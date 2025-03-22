@@ -1,0 +1,35 @@
+import { Elysia, t } from "elysia";
+import { cors } from "@elysiajs/cors";
+import { db } from "./db";
+import { counters } from "./db/schema";
+import { eq } from "drizzle-orm";
+import { counterRoutes } from "./routes/counter";
+import { auth } from "./routes/auth";
+import { studentRoutes } from "./routes/students";
+import { join } from "path";
+// Create a new Elysia app
+const app = new Elysia()
+  .use(cors())
+  // Serve static files from 'dist'
+  .get("/", () => {
+    return Bun.file(join(import.meta.dir, "../dist/index.html"));
+  })
+  .get("/assets/*", ({ params }) => {
+    const filePath = join(import.meta.dir, "../dist/assets", params["*"]);
+    console.log(`Serving asset: ${filePath}`);
+    const file = Bun.file(filePath);
+    return file;
+  })
+  // Create counter API
+  .group("/api", (app) => app.use(auth).use(studentRoutes))
+  // // Catch-all for SPA routes (must come after API routes)
+  // .get("/*", () => {
+  //   return Bun.file(join(import.meta.dir, "../dist/index.html"));
+  // })
+  .listen(process.env.PORT || 3000);
+console.log(
+  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+);
+
+// Export app type for Eden
+export type App = typeof app;

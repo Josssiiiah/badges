@@ -1,0 +1,9 @@
+[phases.setup]
+nixpkgsArchive = 'latest' # Use the latest Nixpkgs with recent Bun versions
+nixPkgs = ['bun']
+
+[phases.build]
+cmds = ['bun run build']
+
+[start]
+cmd = 'cd backend && bun src/index.ts'

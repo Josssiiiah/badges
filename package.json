@@ -1,0 +1,27 @@
+{
+  "name": "space",
+  "private": true,
+  "scripts": {
+    "world": "bun run --cwd backend dev & bun run --cwd frontend dev & bun run --cwd backend drizzle-kit studio --config drizzle.config.ts",    
+    "build": "bun run --cwd frontend build && cp -r frontend/dist backend/",
+    "deploy": "bun run build && bun run --cwd backend dev",
+    "db:push": "bun run --cwd backend drizzle-kit push",
+    "db:generate": "bun run --cwd backend drizzle-kit generate",
+    "db:migrate": "bun run --cwd backend drizzle-kit migrate",
+    "fmt": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "fmt:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "push": "drizzle-kit push --config=backend/drizzle.config.ts",
+    "pull": "drizzle-kit introspect",
+    "generate": "drizzle-kit generate",
+    "drop": "drizzle-kit drop",
+    "check": "drizzle-kit check",
+    "up": "drizzle-kit up"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "dependencies": {
+    "nanoid": "^5.1.5"
+  }
+}

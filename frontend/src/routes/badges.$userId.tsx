@@ -55,27 +55,6 @@ function RouteComponent() {
     );
   }
 
-//   if (!session?.user) {
-//     return (
-//       <div className="container mx-auto p-4">
-//         <div className="bg-white shadow rounded-lg p-6">
-//           <h2 className="text-xl font-semibold mb-2">
-//             Authentication Required
-//           </h2>
-//           <p className="text-gray-600 mb-4">
-//             You need to be logged in to view your badge.
-//           </p>
-//           <button
-//             onClick={() => (window.location.href = "/login")}
-//             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-//           >
-//             Login
-//           </button>
-//         </div>
-//       </div>
-//     );
-//   }
-
   if (error) {
     return (
       <div className="container mx-auto p-4">

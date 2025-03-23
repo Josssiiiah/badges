@@ -15,6 +15,32 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
       return { error: String(error) };
     }
   })
+  .get(
+    "/find/:studentId",
+    async ({ params }) => {
+      try {
+        const student = await db
+          .select()
+          .from(students)
+          .where(eq(students.studentId, params.studentId))
+          .limit(1);
+
+        if (student.length === 0) {
+          return { error: "Student not found" };
+        }
+
+        return { student: student[0] };
+      } catch (error) {
+        console.error("Error fetching student:", error);
+        return { error: String(error) };
+      }
+    },
+    {
+      params: t.Object({
+        studentId: t.String(),
+      }),
+    }
+  )
   .post(
     "/create",
     async ({ body }) => {

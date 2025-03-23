@@ -23,14 +23,26 @@ function RootComponent() {
         >
           Home
         </Link>{" "}
-        <Link
-          to="/badges"
-          activeProps={{
-            className: "font-bold",
-          }}
-        >
-          Badges
-        </Link>
+        {isAuthenticated && session?.user?.id ? (
+          <Link
+            to="/badges/$userId"
+            params={{ userId: session.user.id }}
+            activeProps={{
+              className: "font-bold",
+            }}
+          >
+            Badges
+          </Link>
+        ) : (
+          <Link
+            to="/badges"
+            activeProps={{
+              className: "font-bold",
+            }}
+          >
+            Badges
+          </Link>
+        )}
         {isAuthenticated ? (
           <>
             <Link

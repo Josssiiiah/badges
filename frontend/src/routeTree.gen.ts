@@ -13,8 +13,8 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as LogoutImport } from './routes/logout'
 import { Route as LoginImport } from './routes/login'
+import { Route as BadgesImport } from './routes/badges'
 import { Route as AdminImport } from './routes/admin'
-import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
 import { Route as StudentIdImport } from './routes/student.$id'
 
@@ -32,15 +32,15 @@ const LoginRoute = LoginImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AdminRoute = AdminImport.update({
-  id: '/admin',
-  path: '/admin',
+const BadgesRoute = BadgesImport.update({
+  id: '/badges',
+  path: '/badges',
   getParentRoute: () => rootRoute,
 } as any)
 
-const AboutRoute = AboutImport.update({
-  id: '/about',
-  path: '/about',
+const AdminRoute = AdminImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -67,18 +67,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutImport
-      parentRoute: typeof rootRoute
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminImport
+      parentRoute: typeof rootRoute
+    }
+    '/badges': {
+      id: '/badges'
+      path: '/badges'
+      fullPath: '/badges'
+      preLoaderRoute: typeof BadgesImport
       parentRoute: typeof rootRoute
     }
     '/login': {
@@ -109,8 +109,8 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/badges': typeof BadgesRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/student/$id': typeof StudentIdRoute
@@ -118,8 +118,8 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/badges': typeof BadgesRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/student/$id': typeof StudentIdRoute
@@ -128,8 +128,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/badges': typeof BadgesRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/student/$id': typeof StudentIdRoute
@@ -137,14 +137,14 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/admin' | '/login' | '/logout' | '/student/$id'
+  fullPaths: '/' | '/admin' | '/badges' | '/login' | '/logout' | '/student/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/admin' | '/login' | '/logout' | '/student/$id'
+  to: '/' | '/admin' | '/badges' | '/login' | '/logout' | '/student/$id'
   id:
     | '__root__'
     | '/'
-    | '/about'
     | '/admin'
+    | '/badges'
     | '/login'
     | '/logout'
     | '/student/$id'
@@ -153,8 +153,8 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
+  BadgesRoute: typeof BadgesRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   StudentIdRoute: typeof StudentIdRoute
@@ -162,8 +162,8 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
+  BadgesRoute: BadgesRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   StudentIdRoute: StudentIdRoute,
@@ -180,8 +180,8 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/about",
         "/admin",
+        "/badges",
         "/login",
         "/logout",
         "/student/$id"
@@ -190,11 +190,11 @@ export const routeTree = rootRoute
     "/": {
       "filePath": "index.tsx"
     },
-    "/about": {
-      "filePath": "about.tsx"
-    },
     "/admin": {
       "filePath": "admin.tsx"
+    },
+    "/badges": {
+      "filePath": "badges.tsx"
     },
     "/login": {
       "filePath": "login.tsx"

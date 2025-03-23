@@ -24,12 +24,12 @@ function RootComponent() {
           Home
         </Link>{" "}
         <Link
-          to="/about"
+          to="/badges"
           activeProps={{
             className: "font-bold",
           }}
         >
-          About
+          Badges
         </Link>
         {isAuthenticated ? (
           <>

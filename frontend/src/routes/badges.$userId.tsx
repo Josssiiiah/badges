@@ -27,7 +27,9 @@ function RouteComponent() {
       }
 
       const API_URL = `${import.meta.env.VITE_BACKEND_URL}/students`;
-      const response = await fetch(`${API_URL}/find/${userId}`);
+      const response = await fetch(`${API_URL}/find/${userId}`, {
+        credentials: "include",
+      });
       const data = await response.json();
 
       if (data.error) {

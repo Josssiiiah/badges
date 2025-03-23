@@ -2,6 +2,19 @@ import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 if (!FRONTEND_URL) throw new Error("VITE_FRONTEND_URL is not set");
@@ -20,6 +33,7 @@ export default function Login() {
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
@@ -32,6 +46,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
+    setIsSubmitting(true);
 
     try {
       if (isSignUp) {
@@ -57,114 +72,138 @@ export default function Login() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-
   if (isPending) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-8 h-8 rounded-full border-b-2 border-gray-900 animate-spin"></div>
+      <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[80vh]">
+        <div className="w-full max-w-md">
+          <Skeleton className="h-12 w-3/4 mx-auto mb-6" />
+          <Skeleton className="h-4 w-1/2 mx-auto mb-10" />
+
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full mt-6" />
+            <Skeleton className="h-4 w-40 mx-auto mt-6" />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
-      <div className="p-8 space-y-8 w-full max-w-md bg-white rounded-lg shadow-lg">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            {isSignUp ? "Create an account" : "Sign in to your account"}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
+    <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[80vh]">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            {isSignUp ? "Create an account" : "Sign in"}
+          </CardTitle>
+          <CardDescription className="text-center">
             {isSignUp
-              ? "Create a new account to continue"
-              : "Sign in to access your account"}
-          </p>
-        </div>
-
-        <form onSubmit={handleEmailAuth} className="mt-8 space-y-6">
+              ? "Enter your details to create a new account"
+              : "Enter your credentials to access your account"}
+          </CardDescription>
           {error && (
-            <div className="text-sm text-center text-red-500">{error}</div>
+            <div className="text-sm text-center text-red-500 p-2 mt-2 bg-red-50 border border-red-200 rounded">
+              {error}
+            </div>
           )}
           {successMessage && (
-            <div className="text-sm text-center text-green-500">
+            <div className="text-sm text-center text-green-600 p-2 mt-2 bg-green-50 border border-green-200 rounded">
               {successMessage}
             </div>
           )}
-          <div className="-space-y-px rounded-md shadow-sm">
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleEmailAuth} className="space-y-4">
             {isSignUp && (
-              <div>
-                <label htmlFor="name" className="sr-only">
-                  Full Name
-                </label>
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
                   id="name"
-                  name="name"
                   type="text"
+                  placeholder="John Doe"
                   required={isSignUp}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="block relative px-3 py-2 w-full placeholder-gray-500 text-gray-900 rounded-none rounded-t-md border border-gray-300 appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Full Name"
                 />
               </div>
             )}
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
                 id="email"
-                name="email"
                 type="email"
+                placeholder="your.email@example.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${
-                  !isSignUp ? "rounded-t-md" : ""
-                } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
-                placeholder="Email address"
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+              </div>
+              <Input
                 id="password"
-                name="password"
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block relative px-3 py-2 w-full placeholder-gray-500 text-gray-900 rounded-none rounded-b-md border border-gray-300 appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
               />
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              className="flex relative justify-center px-4 py-2 w-full text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {isSignUp ? "Sign up" : "Sign in"}
-            </button>
-          </div>
-        </form>
-
-        <div className="text-center">
-          <button
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  {isSignUp ? "Creating account..." : "Signing in..."}
+                </>
+              ) : (
+                <>{isSignUp ? "Create account" : "Sign in"}</>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+        <Separator />
+        <CardFooter className="flex justify-center p-6">
+          <Button
+            variant="link"
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-indigo-600 hover:text-indigo-500"
+            className="text-sm"
           >
             {isSignUp
               ? "Already have an account? Sign in"
-              : "Don't have an account? Sign up"}
-          </button>
-        </div>
-      </div>
+              : "Don't have an account? Create one"}
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

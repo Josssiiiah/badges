@@ -2,12 +2,6 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
-// Counter table with id and count fields
-export const counters = sqliteTable("counters", {
-  id: text("id").primaryKey(),
-  count: integer("count").notNull().default(0),
-});
-
 // Students table
 export const students = sqliteTable("students", {
   studentId: text("student_id").primaryKey(),

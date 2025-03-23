@@ -1,9 +1,5 @@
 import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
-import { db } from "./db";
-import { counters } from "./db/schema";
-import { eq } from "drizzle-orm";
-import { counterRoutes } from "./routes/counter";
 import { auth } from "./routes/auth";
 import { studentRoutes } from "./routes/students";
 import { join } from "path";

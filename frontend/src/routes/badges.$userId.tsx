@@ -27,9 +27,7 @@ function RouteComponent() {
       }
 
       const API_URL = `${import.meta.env.VITE_BACKEND_URL}/students`;
-      const response = await fetch(`${API_URL}/find/${userId}`, {
-        credentials: "include",
-      });
+      const response = await fetch(`${API_URL}/find/${userId}`);
       const data = await response.json();
 
       if (data.error) {
@@ -72,8 +70,8 @@ function RouteComponent() {
   return (
     <div className="container mx-auto p-4">
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-2">Your Badge Status</h2>
-        <p className="text-gray-600 mb-4">View your badge information below.</p>
+        <h2 className="text-xl font-semibold mb-2">Badge Status</h2>
+        <p className="text-gray-600 mb-4">Student badge information</p>
 
         {student ? (
           <div className="space-y-4">
@@ -105,7 +103,7 @@ function RouteComponent() {
             </div>
           </div>
         ) : (
-          <p>No student information found. Please contact an administrator.</p>
+          <p>No student information found. Please contact an administrator boyyyy.</p>
         )}
       </div>
     </div>

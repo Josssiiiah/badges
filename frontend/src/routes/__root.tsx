@@ -34,14 +34,7 @@ function RootComponent() {
             Badges
           </Link>
         ) : (
-          <Link
-            to="/badges"
-            activeProps={{
-              className: "font-bold",
-            }}
-          >
-            Badges
-          </Link>
+          <></>
         )}
         {isAuthenticated ? (
           <>

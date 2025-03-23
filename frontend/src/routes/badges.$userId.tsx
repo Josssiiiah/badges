@@ -1,5 +1,4 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { authClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
 
 type Student = {
@@ -15,7 +14,6 @@ export const Route = createFileRoute("/badges/$userId")({
 
 function RouteComponent() {
   const { userId } = useParams({ from: "/badges/$userId" });
-  const { data: session } = authClient.useSession();
 
   const {
     data: student,

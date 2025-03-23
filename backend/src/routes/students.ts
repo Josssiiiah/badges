@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 
 export const studentRoutes = new Elysia({ prefix: "/students" })
   .use(setup)
-  .get("/", async () => {
+  .get("/all", async () => {
     try {
       const result = await db.select().from(students);
       return { students: result };
@@ -16,7 +16,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
     }
   })
   .post(
-    "/",
+    "/create",
     async ({ body }) => {
       try {
         const newStudent = await db
@@ -45,7 +45,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
     }
   )
   .put(
-    "/:studentId",
+    "/update/:studentId/",
     async ({ params, body }) => {
       try {
         const updatedStudent = await db
@@ -81,7 +81,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
     }
   )
   .delete(
-    "/:studentId",
+    "/delete/:studentId",
     async ({ params }) => {
       try {
         const deleted = await db

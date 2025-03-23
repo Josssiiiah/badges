@@ -32,7 +32,8 @@ type Student = {
   hasBadge: boolean;
 };
 
-const API_URL = "http://localhost:3000/api/students";
+// Use the environment variable for API URL
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/students`;
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -141,7 +142,7 @@ function StudentDashboard() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await fetch(API_URL);
+      const response = await fetch(`${API_URL}/all`);
       const data = await response.json();
 
       if (data.students) {
@@ -227,7 +228,7 @@ function StudentDashboard() {
       );
 
       // API update
-      const response = await fetch(`${API_URL}/${studentId}`, {
+      const response = await fetch(`${API_URL}/update/${studentId}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -268,7 +269,7 @@ function StudentDashboard() {
       }
 
       // API call
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -322,13 +323,16 @@ function StudentDashboard() {
       }
 
       // API call
-      const response = await fetch(`${API_URL}/${editingStudent.studentId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(editingStudent),
-      });
+      const response = await fetch(
+        `${API_URL}/update/${editingStudent.studentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(editingStudent),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update student");
@@ -361,7 +365,7 @@ function StudentDashboard() {
   const deleteStudent = async (studentId: string) => {
     try {
       // API call
-      const response = await fetch(`${API_URL}/${studentId}`, {
+      const response = await fetch(`${API_URL}/delete/${studentId}`, {
         method: "DELETE",
       });
 

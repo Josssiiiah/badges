@@ -20,9 +20,6 @@ const app = new Elysia()
 
   // Serve SPA for all other routes
   // Using .all() instead of .get() to handle all HTTP methods for non-API routes
-  .get("/", () => {
-    return Bun.file(join(import.meta.dir, "../dist/index.html"));
-  })
   .all("/*", ({ path, request }) => {
     // Only serve the SPA if it's not an API route
     // This handles all methods (GET, POST, etc.) for SPA routes

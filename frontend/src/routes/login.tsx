@@ -142,6 +142,7 @@ export default function Login() {
                     required={isSignUp}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    className="text-black"
                   />
                 </div>
               )}
@@ -155,6 +156,7 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="text-black"
                 />
               </div>
 
@@ -168,6 +170,7 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="text-black"
                 />
               </div>
 

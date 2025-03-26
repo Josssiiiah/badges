@@ -93,12 +93,12 @@ export function TemplatesDashboard() {
       {/* Upload Form */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Upload New Badge</CardTitle>
+          <CardTitle className="text-white">Upload New Badge</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Badge Name</Label>
+              <Label className="text-slate-200" htmlFor="name">Badge Name</Label>
               <Input
                 id="name"
                 value={name}
@@ -107,7 +107,7 @@ export function TemplatesDashboard() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
+              <Label className="text-slate-200" htmlFor="description">Description (Optional)</Label>
               <Input
                 id="description"
                 value={description}
@@ -115,7 +115,7 @@ export function TemplatesDashboard() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image">Badge Image</Label>
+              <Label className="text-slate-200" htmlFor="image">Badge Image</Label>
               <Input
                 id="image"
                 type="file"

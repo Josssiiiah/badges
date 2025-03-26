@@ -78,7 +78,7 @@ function RootComponent() {
                     <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">
                       {session?.user?.name || "User"}
                     </span>
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-12 w-12">
                       <AvatarImage src="" />
                       <AvatarFallback className="bg-blue-600 text-white">
                         {getInitials(session?.user?.name)}

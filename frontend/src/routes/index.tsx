@@ -54,10 +54,10 @@ function HomeComponent() {
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl mb-4">
+          <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl mb-4">
             Badge Management System
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-black max-w-2xl mx-auto">
             Streamlined badge authorization and management for students and
             administrators.
           </p>
@@ -68,13 +68,13 @@ function HomeComponent() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>My Badges</CardTitle>
+                  <CardTitle className="text-gray-800">My Badges</CardTitle>
                   <CardDescription>
                     View your badge authorization status.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-300 mb-4">
+                  <p className="text-sm text-black mb-4">
                     Check whether your badge has been authorized by an
                     administrator.
                   </p>
@@ -92,13 +92,13 @@ function HomeComponent() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Admin Dashboard</CardTitle>
+                  <CardTitle className="text-gray-800">Admin Dashboard</CardTitle>
                   <CardDescription>
                     Manage student badge authorizations.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-300 mb-4">
+                  <p className="text-sm text-black mb-4">
                     Administrators can manage student records and badge
                     authorizations.
                   </p>
@@ -116,11 +116,11 @@ function HomeComponent() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle>Student Access</CardTitle>
+                  <CardTitle className="text-gray-800">Student Access</CardTitle>
                   <CardDescription>View your badge status.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-300 mb-4">
+                  <p className="text-sm text-black mb-4">
                     Students can log in to check their badge authorization
                     status.
                   </p>
@@ -134,13 +134,15 @@ function HomeComponent() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Administrator Access</CardTitle>
+                  <CardTitle className="text-gray-800">
+                    Administrator Access
+                  </CardTitle>
                   <CardDescription>
                     Manage badge authorizations.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-300 mb-4">
+                  <p className="text-sm text-black mb-4">
                     Administrators can log in to manage student records and
                     authorizations.
                   </p>

@@ -254,7 +254,7 @@ export function StudentDashboard({
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="studentId">Student ID</Label>
+                <Label className="text-white" htmlFor="studentId">Student ID</Label>
                 <Input
                   id="studentId"
                   value={newStudent.studentId}
@@ -264,7 +264,9 @@ export function StudentDashboard({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label className="text-white" htmlFor="name">
+                  Name
+                </Label>
                 <Input
                   id="name"
                   value={newStudent.name}
@@ -274,7 +276,9 @@ export function StudentDashboard({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label className="text-white" htmlFor="email">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"

@@ -92,7 +92,9 @@ function HomeComponent() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-gray-800">Admin Dashboard</CardTitle>
+                  <CardTitle className="text-gray-800">
+                    Admin Dashboard
+                  </CardTitle>
                   <CardDescription>
                     Manage student badge authorizations.
                   </CardDescription>
@@ -116,7 +118,9 @@ function HomeComponent() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-gray-800">Student Access</CardTitle>
+                  <CardTitle className="text-gray-800">
+                    Student Access
+                  </CardTitle>
                   <CardDescription>View your badge status.</CardDescription>
                 </CardHeader>
                 <CardContent>

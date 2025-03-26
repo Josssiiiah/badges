@@ -134,7 +134,7 @@ function UserProfileComponent() {
                       className="border-slate-200 bg-none shadow-sm hover:shadow-lg transition-all duration-200"
                     >
                       <CardContent className="p-4 sm:p-6">
-                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-0">
                           <div className="max-w-[4000px] sm:max-w-[400px] mx-auto sm:mx-0">
                             {badge.imageData ? (
                               <img
@@ -148,7 +148,7 @@ function UserProfileComponent() {
                               </div>
                             )}
                           </div>
-                          <div className="flex-1 pt-4 sm:pt-12 text-center sm:text-left">
+                          <div className="flex-1 pt-4 sm:pt-0 text-center sm:text-left">
                             <h3 className="font-semibold text-xl sm:text-2xl text-slate-900 mb-2">
                               {badge.name}
                             </h3>

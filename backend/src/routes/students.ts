@@ -1,14 +1,26 @@
 import { Elysia, t } from "elysia";
 import { setup } from "../setup";
 import { db } from "../db/connection";
-import { students } from "../db/schema";
+import { students, badges } from "../db/schema";
 import { eq } from "drizzle-orm";
 
 export const studentRoutes = new Elysia({ prefix: "/students" })
   .use(setup)
   .get("/all", async () => {
     try {
-      const result = await db.select().from(students);
+      const result = await db
+        .select({
+          studentId: students.studentId,
+          name: students.name,
+          email: students.email,
+          hasBadge: students.hasBadge,
+          badgeId: students.badgeId,
+          badge: badges,
+          createdAt: students.createdAt,
+          updatedAt: students.updatedAt,
+        })
+        .from(students)
+        .leftJoin(badges, eq(students.badgeId, badges.id));
       return { students: result };
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -20,8 +32,18 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
     async ({ params }) => {
       try {
         const student = await db
-          .select()
+          .select({
+            studentId: students.studentId,
+            name: students.name,
+            email: students.email,
+            hasBadge: students.hasBadge,
+            badgeId: students.badgeId,
+            badge: badges,
+            createdAt: students.createdAt,
+            updatedAt: students.updatedAt,
+          })
           .from(students)
+          .leftJoin(badges, eq(students.badgeId, badges.id))
           .where(eq(students.studentId, params.studentId))
           .limit(1);
 
@@ -52,6 +74,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             name: body.name,
             email: body.email,
             hasBadge: body.hasBadge || false,
+            badgeId: body.badgeId,
           })
           .returning();
 
@@ -67,6 +90,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         name: t.String(),
         email: t.String(),
         hasBadge: t.Optional(t.Boolean()),
+        badgeId: t.Optional(t.String()),
       }),
     }
   )
@@ -80,6 +104,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             name: body.name,
             email: body.email,
             hasBadge: body.hasBadge,
+            badgeId: body.badgeId,
             updatedAt: new Date(),
           })
           .where(eq(students.studentId, params.studentId))
@@ -103,6 +128,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         name: t.String(),
         email: t.String(),
         hasBadge: t.Boolean(),
+        badgeId: t.Optional(t.String()),
       }),
     }
   )

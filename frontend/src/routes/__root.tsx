@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,96 +71,6 @@ function RootComponent() {
           </div>
 
           <div className="flex items-center">
-            {/* Mobile menu */}
-            <Sheet>
-              <SheetTrigger asChild className="sm:hidden mr-2">
-                <Button variant="outline" size="icon" className="h-8 w-8">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="4" x2="20" y1="12" y2="12" />
-                    <line x1="4" x2="20" y1="6" y2="6" />
-                    <line x1="4" x2="20" y1="18" y2="18" />
-                  </svg>
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[240px] sm:w-[300px]">
-                <div className="flex flex-col gap-4 py-4">
-                  <Link
-                    to="/"
-                    className="text-lg font-semibold text-gray-900 hover:text-gray-700 transition"
-                    activeProps={{
-                      className:
-                        "text-lg font-semibold text-blue-600 hover:text-blue-700 transition",
-                    }}
-                    activeOptions={{ exact: true }}
-                  >
-                    Badge System
-                  </Link>
-                  <Separator />
-                  {isAuthenticated && session?.user?.id && (
-                    <Link
-                      to="/badges/$userId"
-                      params={{ userId: session.user.id }}
-                      className="text-gray-600 hover:text-gray-900 py-2 text-sm font-medium"
-                      activeProps={{
-                        className:
-                          "text-blue-600 hover:text-blue-700 py-2 text-sm font-medium",
-                      }}
-                    >
-                      My Badges
-                    </Link>
-                  )}
-
-                  {isAuthenticated && (
-                    <Link
-                      to="/admin"
-                      className="text-gray-600 hover:text-gray-900 py-2 text-sm font-medium"
-                      activeProps={{
-                        className:
-                          "text-blue-600 hover:text-blue-700 py-2 text-sm font-medium",
-                      }}
-                    >
-                      Admin Dashboard
-                    </Link>
-                  )}
-
-                  {isAuthenticated ? (
-                    <>
-                      <Separator />
-                      <Button
-                        variant="destructive"
-                        onClick={() => authClient.signOut()}
-                        className="mt-2"
-                      >
-                        Log out
-                      </Button>
-                    </>
-                  ) : (
-                    <Link
-                      to="/login"
-                      className="text-gray-600 hover:text-gray-900 py-2 text-sm font-medium"
-                      activeProps={{
-                        className:
-                          "text-blue-600 hover:text-blue-700 py-2 text-sm font-medium",
-                      }}
-                    >
-                      Login
-                    </Link>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger className="focus:outline-none">
@@ -179,7 +88,16 @@ function RootComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator /> 
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/users/$username"
+                      params={{ username: session?.user?.name || "" }}
+                      className="cursor-pointer"
+                    >
+                      View Profile
+                    </Link>
+                  </DropdownMenuItem>
                   {isAuthenticated && session?.user?.id && (
                     <DropdownMenuItem asChild>
                       <Link
@@ -196,6 +114,7 @@ function RootComponent() {
                       Admin Dashboard
                     </Link>
                   </DropdownMenuItem>
+                 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => authClient.signOut()}

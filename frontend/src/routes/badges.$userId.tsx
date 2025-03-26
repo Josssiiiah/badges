@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge as BadgeUI } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
@@ -16,6 +16,17 @@ type Student = {
   name: string;
   email: string;
   hasBadge: boolean;
+  badgeId?: string;
+};
+
+type Badge = {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl?: string;
+  imageData: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 };
 
 export const Route = createFileRoute("/badges/$userId")({
@@ -27,7 +38,7 @@ function RouteComponent() {
 
   const {
     data: student,
-    isLoading,
+    isLoading: isStudentLoading,
     error: queryError,
   } = useQuery({
     queryKey: ["student", userId],
@@ -53,6 +64,22 @@ function RouteComponent() {
     enabled: !!userId,
   });
 
+  const { data: badges, isLoading: isBadgesLoading } = useQuery({
+    queryKey: ["badges"],
+    queryFn: async () => {
+      const API_URL = `${import.meta.env.VITE_BACKEND_URL}/badges`;
+      const response = await fetch(`${API_URL}/all`);
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data.badges as Badge[];
+    },
+  });
+
+  const isLoading = isStudentLoading || isBadgesLoading;
   const error = queryError instanceof Error ? queryError.message : null;
 
   if (isLoading) {
@@ -148,23 +175,58 @@ function RouteComponent() {
                     Badge Status
                   </h3>
                   {student.hasBadge ? (
-                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white font-medium text-base">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 mr-1.5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      Badge Authorized
+                    <div className="space-y-4">
+                      <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white font-medium text-base">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 mr-1.5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Badge Authorized
+                      </div>
+
+                      {badges && badges.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-medium text-gray-500 mb-2">
+                            Your Badge
+                          </h3>
+                          <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+                            <div className="flex flex-col items-center">
+                              <div className="w-96  h-96 mb-4 overflow-hidden">
+                                {badges[0].imageData ? (
+                                  <img
+                                    src={badges[0].imageData}
+                                    alt={badges[0].name}
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                    No Image
+                                  </div>
+                                )}
+                              </div>
+                              <h4 className="font-semibold text-lg text-center">
+                                {badges[0].name}
+                              </h4>
+                              {badges[0].description && (
+                                <p className="text-gray-600 text-sm text-center mt-1">
+                                  {badges[0].description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <Badge
+                    <BadgeUI
                       variant="outline"
                       className="text-base px-3 py-1 border-amber-300 text-amber-700"
                     >
@@ -181,7 +243,7 @@ function RouteComponent() {
                         />
                       </svg>
                       Not Authorized
-                    </Badge>
+                    </BadgeUI>
                   )}
                 </div>
               </div>

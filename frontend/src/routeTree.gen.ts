@@ -15,7 +15,7 @@ import { Route as LogoutImport } from './routes/logout'
 import { Route as LoginImport } from './routes/login'
 import { Route as AdminImport } from './routes/admin'
 import { Route as IndexImport } from './routes/index'
-import { Route as StudentIdImport } from './routes/student.$id'
+import { Route as UsersUsernameImport } from './routes/users.$username'
 import { Route as BadgesUserIdImport } from './routes/badges.$userId'
 
 // Create/Update Routes
@@ -44,9 +44,9 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const StudentIdRoute = StudentIdImport.update({
-  id: '/student/$id',
-  path: '/student/$id',
+const UsersUsernameRoute = UsersUsernameImport.update({
+  id: '/users/$username',
+  path: '/users/$username',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -95,11 +95,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BadgesUserIdImport
       parentRoute: typeof rootRoute
     }
-    '/student/$id': {
-      id: '/student/$id'
-      path: '/student/$id'
-      fullPath: '/student/$id'
-      preLoaderRoute: typeof StudentIdImport
+    '/users/$username': {
+      id: '/users/$username'
+      path: '/users/$username'
+      fullPath: '/users/$username'
+      preLoaderRoute: typeof UsersUsernameImport
       parentRoute: typeof rootRoute
     }
   }
@@ -113,7 +113,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/badges/$userId': typeof BadgesUserIdRoute
-  '/student/$id': typeof StudentIdRoute
+  '/users/$username': typeof UsersUsernameRoute
 }
 
 export interface FileRoutesByTo {
@@ -122,7 +122,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/badges/$userId': typeof BadgesUserIdRoute
-  '/student/$id': typeof StudentIdRoute
+  '/users/$username': typeof UsersUsernameRoute
 }
 
 export interface FileRoutesById {
@@ -132,7 +132,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/badges/$userId': typeof BadgesUserIdRoute
-  '/student/$id': typeof StudentIdRoute
+  '/users/$username': typeof UsersUsernameRoute
 }
 
 export interface FileRouteTypes {
@@ -143,9 +143,15 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/badges/$userId'
-    | '/student/$id'
+    | '/users/$username'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/login' | '/logout' | '/badges/$userId' | '/student/$id'
+  to:
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/logout'
+    | '/badges/$userId'
+    | '/users/$username'
   id:
     | '__root__'
     | '/'
@@ -153,7 +159,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/badges/$userId'
-    | '/student/$id'
+    | '/users/$username'
   fileRoutesById: FileRoutesById
 }
 
@@ -163,7 +169,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   BadgesUserIdRoute: typeof BadgesUserIdRoute
-  StudentIdRoute: typeof StudentIdRoute
+  UsersUsernameRoute: typeof UsersUsernameRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -172,7 +178,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   BadgesUserIdRoute: BadgesUserIdRoute,
-  StudentIdRoute: StudentIdRoute,
+  UsersUsernameRoute: UsersUsernameRoute,
 }
 
 export const routeTree = rootRoute
@@ -190,7 +196,7 @@ export const routeTree = rootRoute
         "/login",
         "/logout",
         "/badges/$userId",
-        "/student/$id"
+        "/users/$username"
       ]
     },
     "/": {
@@ -208,8 +214,8 @@ export const routeTree = rootRoute
     "/badges/$userId": {
       "filePath": "badges.$userId.tsx"
     },
-    "/student/$id": {
-      "filePath": "student.$id.tsx"
+    "/users/$username": {
+      "filePath": "users.$username.tsx"
     }
   }
 }

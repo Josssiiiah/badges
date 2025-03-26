@@ -2,6 +2,23 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
+// Badges table
+export const badges = sqliteTable("badges", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  name: text("name").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  imageData: text("image_data"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+});
+
 // Students table
 export const students = sqliteTable("students", {
   studentId: text("student_id").primaryKey(),
@@ -10,6 +27,7 @@ export const students = sqliteTable("students", {
   hasBadge: integer("has_badge", { mode: "boolean" })
     .default(false)
     .$type<boolean>(),
+  badgeId: text("badge_id").references(() => badges.id),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),

@@ -150,7 +150,7 @@ export function TemplatesDashboard() {
             {data?.map((badge: Badge) => (
               <Card
                 key={badge.id}
-                className="overflow-hidden border border-gray-700 bg-gray-800/50 hover:bg-gray-800 transition-colors"
+                className="overflow-hidden flex  border border-gray-700 bg-gray-800/50 hover:bg-gray-800 transition-colors"
               >
                 <CardContent className="p-0">
                   <div className="w-full aspect-square bg-black/20 flex items-center justify-center overflow-hidden">

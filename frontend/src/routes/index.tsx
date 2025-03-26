@@ -74,7 +74,7 @@ function HomeComponent() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-300 mb-4">
                     Check whether your badge has been authorized by an
                     administrator.
                   </p>
@@ -98,7 +98,7 @@ function HomeComponent() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-300 mb-4">
                     Administrators can manage student records and badge
                     authorizations.
                   </p>
@@ -120,7 +120,7 @@ function HomeComponent() {
                   <CardDescription>View your badge status.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-300 mb-4">
                     Students can log in to check their badge authorization
                     status.
                   </p>
@@ -140,7 +140,7 @@ function HomeComponent() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-gray-300 mb-4">
                     Administrators can log in to manage student records and
                     authorizations.
                   </p>

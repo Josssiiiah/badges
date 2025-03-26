@@ -105,88 +105,6 @@ export function StudentDashboard({
     }
   };
 
-  const toggleBadge = async (studentId: string) => {
-    try {
-      const student = students.find((s) => s.studentId === studentId);
-      if (!student) return;
-
-      const updatedStudent = { ...student, hasBadge: !student.hasBadge };
-
-      // Optimistic update
-      setStudents(
-        students.map((s) => (s.studentId === studentId ? updatedStudent : s))
-      );
-
-      // API update
-      const response = await fetch(`${API_URL}/update/${studentId}/`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedStudent),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update student");
-      }
-
-      toast({
-        title: "Success",
-        description: `Badge ${updatedStudent.hasBadge ? "assigned to" : "removed from"} ${student.name}`,
-      });
-    } catch (error) {
-      console.error("Error updating badge:", error);
-      // Revert on error
-      fetchStudents();
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update badge",
-      });
-    }
-  };
-
-  const assignBadge = async (studentId: string, badgeId: string) => {
-    try {
-      const student = students.find((s) => s.studentId === studentId);
-      if (!student) return;
-
-      const updatedStudent = { ...student, hasBadge: true, badgeId };
-
-      // Optimistic update
-      setStudents(
-        students.map((s) => (s.studentId === studentId ? updatedStudent : s))
-      );
-
-      // API update
-      const response = await fetch(`${API_URL}/update/${studentId}/`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedStudent),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update student");
-      }
-
-      toast({
-        title: "Success",
-        description: `Badge assigned to ${student.name}`,
-      });
-    } catch (error) {
-      console.error("Error assigning badge:", error);
-      // Revert on error
-      fetchStudents();
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to assign badge",
-      });
-    }
-  };
-
   const addStudent = async () => {
     try {
       // Validate form
@@ -409,61 +327,13 @@ export function StudentDashboard({
                   <TableCell>{student.email}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-4">
-                      {student.badge ? (
+                      {student.badge && (
                         <img
                           src={student.badge.imageData}
                           alt={student.badge.name}
                           className="w-8 h-8 object-contain"
                         />
-                      ) : (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              Assign Badge
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Assign Badge</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                <Label>Select Badge</Label>
-                                <Select
-                                  onValueChange={(value) =>
-                                    assignBadge(student.studentId, value)
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a badge" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {badges?.map((badge) => (
-                                      <SelectItem
-                                        key={badge.id}
-                                        value={badge.id}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <img
-                                            src={badge.imageData}
-                                            alt={badge.name}
-                                            className="w-6 h-6 object-contain"
-                                          />
-                                          {badge.name}
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
                       )}
-                      <Checkbox
-                        checked={student.hasBadge}
-                        onCheckedChange={() => toggleBadge(student.studentId)}
-                      />
                     </div>
                   </TableCell>
                   <TableCell>
@@ -518,8 +388,71 @@ export function StudentDashboard({
                                 }
                               />
                             </div>
+                            <div className="space-y-2">
+                              <Label>Badge Status</Label>
+                              <div className="flex items-center gap-4">
+                                <Checkbox
+                                  checked={editingStudent?.hasBadge || false}
+                                  onCheckedChange={(checked) =>
+                                    setEditingStudent(
+                                      editingStudent
+                                        ? {
+                                            ...editingStudent,
+                                            hasBadge: checked as boolean,
+                                            badgeId: checked
+                                              ? editingStudent.badgeId
+                                              : undefined,
+                                          }
+                                        : null
+                                    )
+                                  }
+                                />
+                                <span className="text-sm text-gray-500">
+                                  Has Badge
+                                </span>
+                              </div>
+                            </div>
+                            {editingStudent?.hasBadge && (
+                              <div className="space-y-2">
+                                <Label>Select Badge</Label>
+                                <Select
+                                  value={editingStudent.badgeId}
+                                  onValueChange={(value) =>
+                                    setEditingStudent(
+                                      editingStudent
+                                        ? {
+                                            ...editingStudent,
+                                            badgeId: value,
+                                          }
+                                        : null
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a badge" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {badges?.map((badge) => (
+                                      <SelectItem
+                                        key={badge.id}
+                                        value={badge.id}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <img
+                                            src={badge.imageData}
+                                            alt={badge.name}
+                                            className="w-6 h-6 object-contain"
+                                          />
+                                          {badge.name}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                           </div>
-                          <DialogFooter>
+                          <DialogFooter className="mt-16">
                             <DialogClose asChild>
                               <Button variant="outline">Cancel</Button>
                             </DialogClose>

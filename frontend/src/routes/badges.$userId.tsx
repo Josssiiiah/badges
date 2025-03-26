@@ -139,7 +139,7 @@ function RouteComponent() {
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto">
         <Card>
-          <CardHeader className="bg-slate-100 border-b">
+          <CardHeader className="bg-slate-100 border text-black rounded-xl">
             <CardTitle>Badge Information</CardTitle>
             <CardDescription>Your badge authorization status</CardDescription>
           </CardHeader>
@@ -148,30 +148,34 @@ function RouteComponent() {
             {student ? (
               <div className="space-y-6">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Student ID
-                  </h3>
-                  <p className="text-base font-medium">{student.studentId}</p>
+                  <h3 className="text-sm font-medium text-black">Student ID</h3>
+                  <p className="text-base font-medium text-black">
+                    {student.studentId}
+                  </p>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-gray-500">Name</h3>
-                  <p className="text-base font-medium">{student.name}</p>
+                  <h3 className="text-sm font-medium text-black">Name</h3>
+                  <p className="text-base font-medium text-black">
+                    {student.name}
+                  </p>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                  <p className="text-base font-medium">{student.email}</p>
+                  <h3 className="text-sm font-medium text-black">Email</h3>
+                  <p className="text-base font-medium text-black">
+                    {student.email}
+                  </p>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-500">
+                  <h3 className="text-sm font-medium text-black">
                     Badge Status
                   </h3>
                   {student.hasBadge ? (
@@ -194,7 +198,7 @@ function RouteComponent() {
 
                       {badges && badges.length > 0 && (
                         <div className="mt-4">
-                          <h3 className="text-sm font-medium text-gray-500 mb-2">
+                          <h3 className="text-sm font-medium text-black mb-2">
                             Your Badge
                           </h3>
                           <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
@@ -212,11 +216,11 @@ function RouteComponent() {
                                   </div>
                                 )}
                               </div>
-                              <h4 className="font-semibold text-lg text-center">
+                              <h4 className="font-semibold text-lg text-center text-black">
                                 {badges[0].name}
                               </h4>
                               {badges[0].description && (
-                                <p className="text-gray-600 text-sm text-center mt-1">
+                                <p className="text-black text-sm text-center mt-1">
                                   {badges[0].description}
                                 </p>
                               )}
@@ -263,7 +267,7 @@ function RouteComponent() {
                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <p className="mt-4 text-gray-600">
+                <p className="mt-4 text-black">
                   No student information found. Please contact an administrator.
                 </p>
               </div>

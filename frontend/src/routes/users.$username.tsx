@@ -74,25 +74,29 @@ function UserProfileComponent() {
           <CardHeader className="flex flex-row items-center space-x-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src="" />
-              <AvatarFallback className="bg-slate text-pure">
+              <AvatarFallback className="bg-[var(--accent-bg)] text-[var(--main-text)]">
                 {getInitials(username)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold text-pure">{username}</h2>
-              <p className="text-pure/80">User Profile</p>
+              <h2 className="text-2xl font-bold text-[var(--main-text)]">
+                {username}
+              </h2>
+              <p className="text-[var(--main-text)]/80">User Profile</p>
             </div>
           </CardHeader>
-          <Separator className="bg-space-300" />
+          <Separator className="bg-[var(--accent-bg)]" />
           <CardContent className="pt-6">
             {badges && badges.length > 0 ? (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-pure">Badges</h3>
+                <h3 className="text-lg font-semibold text-[var(--main-text)]">
+                  Badges
+                </h3>
                 <div className="grid grid-cols-1 gap-4">
                   {badges.map((badge) => (
                     <div
                       key={badge.id}
-                      className="bg-space rounded-lg p-4 border border-space-300"
+                      className="bg-[var(--main-bg)] rounded-lg p-4 border border-[var(--accent-bg)]"
                     >
                       <div className="flex items-center space-x-4">
                         <div className="w-16 h-16 flex-shrink-0">
@@ -103,17 +107,17 @@ function UserProfileComponent() {
                               className="w-full h-full object-contain"
                             />
                           ) : (
-                            <div className="w-full h-full bg-space-300 flex items-center justify-center text-pure/80">
+                            <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/80">
                               No Image
                             </div>
                           )}
                         </div>
                         <div>
-                          <h4 className="font-medium text-pure">
+                          <h4 className="font-medium text-[var(--main-text)]">
                             {badge.name}
                           </h4>
                           {badge.description && (
-                            <p className="text-sm text-pure/80 mt-1">
+                            <p className="text-sm text-[var(--main-text)]/80 mt-1">
                               {badge.description}
                             </p>
                           )}
@@ -125,7 +129,7 @@ function UserProfileComponent() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-pure/80">No badges found</p>
+                <p className="text-[var(--main-text)]/80">No badges found</p>
               </div>
             )}
           </CardContent>

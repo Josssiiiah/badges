@@ -100,10 +100,10 @@ export default function Login() {
     <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[80vh]">
       <div className="flex flex-row justify-center w-full">
         <div className="w-1/2 p-8 pr-12">
-          <h1 className="text-6xl font-bold mb-6 text-pure">
+          <h1 className="text-6xl font-bold mb-6 text-[var(--main-text)]">
             Protect Your Resume-worthy Achievements
           </h1>
-          <p className="text-xl text-pure/80">
+          <p className="text-xl text-[var(--main-text)]/80">
             Track your earned badges and certifiations. Or issue secure,
             verifiable badges and certification links to showcase and validate
             course completion anywhere online.
@@ -111,10 +111,10 @@ export default function Login() {
         </div>
         <Card className="w-1/2">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center text-pure">
+            <CardTitle className="text-2xl font-bold text-center text-[var(--main-text)]">
               {isSignUp ? "Create an account" : "Sign in"}
             </CardTitle>
-            <CardDescription className="text-center text-pure/80">
+            <CardDescription className="text-center text-[var(--main-text)]/80">
               {isSignUp
                 ? "Enter your details to create a new account"
                 : "Enter your credentials to access your account"}
@@ -134,7 +134,9 @@ export default function Login() {
             <form onSubmit={handleEmailAuth} className="space-y-4">
               {isSignUp && (
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name" className="text-[var(--main-text)]">
+                    Full Name
+                  </Label>
                   <Input
                     id="name"
                     type="text"
@@ -148,7 +150,9 @@ export default function Login() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-[var(--main-text)]">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -162,7 +166,9 @@ export default function Login() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-[var(--main-text)]">
+                    Password
+                  </Label>
                 </div>
                 <Input
                   id="password"
@@ -210,7 +216,7 @@ export default function Login() {
             <Button
               variant="link"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm"
+              className="text-sm text-[var(--main-text)]"
             >
               {isSignUp
                 ? "Already have an account? Sign in"

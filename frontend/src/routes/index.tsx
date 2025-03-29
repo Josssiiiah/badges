@@ -56,15 +56,15 @@ function HomeComponent() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-10 pt-24">
           <Badge
-            variant="secondary"
-            className="mb-4 text-sm font-light p-2 px-4 shadow-xl bg-space-300 text-pure"
+            variant="default"
+            className="mb-4 text-sm font-light p-2 px-4  "
           >
             Powered by
           </Badge>
-          <h1 className="text-3xl font-medium text-pure pt-2 leading-[65px] sm:text-6xl mb-4">
+          <h1 className="text-3xl font-medium text-[var(--main-text)] pt-2 leading-[65px] sm:text-6xl mb-4">
             The next-generation badge management system
           </h1>
-          <p className="text-lg text-pure/80 max-w-2xl pt-4 mx-auto">
+          <p className="text-lg text-[var(--main-text)]/80 max-w-2xl pt-4 mx-auto">
             Badge authorization and management for students and administrators.
           </p>
         </div>
@@ -74,33 +74,37 @@ function HomeComponent() {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-pure">Student Access</CardTitle>
-                  <CardDescription>View your badge status.</CardDescription>
+                  <CardTitle className="text-[var(--main-text)]">
+                    Student Access
+                  </CardTitle>
+                  <CardDescription className="text-[var(--main-text)]/80">
+                    View your badge status.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-pure/80 mb-4">
+                  <p className="text-sm text-[var(--main-text)]/80 mb-4">
                     Students can log in to check their badge authorization
                     status.
                   </p>
                 </CardContent>
                 <CardFooter>
                   <Link to="/login" className="w-full">
-                    <Button className="w-full">Student Login</Button>
+                    <Button variant="default" className="w-full text-[var(--main-text)]/80">Student Login</Button>
                   </Link>
                 </CardFooter>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-pure">
+                  <CardTitle className="text-[var(--main-text)]">
                     Administrator Access
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-[var(--main-text)]/80">
                     Manage badge authorizations.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-pure/80 mb-4">
+                  <p className="text-sm text-[var(--main-text)]/80 mb-4">
                     Administrators can log in to manage student records and
                     authorizations.
                   </p>

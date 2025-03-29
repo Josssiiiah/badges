@@ -119,15 +119,15 @@ function RouteComponent() {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
-          <Card className="border-red-200">
-            <CardHeader className="bg-red-50 border-b border-red-200">
-              <CardTitle className="text-red-700">Error</CardTitle>
-              <CardDescription className="text-red-600">
+          <Card className="border-[var(--accent-bg)]">
+            <CardHeader className="bg-[var(--accent-bg)]/10 border-b border-[var(--accent-bg)]">
+              <CardTitle className="text-[var(--main-text)]">Error</CardTitle>
+              <CardDescription className="text-[var(--main-text)]/80">
                 There was a problem retrieving your badge information
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-              <p className="text-red-600">{error}</p>
+              <p className="text-[var(--main-text)]">{error}</p>
             </CardContent>
           </Card>
         </div>
@@ -139,9 +139,11 @@ function RouteComponent() {
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto">
         <Card>
-          <CardHeader className="bg-space-300 border border-space-300 rounded-xl">
-            <CardTitle className="text-pure">Badge Information</CardTitle>
-            <CardDescription className="text-pure/80">
+          <CardHeader className="bg-[var(--accent-bg)] border border-[var(--accent-bg)] rounded-xl">
+            <CardTitle className="text-[var(--main-text)]">
+              Badge Information
+            </CardTitle>
+            <CardDescription className="text-[var(--main-text)]/80">
               Your badge authorization status
             </CardDescription>
           </CardHeader>
@@ -150,36 +152,40 @@ function RouteComponent() {
             {student ? (
               <div className="space-y-6">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-pure/80">
+                  <h3 className="text-sm font-medium text-[var(--main-text)]/80">
                     Student ID
                   </h3>
-                  <p className="text-base font-medium text-pure">
+                  <p className="text-base font-medium text-[var(--main-text)]">
                     {student.studentId}
                   </p>
                 </div>
 
-                <Separator className="bg-space-300" />
+                <Separator className="bg-[var(--accent-bg)]" />
 
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-pure/80">Name</h3>
-                  <p className="text-base font-medium text-pure">
+                  <h3 className="text-sm font-medium text-[var(--main-text)]/80">
+                    Name
+                  </h3>
+                  <p className="text-base font-medium text-[var(--main-text)]">
                     {student.name}
                   </p>
                 </div>
 
-                <Separator className="bg-space-300" />
+                <Separator className="bg-[var(--accent-bg)]" />
 
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-pure/80">Email</h3>
-                  <p className="text-base font-medium text-pure">
+                  <h3 className="text-sm font-medium text-[var(--main-text)]/80">
+                    Email
+                  </h3>
+                  <p className="text-base font-medium text-[var(--main-text)]">
                     {student.email}
                   </p>
                 </div>
 
-                <Separator className="bg-space-300" />
+                <Separator className="bg-[var(--accent-bg)]" />
 
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-pure/80">
+                  <h3 className="text-sm font-medium text-[var(--main-text)]/80">
                     Badge Status
                   </h3>
                   <div className="flex items-center space-x-2">
@@ -187,8 +193,8 @@ function RouteComponent() {
                       variant={student.hasBadge ? "default" : "secondary"}
                       className={
                         student.hasBadge
-                          ? "bg-slate"
-                          : "bg-space-300 text-pure/80"
+                          ? "bg-[var(--accent-bg)] text-[var(--main-text)]"
+                          : "bg-[var(--accent-bg)]/10 text-[var(--main-text)]/80"
                       }
                     >
                       {student.hasBadge ? "Authorized" : "Not Authorized"}
@@ -198,10 +204,10 @@ function RouteComponent() {
 
                 {student.hasBadge && badges && badges.length > 0 && (
                   <div className="mt-4">
-                    <h3 className="text-sm font-medium text-pure/80 mb-2">
+                    <h3 className="text-sm font-medium text-[var(--main-text)]/80 mb-2">
                       Your Badge
                     </h3>
-                    <div className="bg-space rounded-lg shadow-md p-4 border border-space-300">
+                    <div className="bg-[var(--main-bg)] rounded-lg shadow-md p-4 border border-[var(--accent-bg)]">
                       <div className="flex flex-col items-center">
                         <div className="w-96 h-96 mb-4 overflow-hidden">
                           {badges[0].imageData ? (
@@ -211,16 +217,16 @@ function RouteComponent() {
                               className="w-full h-full object-contain"
                             />
                           ) : (
-                            <div className="w-full h-full bg-space-300 flex items-center justify-center text-pure/80">
+                            <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/80">
                               No Image
                             </div>
                           )}
                         </div>
-                        <h4 className="font-semibold text-lg text-center text-pure">
+                        <h4 className="font-semibold text-lg text-center text-[var(--main-text)]">
                           {badges[0].name}
                         </h4>
                         {badges[0].description && (
-                          <p className="text-pure/80 text-sm text-center mt-1">
+                          <p className="text-[var(--main-text)]/80 text-sm text-center mt-1">
                             {badges[0].description}
                           </p>
                         )}
@@ -231,7 +237,9 @@ function RouteComponent() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-pure/80">Loading badge information...</p>
+                <p className="text-[var(--main-text)]/80">
+                  Loading badge information...
+                </p>
               </div>
             )}
           </CardContent>

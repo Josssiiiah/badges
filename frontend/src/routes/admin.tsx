@@ -93,19 +93,19 @@ function AdminPage() {
             <TabsList className="grid w-full grid-cols-3 mb-6 bg-oxford/50 p-1 rounded-lg">
               <TabsTrigger
                 value="students"
-                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-pure/80 rounded-md py-2"
+                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
               >
                 Students
               </TabsTrigger>
               <TabsTrigger
                 value="badges"
-                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-pure/80 rounded-md py-2"
+                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
               >
                 Badges
               </TabsTrigger>
               <TabsTrigger
                 value="stats"
-                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-pure/80 rounded-md py-2"
+                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
               >
                 Stats
               </TabsTrigger>

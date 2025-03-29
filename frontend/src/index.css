@@ -5,7 +5,8 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-    --color-neutral-900: 176 18 113; /* RGB values without commas */
-
+    --main-bg: #ede8f5;
+    --accent-bg: #7091E6;
+    --main-text: #3d52a0;
   }
 }

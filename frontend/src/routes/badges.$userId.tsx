@@ -139,137 +139,99 @@ function RouteComponent() {
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto">
         <Card>
-          <CardHeader className="bg-slate-100 border text-black rounded-xl">
-            <CardTitle>Badge Information</CardTitle>
-            <CardDescription>Your badge authorization status</CardDescription>
+          <CardHeader className="bg-space-300 border border-space-300 rounded-xl">
+            <CardTitle className="text-pure">Badge Information</CardTitle>
+            <CardDescription className="text-pure/80">
+              Your badge authorization status
+            </CardDescription>
           </CardHeader>
 
           <CardContent className="pt-6">
             {student ? (
               <div className="space-y-6">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-black">Student ID</h3>
-                  <p className="text-base font-medium text-black">
+                  <h3 className="text-sm font-medium text-pure/80">
+                    Student ID
+                  </h3>
+                  <p className="text-base font-medium text-pure">
                     {student.studentId}
                   </p>
                 </div>
 
-                <Separator />
+                <Separator className="bg-space-300" />
 
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-black">Name</h3>
-                  <p className="text-base font-medium text-black">
+                  <h3 className="text-sm font-medium text-pure/80">Name</h3>
+                  <p className="text-base font-medium text-pure">
                     {student.name}
                   </p>
                 </div>
 
-                <Separator />
+                <Separator className="bg-space-300" />
 
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium text-black">Email</h3>
-                  <p className="text-base font-medium text-black">
+                  <h3 className="text-sm font-medium text-pure/80">Email</h3>
+                  <p className="text-base font-medium text-pure">
                     {student.email}
                   </p>
                 </div>
 
-                <Separator />
+                <Separator className="bg-space-300" />
 
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-black">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-pure/80">
                     Badge Status
                   </h3>
-                  {student.hasBadge ? (
-                    <div className="space-y-4">
-                      <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-500 text-white font-medium text-base">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-1.5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Badge Authorized
-                      </div>
-
-                      {badges && badges.length > 0 && (
-                        <div className="mt-4">
-                          <h3 className="text-sm font-medium text-black mb-2">
-                            Your Badge
-                          </h3>
-                          <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
-                            <div className="flex flex-col items-center">
-                              <div className="w-96  h-96 mb-4 overflow-hidden">
-                                {badges[0].imageData ? (
-                                  <img
-                                    src={badges[0].imageData}
-                                    alt={badges[0].name}
-                                    className="w-full h-full object-contain"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-                                    No Image
-                                  </div>
-                                )}
-                              </div>
-                              <h4 className="font-semibold text-lg text-center text-black">
-                                {badges[0].name}
-                              </h4>
-                              {badges[0].description && (
-                                <p className="text-black text-sm text-center mt-1">
-                                  {badges[0].description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
+                  <div className="flex items-center space-x-2">
                     <BadgeUI
-                      variant="outline"
-                      className="text-base px-3 py-1 border-amber-300 text-amber-700"
+                      variant={student.hasBadge ? "default" : "secondary"}
+                      className={
+                        student.hasBadge
+                          ? "bg-slate"
+                          : "bg-space-300 text-pure/80"
+                      }
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 mr-1.5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      Not Authorized
+                      {student.hasBadge ? "Authorized" : "Not Authorized"}
                     </BadgeUI>
-                  )}
+                  </div>
                 </div>
+
+                {student.hasBadge && badges && badges.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium text-pure/80 mb-2">
+                      Your Badge
+                    </h3>
+                    <div className="bg-space rounded-lg shadow-md p-4 border border-space-300">
+                      <div className="flex flex-col items-center">
+                        <div className="w-96 h-96 mb-4 overflow-hidden">
+                          {badges[0].imageData ? (
+                            <img
+                              src={badges[0].imageData}
+                              alt={badges[0].name}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-space-300 flex items-center justify-center text-pure/80">
+                              No Image
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-semibold text-lg text-center text-pure">
+                          {badges[0].name}
+                        </h4>
+                        {badges[0].description && (
+                          <p className="text-pure/80 text-sm text-center mt-1">
+                            {badges[0].description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="text-center p-6">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-12 w-12 mx-auto text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <p className="mt-4 text-black">
-                  No student information found. Please contact an administrator.
-                </p>
+              <div className="text-center py-8">
+                <p className="text-pure/80">Loading badge information...</p>
               </div>
             )}
           </CardContent>

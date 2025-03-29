@@ -100,10 +100,10 @@ export default function Login() {
     <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[80vh]">
       <div className="flex flex-row justify-center w-full">
         <div className="w-1/2 p-8 pr-12">
-          <h1 className="text-6xl font-bold mb-6 text-black">
+          <h1 className="text-6xl font-bold mb-6 text-pure">
             Protect Your Resume-worthy Achievements
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-pure/80">
             Track your earned badges and certifiations. Or issue secure,
             verifiable badges and certification links to showcase and validate
             course completion anywhere online.
@@ -111,21 +111,21 @@ export default function Login() {
         </div>
         <Card className="w-1/2">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
+            <CardTitle className="text-2xl font-bold text-center text-pure">
               {isSignUp ? "Create an account" : "Sign in"}
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription className="text-center text-pure/80">
               {isSignUp
                 ? "Enter your details to create a new account"
                 : "Enter your credentials to access your account"}
             </CardDescription>
             {error && (
-              <div className="text-sm text-center text-red-500 p-2 mt-2 bg-red-50 border border-red-200 rounded">
+              <div className="text-sm text-center text-red-400 p-2 mt-2 bg-red-400/10 border border-red-400/20 rounded">
                 {error}
               </div>
             )}
             {successMessage && (
-              <div className="text-sm text-center text-green-600 p-2 mt-2 bg-green-50 border border-green-200 rounded">
+              <div className="text-sm text-center text-green-400 p-2 mt-2 bg-green-400/10 border border-green-400/20 rounded">
                 {successMessage}
               </div>
             )}

@@ -24,16 +24,16 @@ function RootComponent() {
   const isAuthenticated = !!session;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <header className="bg-white border-b shadow-sm">
+    <div className="min-h-screen flex flex-col bg-coaster-200">
+      <header>
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <Link
               to="/"
-              className="text-xl font-semibold text-gray-900 hover:text-gray-700 transition"
+              className="text-xl font-semibold  transition"
               activeProps={{
                 className:
-                  "text-xl font-semibold text-blue-600 hover:text-blue-700 transition",
+                  "text-xl font-semibold text-slate hover:text-slate/80 transition",
               }}
               activeOptions={{ exact: true }}
             >
@@ -45,10 +45,10 @@ function RootComponent() {
                 <Link
                   to="/badges/$userId"
                   params={{ userId: session.user.id }}
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-pure/80 hover:px-3 py-2 rounded-md text-sm font-medium"
                   activeProps={{
                     className:
-                      "text-blue-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium",
+                      "text-slate hover:text-slate/80 px-3 py-2 rounded-md text-sm font-medium",
                   }}
                 >
                   My Badges
@@ -58,10 +58,10 @@ function RootComponent() {
               {isAuthenticated && (
                 <Link
                   to="/admin"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-pure/80 hover:px-3 py-2 rounded-md text-sm font-medium"
                   activeProps={{
                     className:
-                      "text-blue-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium",
+                      "text-slate hover:text-slate/80 px-3 py-2 rounded-md text-sm font-medium",
                   }}
                 >
                   Admin
@@ -75,21 +75,29 @@ function RootComponent() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="focus:outline-none">
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">
+                    <span className="text-sm font-medium text-pure/80 hidden sm:inline-block">
                       {session?.user?.name || "User"}
                     </span>
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src="" />
-                      <AvatarFallback className="bg-blue-600 text-white">
+                      <AvatarImage src={session?.user?.image || undefined} />
+                      <AvatarFallback className="bg-slate text-pure">
                         {getInitials(session?.user?.name)}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator /> 
-                  <DropdownMenuItem asChild>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-space border-space-300"
+                >
+                  <DropdownMenuLabel className="text-pure">
+                    My Account
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="" />
+                  <DropdownMenuItem
+                    asChild
+                    className="text-pure/80 hover:text-pure"
+                  >
                     <Link
                       to="/users/$username"
                       params={{ username: session?.user?.name || "" }}
@@ -99,7 +107,10 @@ function RootComponent() {
                     </Link>
                   </DropdownMenuItem>
                   {isAuthenticated && session?.user?.id && (
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem
+                      asChild
+                      className="text-pure/80 hover:text-pure"
+                    >
                       <Link
                         to="/badges/$userId"
                         params={{ userId: session.user.id }}
@@ -109,27 +120,30 @@ function RootComponent() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem
+                    asChild
+                    className="text-pure/80 hover:text-pure"
+                  >
                     <Link to="/admin" className="cursor-pointer">
                       Admin Dashboard
                     </Link>
                   </DropdownMenuItem>
-                 
-                  <DropdownMenuSeparator />
+
+                  <DropdownMenuSeparator className="" />
                   <DropdownMenuItem
                     onClick={() => authClient.signOut()}
-                    className="text-red-600 focus:text-red-600 cursor-pointer"
+                    className="text-red-400 hover:text-red-300 cursor-pointer"
                   >
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="default" className="border" asChild>
+              <Button variant="default" className=" text-pure" asChild>
                 <Link
                   to="/login"
                   activeProps={{
-                    className: "text-blue-600 hover:text-blue-700",
+                    className: "",
                   }}
                 >
                   Login
@@ -144,9 +158,9 @@ function RootComponent() {
         <Outlet />
       </main>
 
-      <footer className="bg-white border-t py-6">
+      <footer className="py-6">
         <div className="container mx-auto px-4">
-          <p className="text-center text-gray-500 text-sm">
+          <p className="text-centertext-sm">
             © {new Date().getFullYear()} Badge Management System
           </p>
         </div>

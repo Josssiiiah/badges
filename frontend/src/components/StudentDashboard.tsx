@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Pencil, Trash2 } from "lucide-react";
 
 type Badge = {
   id: string;
@@ -241,9 +242,9 @@ export function StudentDashboard({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Student Dashboard</h2>
+        <h2 className="text-2xl font-bold">Students</h2>
         <Dialog>
           <DialogTrigger asChild>
             <Button>Add Student</Button>
@@ -254,7 +255,9 @@ export function StudentDashboard({
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-white" htmlFor="studentId">Student ID</Label>
+                <Label className="text-white" htmlFor="studentId">
+                  Student ID
+                </Label>
                 <Input
                   id="studentId"
                   value={newStudent.studentId}
@@ -299,7 +302,7 @@ export function StudentDashboard({
         </Dialog>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border ">
         <Table>
           <TableHeader>
             <TableRow>
@@ -345,11 +348,12 @@ export function StudentDashboard({
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
-                            variant="outline"
-                            size="sm"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => setEditingStudent(student)}
+                            className="h-8 w-8"
                           >
-                            Edit
+                            <Pencil className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -467,11 +471,12 @@ export function StudentDashboard({
                         </DialogContent>
                       </Dialog>
                       <Button
-                        variant="destructive"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => deleteStudent(student.studentId)}
+                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20"
                       >
-                        Delete
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

@@ -4,68 +4,23 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Noto Sans", "sans-serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
-        gray: {
-          50: "#f9fafb",
-          100: "#f3f4f6",
+        primary:
+        {
+          100: "#e5e7eb",
           200: "#e5e7eb",
-          300: "#d1d5db",
-          400: "#9ca3af",
-          500: "#6b7280",
-          600: "#4b5563",
-          700: "#374151",
-          800: "#1f2937",
-          900: "#111827",
-          950: "#030712",
         },
-        border: "hsl(240 5.9% 90%)",
-        input: "hsl(240 5.9% 90%)",
-        background: "hsl(0 0% 100%)",
-        foreground: "hsl(240 10% 3.9%)",
-        primary: {
-          50: "#f0f9ff",
-          100: "#e0f2fe",
-          200: "#bae6fd",
-          300: "#7dd3fc",
-          400: "#38bdf8",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          800: "#075985",
-          900: "#0c4a6e",
-          950: "#082f49",
-          DEFAULT: "hsl(221.2 83.2% 53.3%)",
-          foreground: "hsl(210 40% 98%)",
-        },
-        secondary: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(222.2 47.4% 11.2%)",
-        },
-        destructive: {
-          DEFAULT: "hsl(0 84.2% 60.2%)",
-          foreground: "hsl(210 40% 98%)",
-        },
-        muted: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(215.4 16.3% 46.9%)",
-        },
-        accent: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(222.2 47.4% 11.2%)",
-        },
-        popover: {
-          DEFAULT: "hsl(0 0% 100%)",
-          foreground: "hsl(222.2 47.4% 11.2%)",
-        },
-        card: {
-          DEFAULT: "hsl(0 0% 100%)",
-          foreground: "hsl(222.2 47.4% 11.2%)",
-        },
+        neutral: {
+          900: 'rgb(var(--color-neutral-900))', // Use `rgb()` with the variable
+        }
       },
       boxShadow: {
         sm: "0 1px 2px 0 rgb(0 0 0 / 0.05)",

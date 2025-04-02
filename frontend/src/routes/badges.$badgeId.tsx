@@ -117,7 +117,7 @@ function BadgeViewComponent() {
       icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
     },
     {
-      title: "Issued using Badge System",
+      title: "Issued using Certilo",
       icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
     },
     {

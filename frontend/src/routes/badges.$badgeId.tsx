@@ -152,7 +152,7 @@ function BadgeViewComponent() {
     <div className="container mx-auto px-4 py-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Earned By Section */}
-        <div className="bg-[var(--accent-bg)]/10 rounded-lg p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+        <div className="bg-[var(--accent-bg)]/10 rounded-lg p-6 flex flex-col sm:mx-14 sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
           <p className="font-medium text-sm text-[var(--dark-gray)]">
             This badge was issued to{" "}
             <span className="text-[var(--main-text)]">{user.name}</span> on
@@ -257,7 +257,7 @@ function BadgeViewComponent() {
           </div>
 
           {/* Badge Info (Right Column) */}
-          <div className="space-y-4 md:pt-12">
+          <div className="space-y-4 md:pt-12 sm:pr-14">
             <h2 className="text-xl sm:text-2xl font-bold text-[var(--dark-gray)]">
               {badge.name}
             </h2>

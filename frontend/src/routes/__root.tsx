@@ -23,17 +23,8 @@ function RootComponent() {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session;
 
-  // Lock scroll on mount
-  // Gonna have to come back and do this the right way
-  React.useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--main-bg)] overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-[var(--main-bg)]">
       <header>
         <div className="container pt-4 mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-6">

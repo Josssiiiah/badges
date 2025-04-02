@@ -7,4 +7,3 @@ const sqlite = new Database("sqlite.db");
 
 // Create Drizzle client
 export const db = drizzle(sqlite, { schema });
-

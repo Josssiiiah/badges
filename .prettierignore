@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build output
+dist
+build
+.next
+out
+
+# backend for now
+backend
+
+# Cache
+.cache
+.npm
+.eslintcache
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Misc
+*.log
+*.min.js
+*.min.css 

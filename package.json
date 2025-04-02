@@ -2,7 +2,7 @@
   "name": "space",
   "private": true,
   "scripts": {
-    "world": "bun run --cwd backend dev & bun run --cwd frontend dev & bun run --cwd backend drizzle-kit studio --config drizzle.config.ts",    
+    "world": "bun run --cwd backend dev & bun run --cwd frontend dev & bun run --cwd backend drizzle-kit studio --config drizzle.config.ts",
     "build": "bun run --cwd frontend build && cp -r frontend/dist backend/",
     "deploy": "bun run build && bun run --cwd backend dev",
     "db:push": "bun run --cwd backend drizzle-kit push",
@@ -22,6 +22,10 @@
     "backend"
   ],
   "dependencies": {
+    "framer-motion": "^12.6.3",
     "nanoid": "^5.1.5"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
   }
 }

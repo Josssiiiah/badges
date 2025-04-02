@@ -7,11 +7,7 @@ import type { PluginOption } from "vite";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    TanStackRouterVite({}) as unknown as PluginOption,
-    react() as unknown as PluginOption,
-    tailwindcss() as unknown as PluginOption,
-  ],
+  plugins: [TanStackRouterVite({}), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

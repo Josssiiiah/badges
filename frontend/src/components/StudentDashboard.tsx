@@ -28,7 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pencil, Trash2, PlusCircle } from "lucide-react";
 
 type Badge = {
   id: string;
@@ -76,7 +77,7 @@ export function StudentDashboard({
     } else if (students.length === 0) {
       fetchStudents();
     }
-  }, [initialStudents, students]);
+  }, [initialStudents]);
 
   // Update fetchStudents function to only fetch if we don't have initialStudents
   const fetchStudents = async () => {
@@ -172,7 +173,7 @@ export function StudentDashboard({
         return;
       }
 
-      // API call
+      // First update student info
       const response = await fetch(
         `${API_URL}/update/${editingStudent.studentId}`,
         {
@@ -180,7 +181,11 @@ export function StudentDashboard({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(editingStudent),
+          body: JSON.stringify({
+            name: editingStudent.name,
+            email: editingStudent.email,
+            hasBadge: editingStudent.hasBadge,
+          }),
         }
       );
 
@@ -189,6 +194,27 @@ export function StudentDashboard({
       }
 
       const result = await response.json();
+
+      // If badge is being assigned, create a badge assignment
+      if (editingStudent.hasBadge && editingStudent.badgeId) {
+        const badgeResponse = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/badges/assign`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              badgeId: editingStudent.badgeId,
+              userId: editingStudent.studentId,
+            }),
+          }
+        );
+
+        if (!badgeResponse.ok) {
+          throw new Error("Failed to assign badge");
+        }
+      }
 
       // Update local state
       setStudents(
@@ -242,312 +268,315 @@ export function StudentDashboard({
   };
 
   return (
-    <div className="container mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-[var(--main-text)]">Students</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/90">
-              Add Student
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-[var(--main-bg)] border-[var(--accent-bg)]">
-            <DialogHeader>
-              <DialogTitle className="text-[var(--main-text)]">
-                Add New Student
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[var(--main-text)]" htmlFor="studentId">
-                  Student ID
-                </Label>
-                <Input
-                  id="studentId"
-                  value={newStudent.studentId}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, studentId: e.target.value })
-                  }
-                  className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[var(--main-text)]" htmlFor="name">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={newStudent.name}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, name: e.target.value })
-                  }
-                  className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[var(--main-text)]" htmlFor="email">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={newStudent.email}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, email: e.target.value })
-                  }
-                  className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button
-                  variant="outline"
-                  className="border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
-                >
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
-                onClick={addStudent}
-                className="bg-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/90"
-              >
-                Add Student
+    <div className="space-y-6">
+      {/* Header */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-[var(--main-text)]">
+            Student Management
+          </CardTitle>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4 text-[var(--gray)]" />{" "}
+                <span className="text-gray-500">Add Student</span>
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Student</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label
+                    htmlFor="studentId"
+                    className="text-right text-gray-500"
+                  >
+                    Student ID
+                  </Label>
+                  <Input
+                    id="studentId"
+                    value={newStudent.studentId}
+                    onChange={(e) =>
+                      setNewStudent({
+                        ...newStudent,
+                        studentId: e.target.value,
+                      })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right text-gray-500">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={newStudent.name}
+                    onChange={(e) =>
+                      setNewStudent({ ...newStudent, name: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right text-gray-500">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={newStudent.email}
+                    onChange={(e) =>
+                      setNewStudent({ ...newStudent, email: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={addStudent} type="submit">
+                  Add Student
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+      </Card>
 
-      <div className="rounded-md border border-[var(--accent-bg)] bg-[var(--main-bg)]">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-[var(--accent-bg)]/10">
-              <TableHead className="text-[var(--main-text)]">
-                Student ID
-              </TableHead>
-              <TableHead className="text-[var(--main-text)]">Name</TableHead>
-              <TableHead className="text-[var(--main-text)]">Email</TableHead>
-              <TableHead className="text-[var(--main-text)]">Badge</TableHead>
-              <TableHead className="text-[var(--main-text)]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+      {/* Student Table */}
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center text-[var(--main-text)]"
-                >
-                  Loading...
-                </TableCell>
+                <TableHead className="text-[var(--main-text)]">
+                  Student ID
+                </TableHead>
+                <TableHead className="text-[var(--main-text)]">Name</TableHead>
+                <TableHead className="text-[var(--main-text)]">Email</TableHead>
+                <TableHead className="text-[var(--main-text)]">Badge</TableHead>
+                <TableHead className="text-right text-[var(--main-text)]">
+                  Actions
+                </TableHead>
               </TableRow>
-            ) : students.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center text-[var(--main-text)]"
-                >
-                  No students found
-                </TableCell>
-              </TableRow>
-            ) : (
-              students.map((student) => (
-                <TableRow
-                  key={student.studentId}
-                  className="hover:bg-[var(--accent-bg)]/10"
-                >
-                  <TableCell className="text-[var(--main-text)]">
-                    {student.studentId}
-                  </TableCell>
-                  <TableCell className="text-[var(--main-text)]">
-                    {student.name}
-                  </TableCell>
-                  <TableCell className="text-[var(--main-text)]">
-                    {student.email}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-4">
-                      {student.badge && (
-                        <img
-                          src={student.badge.imageData}
-                          alt={student.badge.name}
-                          className="w-8 h-8 object-contain"
-                        />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditingStudent(student)}
-                            className="h-8 w-8 text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-[var(--main-bg)] border-[var(--accent-bg)]">
-                          <DialogHeader>
-                            <DialogTitle className="text-[var(--main-text)]">
-                              Edit Student
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <Label
-                                className="text-[var(--main-text)]"
-                                htmlFor="edit-name"
-                              >
-                                Name
-                              </Label>
-                              <Input
-                                id="edit-name"
-                                value={editingStudent?.name || ""}
-                                onChange={(e) =>
-                                  setEditingStudent(
-                                    editingStudent
-                                      ? {
-                                          ...editingStudent,
-                                          name: e.target.value,
-                                        }
-                                      : null
-                                  )
-                                }
-                                className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label
-                                className="text-[var(--main-text)]"
-                                htmlFor="edit-email"
-                              >
-                                Email
-                              </Label>
-                              <Input
-                                id="edit-email"
-                                type="email"
-                                value={editingStudent?.email || ""}
-                                onChange={(e) =>
-                                  setEditingStudent(
-                                    editingStudent
-                                      ? {
-                                          ...editingStudent,
-                                          email: e.target.value,
-                                        }
-                                      : null
-                                  )
-                                }
-                                className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="text-[var(--main-text)]">
-                                Badge Status
-                              </Label>
-                              <div className="flex items-center gap-4">
-                                <Checkbox
-                                  checked={editingStudent?.hasBadge || false}
-                                  onCheckedChange={(checked) =>
-                                    setEditingStudent(
-                                      editingStudent
-                                        ? {
-                                            ...editingStudent,
-                                            hasBadge: checked as boolean,
-                                            badgeId: checked
-                                              ? editingStudent.badgeId
-                                              : undefined,
-                                          }
-                                        : null
-                                    )
-                                  }
-                                  className="border-[var(--accent-bg)] data-[state=checked]:bg-[var(--accent-bg)]"
-                                />
-                                <span className="text-sm text-[var(--main-text)]/80">
-                                  Has Badge
-                                </span>
-                              </div>
-                            </div>
-                            {editingStudent?.hasBadge && (
-                              <div className="space-y-2">
-                                <Label className="text-[var(--main-text)]">
-                                  Select Badge
-                                </Label>
-                                <Select
-                                  value={editingStudent.badgeId}
-                                  onValueChange={(value) =>
-                                    setEditingStudent(
-                                      editingStudent
-                                        ? {
-                                            ...editingStudent,
-                                            badgeId: value,
-                                          }
-                                        : null
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]">
-                                    <SelectValue placeholder="Select a badge" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-[var(--main-bg)] border-[var(--accent-bg)]">
-                                    {badges?.map((badge) => (
-                                      <SelectItem
-                                        key={badge.id}
-                                        value={badge.id}
-                                        className="text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <img
-                                            src={badge.imageData}
-                                            alt={badge.name}
-                                            className="w-6 h-6 object-contain"
-                                          />
-                                          {badge.name}
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-                          </div>
-                          <DialogFooter className="mt-16">
-                            <DialogClose asChild>
-                              <Button
-                                variant="outline"
-                                className="border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
-                              >
-                                Cancel
-                              </Button>
-                            </DialogClose>
-                            <Button
-                              onClick={updateStudent}
-                              className="bg-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/90"
-                            >
-                              Save Changes
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteStudent(student.studentId)}
-                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-100"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="h-24 text-center text-[var(--main-text)]/80"
+                  >
+                    Loading...
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : students.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="h-24 text-center text-[var(--main-text)]/80"
+                  >
+                    No students found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                students.map((student) => (
+                  <TableRow key={student.studentId}>
+                    <TableCell className="font-medium text-[var(--main-text)]">
+                      {student.studentId}
+                    </TableCell>
+                    <TableCell className="text-[var(--main-text)]">
+                      {student.name}
+                    </TableCell>
+                    <TableCell className="text-[var(--main-text)]">
+                      {student.email}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        {student.badge ? (
+                          <img
+                            src={student.badge.imageData}
+                            alt={student.badge.name}
+                            className="w-8 h-8 object-contain rounded-sm mr-2"
+                          />
+                        ) : (
+                          <span className="text-[var(--main-text)]/80 text-sm">
+                            No Badge
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setEditingStudent(student)}
+                              className="h-8 w-8"
+                            >
+                              <Pencil className="h-4 w-4 text-[var(--gray)]" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Edit Student</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="edit-name"
+                                  className="text-right text-[var(--main-text)]"
+                                >
+                                  Name
+                                </Label>
+                                <Input
+                                  id="edit-name"
+                                  value={editingStudent?.name || ""}
+                                  onChange={(e) =>
+                                    setEditingStudent(
+                                      editingStudent
+                                        ? {
+                                            ...editingStudent,
+                                            name: e.target.value,
+                                          }
+                                        : null
+                                    )
+                                  }
+                                  className="col-span-3"
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="edit-email"
+                                  className="text-right text-[var(--main-text)]"
+                                >
+                                  Email
+                                </Label>
+                                <Input
+                                  id="edit-email"
+                                  type="email"
+                                  value={editingStudent?.email || ""}
+                                  onChange={(e) =>
+                                    setEditingStudent(
+                                      editingStudent
+                                        ? {
+                                            ...editingStudent,
+                                            email: e.target.value,
+                                          }
+                                        : null
+                                    )
+                                  }
+                                  className="col-span-3"
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right text-[var(--main-text)]">
+                                  Badge
+                                </Label>
+                                <div className="col-span-3 flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`edit-hasBadge-${student.studentId}`}
+                                    checked={editingStudent?.hasBadge || false}
+                                    onCheckedChange={(checked) =>
+                                      setEditingStudent(
+                                        editingStudent
+                                          ? {
+                                              ...editingStudent,
+                                              hasBadge: checked as boolean,
+                                              badgeId: checked
+                                                ? editingStudent.badgeId
+                                                : undefined,
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  />
+                                  <Label
+                                    htmlFor={`edit-hasBadge-${student.studentId}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[var(--main-text)]"
+                                  >
+                                    Assign Badge
+                                  </Label>
+                                </div>
+                              </div>
+                              {editingStudent?.hasBadge && (
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label
+                                    htmlFor="edit-badge"
+                                    className="text-right text-[var(--main-text)]"
+                                  >
+                                    Select Badge
+                                  </Label>
+                                  <Select
+                                    value={editingStudent.badgeId}
+                                    onValueChange={(value) =>
+                                      setEditingStudent(
+                                        editingStudent
+                                          ? {
+                                              ...editingStudent,
+                                              badgeId: value,
+                                            }
+                                          : null
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger className="col-span-3">
+                                      <SelectValue placeholder="Select a badge" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {badges?.map((badge) => (
+                                        <SelectItem
+                                          key={badge.id}
+                                          value={badge.id}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <img
+                                              src={badge.imageData}
+                                              alt={badge.name}
+                                              className="w-6 h-6 object-contain rounded-sm"
+                                            />
+                                            {badge.name}
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+                            </div>
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                              </DialogClose>
+                              <Button onClick={updateStudent} type="submit">
+                                Save Changes
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteStudent(student.studentId)}
+                          className="h-8 w-8 text-[var(--gray)] hover:bg-[var(--gray)]/10 hover:text-[var(--gray)]"
+                        >
+                          <Trash2 className="h-4 w-4 text-[var(--gray)]" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

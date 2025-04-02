@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { StudentDashboard } from "@/components/StudentDashboard";
 import { TemplatesDashboard } from "@/components/TemplatesDashboard";
-import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,7 +23,7 @@ function AdminPage() {
     queryKey: ["badges"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/badges/all`
+        `${import.meta.env.VITE_BACKEND_URL}/badges/all`,
       );
       const data = await response.json();
       return data.badges || [];
@@ -37,7 +36,7 @@ function AdminPage() {
     queryFn: async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/students/all`
+          `${import.meta.env.VITE_BACKEND_URL}/students/all`,
         );
         const data = await response.json();
         return data.students || [];
@@ -79,33 +78,34 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-primary text-pure">
       <div className="container mx-auto p-6">
-        {/* Welcome Section */}
-        <div className=" rounded-lg bg-slate-900/50 backdrop-blur-lg shadow-md p-6 border border-space-300 mb-8">
-          <h2 className="text-xl font-semibold mb-2 text-pure">Dashboard</h2>
-          <p className="text-pure/80">
+        <div className=" rounded-lg bg-[var(--gray)]/10 backdrop-blur-lg shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-2 text-[var(--main-text)]">
+            Dashboard
+          </h2>
+          <p className="text-[var(--main-text)]">
             Manage students, badges, and view statistics.
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="bg-space-500/50 backdrop-blur-lg rounded-lg shadow-md p-6 border border-space-300">
+        <div className="bg-[var(--gray)]/10 backdrop-blur-lg rounded-lg shadow-md p-6">
           <Tabs defaultValue="students" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6 bg-oxford/50 p-1 rounded-lg">
               <TabsTrigger
                 value="students"
-                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
+                className="data-[state=active]:bg-[var(--violet-light)] data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
               >
                 Students
               </TabsTrigger>
               <TabsTrigger
                 value="badges"
-                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
+                className="data-[state=active]:bg-[var(--violet)] data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
               >
                 Badges
               </TabsTrigger>
               <TabsTrigger
                 value="stats"
-                className="data-[state=active]:bg-violet-500 data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
+                className="data-[state=active]:bg-[var(--violet)] data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
               >
                 Stats
               </TabsTrigger>

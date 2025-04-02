@@ -1,12 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
     --radius: 0.5rem;
-    --main-bg: #ede8f5;
-    --accent-bg: #7091E6;
+    --main-bg: #efefef;
+    --accent-bg: #6d91eb76;
     --main-text: #3d52a0;
+    --violet-light: #8e51ff;
+    --gray: #8697c4;
+    --light-gray: #ccd4e7;
+    --dark-gray: #2E2E2E;
   }
 }

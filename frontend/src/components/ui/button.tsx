@@ -5,16 +5,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 dark:focus-visible:ring-neutral-300",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 dark:focus-visible:ring-neutral-300 cursor-pointer",
   {
     variants: {
       variant: {
-        default: "bg-slate text-[var(--main-text)] shadow hover:bg-slate/90",
+        default:
+          "bg-[var(--accent-bg)] text-[var(--dark-gray)] shadow hover:bg-[var(--accent-bg)]/80",
         destructive:
           "bg-red-500 text-neutral-50 shadow-sm hover:bg-red-500/90 dark:bg-red-900 dark:text-neutral-50 dark:hover:bg-red-900/90",
         outline:
-          "border border-space-300 bg-space text-[var(--main-text)] shadow-sm hover:bg-space-300 hover:text-[var(--main-text)] dark:border-space-300 dark:bg-space dark:hover:bg-space-300 dark:hover:text-[var(--main-text)]",
-        secondary: "bg-space-300 text-[var(--main-text)] shadow-sm hover:bg-space-300/80",
+          "border border-[var(--accent-bg)] bg-white text-[var(--main-text)] shadow-sm hover:bg-[var(--accent-bg)]/20 hover:text-[var(--main-text)] dark:border-[var(--accent-bg)] dark:bg-space dark:hover:bg-[var(--accent-bg)]/20 dark:hover:text-[var(--main-text)]",
+        secondary:
+          "bg-space-300 text-[var(--main-text)] shadow-sm hover:bg-space-300/80",
         ghost: "hover:bg-space-300 hover:text-pure",
         link: "text-pure underline-offset-4 hover:underline",
       },
@@ -29,7 +31,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 
 export interface ButtonProps
@@ -48,7 +50,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       />
     );
-  }
+  },
 );
 Button.displayName = "Button";
 

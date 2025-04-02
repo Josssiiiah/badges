@@ -10,7 +10,7 @@ export const setup = new Elysia().use(
   cors({
     origin: [frontendUrl],
     credentials: true,
-  })
+  }),
   // ).decorate("groq", createGroq({
   //   apiKey: process.env.GROQ_API_KEY,
   // }));

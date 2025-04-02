@@ -3,15 +3,26 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { UploadCloud, Loader2 } from "lucide-react";
 
 type Badge = {
   id: string;
+  issuedBy: string;
   name: string;
   description: string | null;
-  imageUrl?: string;
   imageData: string;
+  courseLink: string | null;
+  skills: string | null;
+  earningCriteria: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -20,28 +31,55 @@ export function TemplatesDashboard() {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [issuedBy, setIssuedBy] = useState("");
+  const [courseLink, setCourseLink] = useState("");
+  const [skills, setSkills] = useState("");
+  const [earningCriteria, setEarningCriteria] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const { toast } = useToast();
 
   // Fetch all badges
-  const { data, isLoading } = useQuery({
+  const {
+    data: badgesData,
+    isLoading: isBadgesLoading,
+    error: badgesError,
+  } = useQuery<Badge[], Error>({
     queryKey: ["badges"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/badges/all`
+        `${import.meta.env.VITE_BACKEND_URL}/badges/all`,
       );
+      if (!response.ok) {
+        throw new Error("Network response was not ok fetching badges");
+      }
       const data = await response.json();
       return data.badges || [];
     },
   });
 
+  // Handle query error effect
+  React.useEffect(() => {
+    if (badgesError) {
+      console.error("Error fetching badges:", badgesError);
+      toast({
+        variant: "destructive",
+        title: "Error Fetching Badges",
+        description: badgesError.message || "Failed to fetch badge templates.",
+      });
+    }
+  }, [badgesError, toast]);
+
   // Upload badge mutation
-  const uploadBadge = useMutation({
+  const uploadBadge = useMutation<Badge, Error, void>({
     mutationFn: async () => {
       if (!image) throw new Error("No image selected");
       const formData = new FormData();
       formData.append("name", name);
+      formData.append("issuedBy", issuedBy);
       if (description) formData.append("description", description);
+      if (courseLink) formData.append("courseLink", courseLink);
+      if (skills) formData.append("skills", skills);
+      if (earningCriteria) formData.append("earningCriteria", earningCriteria);
       formData.append("image", image);
 
       const response = await fetch(
@@ -50,151 +88,278 @@ export function TemplatesDashboard() {
           method: "POST",
           body: formData,
           credentials: "include",
-        }
+        },
       );
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
+      if (!response.ok || data.error) {
+        throw new Error(data.error || "Failed to upload badge");
+      }
       return data.badge;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["badges"] });
       setName("");
       setDescription("");
+      setIssuedBy("");
+      setCourseLink("");
+      setSkills("");
+      setEarningCriteria("");
       setImage(null);
+      const fileInput = document.getElementById("image") as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
+
       toast({
         title: "Success",
-        description: "Badge uploaded successfully!",
+        description: `Badge '${data.name}' uploaded successfully!`,
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Upload error:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to upload badge",
+        title: "Upload Error",
+        description:
+          error.message || "Failed to upload badge. Please try again.",
       });
     },
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setImage(file);
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast({
+          variant: "destructive",
+          title: "Invalid File Type",
+          description: "Please select an image file (PNG, JPG, GIF).",
+        });
+        setImage(null);
+        e.target.value = "";
+        return;
+      }
+      setImage(file);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name || !image) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please provide a badge name and select an image.",
+      });
+      return;
+    }
     uploadBadge.mutate();
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h2 className="text-2xl font-bold mb-6 text-[var(--main-text)]">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold tracking-tight text-[var(--main-text)]">
         Badge Templates
       </h2>
 
-      {/* Upload Form */}
-      <Card className="mb-8">
+      {/* Upload Form Card */}
+      <Card>
         <CardHeader>
           <CardTitle className="text-[var(--main-text)]">
-            Upload New Badge
+            Upload New Badge Template
           </CardTitle>
+          <CardDescription className="text-[var(--main-text)]/80">
+            Create a new badge template by providing the required information.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-[var(--main-text)]" htmlFor="name">
-                Badge Name
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
-              />
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-[var(--main-text)]">
+                  Badge Name
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g., Python Master"
+                  required
+                  disabled={uploadBadge.isPending}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="issuedBy" className="text-[var(--main-text)]">
+                  Issued By
+                </Label>
+                <Input
+                  id="issuedBy"
+                  value={issuedBy}
+                  onChange={(e) => setIssuedBy(e.target.value)}
+                  placeholder="e.g., Code Academy"
+                  required
+                  disabled={uploadBadge.isPending}
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[var(--main-text)]" htmlFor="description">
-                Description (Optional)
+              <Label htmlFor="description" className="text-[var(--main-text)]">
+                Description
               </Label>
               <Input
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
+                placeholder="Description of the badge"
+                disabled={uploadBadge.isPending}
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-[var(--main-text)]" htmlFor="image">
+              <Label htmlFor="courseLink" className="text-[var(--main-text)]">
+                Course Link
+              </Label>
+              <Input
+                id="courseLink"
+                value={courseLink}
+                onChange={(e) => setCourseLink(e.target.value)}
+                placeholder="https://example.com/course"
+                disabled={uploadBadge.isPending}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="skills" className="text-[var(--main-text)]">
+                Skills
+              </Label>
+              <Input
+                id="skills"
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                placeholder="e.g., Python, Data Structures, Algorithms"
+                disabled={uploadBadge.isPending}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="earningCriteria"
+                className="text-[var(--main-text)]"
+              >
+                Earning Criteria
+              </Label>
+              <Input
+                id="earningCriteria"
+                value={earningCriteria}
+                onChange={(e) => setEarningCriteria(e.target.value)}
+                placeholder="e.g., Complete all course modules with 80% or higher"
+                disabled={uploadBadge.isPending}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image" className="text-[var(--main-text)]">
                 Badge Image
               </Label>
               <Input
                 id="image"
                 type="file"
-                accept="image/png,image/jpeg,image/gif"
+                accept="image/png, image/jpeg, image/gif"
                 onChange={handleFileChange}
                 required
-                className="bg-white border-[var(--accent-bg)] text-[var(--main-text)]"
+                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
+                disabled={uploadBadge.isPending}
               />
+              {image && (
+                <p className="text-sm text-[var(--main-text)]/80">
+                  Selected: {image.name}
+                </p>
+              )}
             </div>
+          </CardContent>
+          <CardFooter>
             <Button
               type="submit"
-              disabled={uploadBadge.isPending}
-              className="bg-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/90"
+              disabled={uploadBadge.isPending || !image || !name || !issuedBy}
             >
-              {uploadBadge.isPending ? "Uploading..." : "Upload Badge"}
+              {uploadBadge.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin text-[var(--main-text)]/80" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                  Upload Badge
+                </>
+              )}
             </Button>
-          </form>
-        </CardContent>
+          </CardFooter>
+        </form>
       </Card>
 
-      {/* Badge Grid */}
-      <div>
-        <h3 className="text-xl font-semibold mb-4 text-[var(--main-text)]">
-          Available Badge Templates
-        </h3>
-
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-bg)]"></div>
-          </div>
-        ) : data?.length === 0 ? (
-          <div className="bg-[var(--main-bg)] rounded-lg p-6 text-center border border-[var(--accent-bg)]">
-            <p className="text-[var(--main-text)]/80">
-              No badge templates available yet.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data?.map((badge: Badge) => (
-              <Card
-                key={badge.id}
-                className="overflow-hidden flex border border-[var(--accent-bg)] bg-[var(--main-bg)] hover:bg-[var(--accent-bg)]/10 transition-colors"
-              >
-                <CardContent className="p-0">
-                  <div className="w-full aspect-square bg-[var(--accent-bg)]/10 flex items-center justify-center overflow-hidden">
+      {/* Badge Grid Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Available Templates</CardTitle>
+          <CardDescription>
+            Browse the existing badge templates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isBadgesLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--main-text)]/80" />
+            </div>
+          ) : Array.isArray(badgesData) && badgesData.length === 0 ? (
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 text-center">
+              <p className="text-[var(--main-text)]/80">
+                No badge templates available yet. Upload one above to get
+                started.
+              </p>
+            </div>
+          ) : Array.isArray(badgesData) ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {badgesData.map((badge: Badge) => (
+                <Card key={badge.id} className="overflow-hidden group">
+                  <CardContent className="p-0 aspect-square flex items-center justify-center bg-muted/40 group-hover:bg-muted/80 transition-colors">
                     <img
                       src={badge.imageData}
-                      alt={badge.name}
-                      className="max-w-full max-h-full object-contain"
+                      alt={`Badge for ${badge.name}`}
+                      className="max-w-[75%] max-h-[75%] object-contain transition-transform group-hover:scale-105"
+                      loading="lazy"
                     />
-                  </div>
-                </CardContent>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-lg font-medium text-[var(--main-text)]">
-                    {badge.name}
-                  </CardTitle>
-                  {badge.description && (
-                    <p className="text-sm text-[var(--main-text)]/80 mt-1">
-                      {badge.description}
+                  </CardContent>
+                  <CardHeader className="p-3">
+                    <CardTitle
+                      className="text-base font-medium truncate text-[var(--main-text)]"
+                      title={badge.name}
+                    >
+                      {badge.name}
+                    </CardTitle>
+                    <p className="text-sm text-[var(--main-text)]/80">
+                      Issued by: {badge.issuedBy}
                     </p>
-                  )}
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                    {badge.description && (
+                      <CardDescription
+                        className="text-xs mt-1 line-clamp-2 text-[var(--main-text)]/80"
+                        title={badge.description}
+                      >
+                        {badge.description}
+                      </CardDescription>
+                    )}
+                    {badge.skills && (
+                      <p className="text-xs mt-1 text-[var(--main-text)]/80">
+                        Skills: {badge.skills}
+                      </p>
+                    )}
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 text-center">
+              <p className="text-[var(--main-text)]/80">
+                Could not load badge templates.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -2,15 +2,41 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
-// Badges table
-export const badges = sqliteTable("badges", {
+// Create Badges table (previously badges)
+export const createBadges = sqliteTable("create_badges", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => nanoid()),
+  issuedBy: text("issued_by").notNull(),
   name: text("name").notNull(),
   description: text("description"),
   imageUrl: text("image_url"),
   imageData: text("image_data"),
+  courseLink: text("course_link"),
+  skills: text("skills"),
+  earningCriteria: text("earning_criteria"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+});
+
+// Assigned Badges table
+export const badges = sqliteTable("badges", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  badgeId: text("badge_id")
+    .references(() => createBadges.id)
+    .notNull(),
+  userId: text("user_id")
+    .references(() => user.id)
+    .notNull(),
+  earnedAt: integer("earned_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),

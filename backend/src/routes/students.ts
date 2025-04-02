@@ -61,7 +61,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
       params: t.Object({
         studentId: t.String(),
       }),
-    }
+    },
   )
   .post(
     "/create",
@@ -92,7 +92,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         hasBadge: t.Optional(t.Boolean()),
         badgeId: t.Optional(t.String()),
       }),
-    }
+    },
   )
   .put(
     "/update/:studentId/",
@@ -130,7 +130,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         hasBadge: t.Boolean(),
         badgeId: t.Optional(t.String()),
       }),
-    }
+    },
   )
   .delete(
     "/delete/:studentId",
@@ -155,5 +155,5 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
       params: t.Object({
         studentId: t.String(),
       }),
-    }
+    },
   );

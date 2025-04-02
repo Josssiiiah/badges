@@ -23,10 +23,19 @@ function RootComponent() {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session;
 
+  // Lock scroll on mount
+  // Gonna have to come back and do this the right way
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--main-bg)]">
+    <div className="min-h-screen flex flex-col bg-[var(--main-bg)] overflow-hidden">
       <header>
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="container pt-4 mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <Link
               to="/"
@@ -37,25 +46,11 @@ function RootComponent() {
               }}
               activeOptions={{ exact: true }}
             >
-              Badge System
+              Certilo
             </Link>
 
             <nav className="hidden sm:flex items-center space-x-4">
-              {isAuthenticated && session?.user?.id && (
-                <Link
-                  to="/badges/$userId"
-                  params={{ userId: session.user.id }}
-                  className="text-[var(--main-text)]/80 hover:px-3 py-2 rounded-md text-sm font-medium"
-                  activeProps={{
-                    className:
-                      "text-[var(--main-text)] hover:text-[var(--main-text)]/80 px-3 py-2 rounded-md text-sm font-medium",
-                  }}
-                >
-                  My Badges
-                </Link>
-              )}
-
-              {isAuthenticated && (
+              {/* {isAuthenticated && (
                 <Link
                   to="/admin"
                   className="text-[var(--main-text)]/80 hover:px-3 py-2 rounded-md text-sm font-medium"
@@ -66,7 +61,7 @@ function RootComponent() {
                 >
                   Admin
                 </Link>
-              )}
+              )} */}
             </nav>
           </div>
 
@@ -75,12 +70,9 @@ function RootComponent() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="focus:outline-none">
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-[var(--main-text)]/80 hidden sm:inline-block">
-                      {session?.user?.name || "User"}
-                    </span>
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={session?.user?.image || undefined} />
-                      <AvatarFallback className="bg-slate text-[var(--main-text)]">
+                      <AvatarFallback className="bg-[var(--light-gray)] text-[var(--main-text)]">
                         {getInitials(session?.user?.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -88,7 +80,7 @@ function RootComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 bg-space border-space-300"
+                  className="w-56 bg-white border-space-300"
                 >
                   <DropdownMenuLabel className="text-[var(--main-text)]">
                     My Account
@@ -103,23 +95,9 @@ function RootComponent() {
                       params={{ username: session?.user?.name || "" }}
                       className="cursor-pointer"
                     >
-                      View Profile
+                      Badges
                     </Link>
                   </DropdownMenuItem>
-                  {isAuthenticated && session?.user?.id && (
-                    <DropdownMenuItem
-                      asChild
-                      className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
-                    >
-                      <Link
-                        to="/badges/$userId"
-                        params={{ userId: session.user.id }}
-                        className="cursor-pointer"
-                      >
-                        My Badges
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem
                     asChild
                     className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
@@ -165,12 +143,12 @@ function RootComponent() {
       <footer className="py-6">
         <div className="container mx-auto px-4">
           <p className="text-center text-sm text-[var(--main-text)]">
-            © {new Date().getFullYear()} Badge Management System
+            © {new Date().getFullYear()} Certilo
           </p>
         </div>
       </footer>
 
-      <TanStackRouterDevtools position="bottom-right" />
+      {/* <TanStackRouterDevtools position="bottom-right" /> */}
     </div>
   );
 }

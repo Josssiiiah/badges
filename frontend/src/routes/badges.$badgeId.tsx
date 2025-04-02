@@ -233,7 +233,7 @@ function BadgeViewComponent() {
               <img
                 src={badge.imageData}
                 alt={badge.name}
-                className="w-full max-w-[200px] sm:max-w-[350px] h-auto object-contain"
+                className="w-full max-w-[300px] sm:max-w-[350px] h-auto object-contain"
               />
             ) : (
               <div className="w-full h-full rounded-full bg-[var(--accent-bg)] flex items-center justify-center text-[var(--dark-gray)]/80">

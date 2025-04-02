@@ -149,10 +149,10 @@ function BadgeViewComponent() {
   const { badge, user, earnedAt } = badgeData;
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-4 sm:py-12">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Earned By Section */}
-        <div className="bg-[var(--accent-bg)]/10 rounded-lg p-6 flex items-center justify-between">
+        <div className="bg-[var(--accent-bg)]/10 rounded-lg p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
           <p className="font-medium text-sm text-[var(--dark-gray)]">
             This badge was issued to{" "}
             <span className="text-[var(--main-text)]">{user.name}</span> on

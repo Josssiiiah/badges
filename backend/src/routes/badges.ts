@@ -2,12 +2,31 @@ import { Elysia, t } from "elysia";
 import { db } from "../db/connection";
 import { createdBadges, badges, user } from "../db/schema";
 import { nanoid } from "nanoid";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { setup } from "../setup";
+import { userMiddleware } from "../middleware/auth-middleware";
 
 export const badgeRoutes = new Elysia({ prefix: "/badges" })
-  // Get all badges
-  .get("/all", async () => {
+  .use(setup)
+  // Get all badges - filtered by organization for administrators
+  .get("/all", async (context) => {
     try {
+      const session = await userMiddleware(context);
+      if (!session.user) {
+        return { error: "Unauthorized" };
+      }
+
+      // If administrator, filter badges by organization
+      if (session.user.role === "administrator" && session.user.organizationId) {
+        const result = await db
+          .select()
+          .from(createdBadges)
+          .where(eq(createdBadges.organizationId, session.user.organizationId));
+        
+        return { badges: result };
+      }
+      
+      // Otherwise, return all badges
       const result = await db.select().from(createdBadges);
       return { badges: result };
     } catch (error) {
@@ -50,9 +69,15 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
     }
   })
   // Assign a badge to a user
-  .post("/assign", async ({ body }) => {
+  .post("/assign", async (context) => {
     try {
+      const { body } = context;
       const { badgeId, userId } = body;
+      const session = await userMiddleware(context);
+      
+      if (!session.user) {
+        return { error: "Unauthorized" };
+      }
 
       // Verify the badge exists
       const badge = await db
@@ -63,6 +88,15 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
 
       if (!badge.length) {
         return { error: "Badge not found" };
+      }
+      
+      // If administrator, verify the badge belongs to their organization
+      if (
+        session.user.role === "administrator" && 
+        session.user.organizationId && 
+        badge[0].organizationId !== session.user.organizationId
+      ) {
+        return { error: "Badge does not belong to your organization" };
       }
 
       // Create the assignment
@@ -88,8 +122,9 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
   // Upload a badge image
   .post(
     "/upload",
-    async ({ body }) => {
+    async (context) => {
       try {
+        const { body } = context;
         const {
           name,
           description,
@@ -99,6 +134,21 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
           skills,
           earningCriteria,
         } = body;
+        
+        const session = await userMiddleware(context);
+        
+        if (!session.user) {
+          return { error: "Unauthorized" };
+        }
+        
+        // Check if user is an administrator and has an organization ID
+        if (session.user.role !== "administrator") {
+          return { error: "Only administrators can create badges" };
+        }
+        
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
 
         // Validate file type (only images)
         const allowedTypes = ["image/png", "image/jpeg", "image/gif"];
@@ -114,7 +164,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         const base64Image = buffer.toString("base64");
         const imageDataUrl = `data:${image.type};base64,${base64Image}`;
 
-        // Save badge metadata and image data to the database
+        // Save badge metadata and image data to the database with organization ID
         const newBadge = await db
           .insert(createdBadges)
           .values({
@@ -125,6 +175,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
             courseLink,
             skills,
             earningCriteria,
+            organizationId: session.user.organizationId, // Associate with organization
           })
           .returning();
 

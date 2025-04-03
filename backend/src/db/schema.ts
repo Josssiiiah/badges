@@ -2,6 +2,39 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
+// Organizations table
+export const organizations = sqliteTable("organizations", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  name: text("name").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+});
+
+// Organization Users junction table
+export const organizationUsers = sqliteTable("organization_users", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  organizationId: text("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  userId: text("user_id")
+    .references(() => user.id)
+    .notNull(),
+  role: text("role", { enum: ["student", "administrator"] })
+    .default("student")
+    .notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+});
+
 // Create Badges table (previously badges)
 export const createdBadges = sqliteTable("created_badges", {
   id: text("id")
@@ -15,6 +48,7 @@ export const createdBadges = sqliteTable("created_badges", {
   courseLink: text("course_link"),
   skills: text("skills"),
   earningCriteria: text("earning_criteria"),
+  organizationId: text("organization_id").references(() => organizations.id),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
@@ -54,6 +88,7 @@ export const students = sqliteTable("students", {
     .default(false)
     .$type<boolean>(),
   badgeId: text("badge_id").references(() => badges.id),
+  organizationId: text("organization_id").references(() => organizations.id),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
@@ -75,6 +110,7 @@ export const user = sqliteTable("user", {
     .default("student")
     .notNull(),
   organization: text("organization"),
+  organizationId: text("organization_id").references(() => organizations.id),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),

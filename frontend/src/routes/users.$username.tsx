@@ -12,6 +12,7 @@ import { getInitials } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Badge as BadgeUI } from "@/components/ui/badge";
+import { fetchWithAuth } from "@/lib/api-client";
 
 type Badge = {
   id: string;
@@ -59,8 +60,7 @@ function UserProfileComponent() {
   } = useQuery({
     queryKey: ["badges"],
     queryFn: async () => {
-      const API_URL = `${import.meta.env.VITE_BACKEND_URL}/badges`;
-      const response = await fetch(`${API_URL}/all`);
+      const response = await fetchWithAuth("badges/all");
       const data = await response.json();
 
       if (data.error) {

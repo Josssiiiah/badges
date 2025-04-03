@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, Loader2 } from "lucide-react";
+import { fetchWithAuth } from "@/lib/api-client";
 
 type Badge = {
   id: string;
@@ -51,14 +52,12 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
       if (earningCriteria) formData.append("earningCriteria", earningCriteria);
       formData.append("image", image);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/badges/upload`,
-        {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        }
-      );
+      const response = await fetchWithAuth("badges/upload", {
+        method: "POST",
+        body: formData,
+        headers: {}, // Remove Content-Type to let browser set it with boundary for FormData
+      });
+
       const data = await response.json();
       if (!response.ok || data.error) {
         throw new Error(data.error || "Failed to upload badge");
@@ -126,14 +125,14 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold tracking-tight text-[var(--main-text)]">
-        Badge Templates
+        Badges
       </h2>
 
       {/* Upload Form Card */}
       <Card>
         <CardHeader>
           <CardTitle className="text-[var(--main-text)]">
-            Upload New Badge Template
+            Upload New Badge
           </CardTitle>
           <CardDescription className="text-[var(--main-text)]/80">
             Create a new badge template by providing the required information.

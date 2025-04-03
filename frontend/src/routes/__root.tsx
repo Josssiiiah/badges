@@ -78,18 +78,20 @@ function RootComponent() {
                     My Account
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="" />
-                  <DropdownMenuItem
-                    asChild
-                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
-                  >
-                    <Link
-                      to="/users/$username"
-                      params={{ username: session?.user?.name || "" }}
-                      className="cursor-pointer"
+                  {!isAdministrator && (
+                    <DropdownMenuItem
+                      asChild
+                      className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
                     >
-                      Badges
-                    </Link>
-                  </DropdownMenuItem>
+                      <Link
+                        to="/users/$username"
+                        params={{ username: session?.user?.name || "" }}
+                        className="cursor-pointer"
+                      >
+                        My Badges
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
 
                   {isAdministrator && (
                     <DropdownMenuItem

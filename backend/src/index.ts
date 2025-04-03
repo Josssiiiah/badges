@@ -3,13 +3,19 @@ import { cors } from "@elysiajs/cors";
 import { auth } from "./routes/auth";
 import { studentRoutes } from "./routes/students";
 import { badgeRoutes } from "./routes/badges";
+import { organizationRoutes } from "./routes/organizations";
 import { join } from "path";
 
 // Create a new Elysia app
 const app = new Elysia()
   .use(cors())
   // Define API routes first - these take precedence
-  .group("/api", (app) => app.use(auth).use(studentRoutes).use(badgeRoutes))
+  .group("/api", (app) => 
+    app.use(auth)
+       .use(studentRoutes)
+       .use(badgeRoutes)
+       .use(organizationRoutes)
+  )
 
   // Static assets
   .get("/assets/*", ({ params }) => {

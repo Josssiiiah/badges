@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, Trash2, PlusCircle } from "lucide-react";
+import { fetchWithAuth } from "@/lib/api-client";
 
 type Badge = {
   id: string;
@@ -47,9 +48,6 @@ type Student = {
   badgeId?: string;
   badge?: Badge;
 };
-
-// Use the environment variable for API URL
-const API_URL = `${import.meta.env.VITE_BACKEND_URL}/students`;
 
 export function StudentDashboard({
   students = [],
@@ -72,14 +70,36 @@ export function StudentDashboard({
   // Update students state when students prop changes
   useEffect(() => {
     if (students.length > 0) {
-      setLocalStudents(students);
+      // Ensure each student has a proper badge reference if they have a badgeId
+      const enhancedStudents = students.map((student) => {
+        if (
+          student.hasBadge &&
+          student.badgeId &&
+          !student.badge &&
+          badges.length > 0
+        ) {
+          // Find the badge from badges prop if it's missing
+          const matchingBadge = badges.find(
+            (badge) => badge.id === student.badgeId
+          );
+          if (matchingBadge) {
+            return {
+              ...student,
+              badge: matchingBadge,
+            };
+          }
+        }
+        return student;
+      });
+
+      setLocalStudents(enhancedStudents);
       setLoading(false);
     } else if (localStudents.length === 0) {
       fetchStudents();
     }
-  }, [students]);
+  }, [students, badges]);
 
-  // Update fetchStudents function to only fetch if we don't have students
+  // Update fetchStudents function to enrich students with badge data if needed
   const fetchStudents = async () => {
     if (students.length > 0) {
       setLocalStudents(students);
@@ -89,11 +109,33 @@ export function StudentDashboard({
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/all`);
+      const response = await fetchWithAuth("students/all");
       const data = await response.json();
 
       if (data.students) {
-        setLocalStudents(data.students);
+        // Ensure each student has a proper badge reference
+        const enhancedStudents = data.students.map((student: Student) => {
+          if (
+            student.hasBadge &&
+            student.badgeId &&
+            !student.badge &&
+            badges.length > 0
+          ) {
+            // Find the badge from badges prop if it's missing
+            const matchingBadge = badges.find(
+              (badge) => badge.id === student.badgeId
+            );
+            if (matchingBadge) {
+              return {
+                ...student,
+                badge: matchingBadge,
+              };
+            }
+          }
+          return student;
+        });
+
+        setLocalStudents(enhancedStudents);
       }
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -120,11 +162,8 @@ export function StudentDashboard({
       }
 
       // API call
-      const response = await fetch(`${API_URL}/create`, {
+      const response = await fetchWithAuth("students/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(newStudent),
       });
 
@@ -174,17 +213,15 @@ export function StudentDashboard({
       }
 
       // First update student info
-      const response = await fetch(
-        `${API_URL}/update/${editingStudent.studentId}`,
+      const response = await fetchWithAuth(
+        `students/update/${editingStudent.studentId}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify({
             name: editingStudent.name,
             email: editingStudent.email,
             hasBadge: editingStudent.hasBadge,
+            badgeId: editingStudent.badgeId,
           }),
         }
       );
@@ -197,29 +234,39 @@ export function StudentDashboard({
 
       // If badge is being assigned, create a badge assignment
       if (editingStudent.hasBadge && editingStudent.badgeId) {
-        const badgeResponse = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/badges/assign`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              badgeId: editingStudent.badgeId,
-              userId: editingStudent.studentId,
-            }),
-          }
-        );
+        const badgeResponse = await fetchWithAuth("badges/assign", {
+          method: "POST",
+          body: JSON.stringify({
+            badgeId: editingStudent.badgeId,
+            userId: editingStudent.studentId,
+          }),
+        });
 
         if (!badgeResponse.ok) {
           throw new Error("Failed to assign badge");
         }
       }
 
-      // Update local state
+      // Find the badge details if a badge is assigned
+      let updatedStudent = result.student;
+      if (updatedStudent.hasBadge && updatedStudent.badgeId) {
+        // Find the badge from the badges prop
+        const selectedBadge = badges.find(
+          (badge) => badge.id === updatedStudent.badgeId
+        );
+        if (selectedBadge) {
+          // Include badge details in the updatedStudent
+          updatedStudent = {
+            ...updatedStudent,
+            badge: selectedBadge,
+          };
+        }
+      }
+
+      // Update local state with the complete student information including badge
       setLocalStudents(
         localStudents.map((s) =>
-          s.studentId === editingStudent.studentId ? result.student : s
+          s.studentId === editingStudent.studentId ? updatedStudent : s
         )
       );
 
@@ -242,7 +289,7 @@ export function StudentDashboard({
 
   const deleteStudent = async (studentId: string) => {
     try {
-      const response = await fetch(`${API_URL}/delete/${studentId}`, {
+      const response = await fetchWithAuth(`students/delete/${studentId}`, {
         method: "DELETE",
       });
 
@@ -270,82 +317,77 @@ export function StudentDashboard({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-[var(--main-text)]">
-            Student Management
-          </CardTitle>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4 text-[var(--gray)]" />{" "}
-                <span className="text-gray-500">Add Student</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Student</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="studentId"
-                    className="text-right text-gray-500"
-                  >
-                    Student ID
-                  </Label>
-                  <Input
-                    id="studentId"
-                    value={newStudent.studentId}
-                    onChange={(e) =>
-                      setNewStudent({
-                        ...newStudent,
-                        studentId: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right text-gray-500">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value={newStudent.name}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, name: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right text-gray-500">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newStudent.email}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, email: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-[var(--main-text)]">
+          Student Management
+        </h2>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4 text-[var(--gray)]" />{" "}
+              <span className="text-gray-500">Add Student</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Student</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="studentId" className="text-right text-gray-500">
+                  Student ID
+                </Label>
+                <Input
+                  id="studentId"
+                  value={newStudent.studentId}
+                  onChange={(e) =>
+                    setNewStudent({
+                      ...newStudent,
+                      studentId: e.target.value,
+                    })
+                  }
+                  className="col-span-3"
+                />
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button onClick={addStudent} type="submit">
-                  Add Student
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-      </Card>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right text-gray-500">
+                  Name
+                </Label>
+                <Input
+                  id="name"
+                  value={newStudent.name}
+                  onChange={(e) =>
+                    setNewStudent({ ...newStudent, name: e.target.value })
+                  }
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right text-gray-500">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newStudent.email}
+                  onChange={(e) =>
+                    setNewStudent({ ...newStudent, email: e.target.value })
+                  }
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={addStudent} type="submit">
+                Add Student
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Student Table */}
       <Card>
@@ -397,7 +439,7 @@ export function StudentDashboard({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
-                        {student.badge ? (
+                        {student.badge?.imageData ? (
                           <img
                             src={student.badge.imageData}
                             alt={student.badge.name}

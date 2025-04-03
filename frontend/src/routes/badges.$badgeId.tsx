@@ -26,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
+import { fetchWithAuth } from "@/lib/api-client";
 
 type Badge = {
   id: string;
@@ -95,8 +96,7 @@ function BadgeViewComponent() {
   } = useQuery({
     queryKey: ["badge", badgeId],
     queryFn: async () => {
-      const API_URL = `${import.meta.env.VITE_BACKEND_URL}/badges`;
-      const response = await fetch(`${API_URL}/${badgeId}`);
+      const response = await fetchWithAuth(`badges/${badgeId}`);
       const data = await response.json();
 
       if (data.error) {

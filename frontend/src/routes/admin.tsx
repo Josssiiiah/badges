@@ -1,51 +1,50 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
-import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { StudentDashboard } from "@/components/StudentDashboard";
-import { TemplatesDashboard } from "@/components/TemplatesDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TemplatesDashboard } from "@/components/TemplatesDashboard";
+import { StudentDashboard } from "@/components/StudentDashboard";
+import { OrganizationsDashboard } from "@/components/OrganizationsDashboard";
+import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { fetchWithAuth } from "@/lib/api-client";
 
 export const Route = createFileRoute("/admin")({
-  component: AdminPage,
-  beforeLoad: async ({ context }) => {
-    // Get the session synchronously to determine whether to render the route
-    const session = await authClient.getSession();
-
-    // For debugging - log the session structure
-    console.log("Session structure:", JSON.stringify(session, null, 2));
-
-    // Redirect if user is not authenticated or not an administrator
-    // Use type assertion to access the correct property
-    if (!session || (session as any).data?.user?.role !== "administrator") {
-      throw new Error("Unauthorized: Administrator access required");
-    }
-
-    return {};
-  },
-  onError: ({ error }) => {
-    // Handle any errors including authentication failures
-    console.error("Admin route error:", error);
-
-    return {
-      element: <AdminAccessDenied error={error} />,
-    };
-  },
+  component: AdminRoute,
 });
 
-// Component to display when access is denied
+function AdminRoute() {
+  const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-oxford flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pure"></div>
+      </div>
+    );
+  }
+
+  // Check if the user is an administrator
+  if (!session || session.user?.role !== "administrator") {
+    return (
+      <AdminAccessDenied
+        error={new Error("You must be an administrator to access this page")}
+      />
+    );
+  }
+
+  return <AdminPage />;
+}
+
 function AdminAccessDenied({ error }: { error: Error }) {
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh]">
-      <h1 className="text-3xl font-bold text-red-500 mb-4">Access Denied</h1>
-      <p className="text-lg mb-6 text-center max-w-md">
-        {error.message ||
-          "You don't have permission to access this page. Administrator privileges are required."}
-      </p>
+    <div className="min-h-screen bg-oxford text-pure flex flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
+      <p className="mb-8 text-center max-w-md">{error.message}</p>
       <button
         onClick={() => navigate({ to: "/" })}
         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
@@ -66,9 +65,7 @@ function AdminPage() {
   const { data: badges, isLoading: isBadgesLoading } = useQuery({
     queryKey: ["badges"],
     queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/badges/all`
-      );
+      const response = await fetchWithAuth("badges/all");
       const data = await response.json();
       return data.badges || [];
     },
@@ -79,9 +76,7 @@ function AdminPage() {
     queryKey: ["students"],
     queryFn: async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/students/all`
-        );
+        const response = await fetchWithAuth("students/all");
         const data = await response.json();
         return data.students || [];
       } catch (error) {
@@ -107,14 +102,18 @@ function AdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-[var(--main-text)]">
+      <h1 className="text-3xl font-bold mb-2 text-[var(--main-text)]">
         Admin Dashboard
       </h1>
+      <p className="text-gray-500 mb-8">
+        Organization: {session?.user?.organization || "No organization"}
+      </p>
 
       <Tabs defaultValue="templates" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="templates">Badge Templates</TabsTrigger>
+          <TabsTrigger value="templates">Badges</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
+          <TabsTrigger value="organization">Organization</TabsTrigger>
         </TabsList>
 
         <TabsContent value="templates" className="mt-6">
@@ -123,6 +122,10 @@ function AdminPage() {
 
         <TabsContent value="students" className="mt-6">
           <StudentDashboard students={students || []} badges={badges || []} />
+        </TabsContent>
+
+        <TabsContent value="organization" className="mt-6">
+          <OrganizationsDashboard />
         </TabsContent>
       </Tabs>
 

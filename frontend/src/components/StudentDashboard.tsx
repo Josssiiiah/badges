@@ -390,7 +390,7 @@ export function StudentDashboard({
       </div>
 
       {/* Student Table */}
-      <Card>
+      <Card className="bg-white/10 backdrop-filter backdrop-blur-md border border-white/20 shadow-xl">
         <CardContent className="p-0">
           <Table>
             <TableHeader>

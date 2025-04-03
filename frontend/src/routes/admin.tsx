@@ -116,15 +116,24 @@ function AdminPage() {
           <TabsTrigger value="organization">Organization</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="templates" className="mt-6">
+        <TabsContent
+          value="templates"
+          className="mt-6 rounded-xl p-6 bg-white/10 backdrop-filter backdrop-blur-lg border-2 border-white/30 shadow-xl ring-1 ring-white/50"
+        >
           <TemplatesDashboard badges={badges || []} />
         </TabsContent>
 
-        <TabsContent value="students" className="mt-6">
+        <TabsContent
+          value="students"
+          className="mt-6 rounded-xl p-6 bg-white/10 backdrop-filter backdrop-blur-lg border-2 border-white/30 shadow-xl ring-1 ring-white/50"
+        >
           <StudentDashboard students={students || []} badges={badges || []} />
         </TabsContent>
 
-        <TabsContent value="organization" className="mt-6">
+        <TabsContent
+          value="organization"
+          className="mt-6 rounded-xl p-6 bg-white/10 backdrop-filter backdrop-blur-lg border-2 border-white/30 shadow-xl ring-1 ring-white/50"
+        >
           <OrganizationsDashboard />
         </TabsContent>
       </Tabs>

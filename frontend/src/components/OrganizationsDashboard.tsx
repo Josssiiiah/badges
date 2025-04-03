@@ -190,7 +190,7 @@ export function OrganizationsDashboard() {
         </h2>
       </div>
 
-      <Card>
+      <Card className="bg-white/10 backdrop-filter backdrop-blur-md border border-white/20 shadow-xl">
         <CardHeader>
           <CardTitle>Organization Info</CardTitle>
         </CardHeader>
@@ -217,7 +217,7 @@ export function OrganizationsDashboard() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-white/10 backdrop-filter backdrop-blur-md border border-white/20 shadow-xl">
         <CardHeader>
           <CardTitle>Organization Members</CardTitle>
         </CardHeader>

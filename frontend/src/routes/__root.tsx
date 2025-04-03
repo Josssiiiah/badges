@@ -38,7 +38,7 @@ function RootComponent() {
               }}
               activeOptions={{ exact: true }}
             >
-              Certilo
+              BadgeSpot
             </Link>
 
             <nav className="hidden sm:flex items-center space-x-4">
@@ -140,7 +140,7 @@ function RootComponent() {
       <footer className="py-6">
         <div className="container mx-auto px-4">
           <p className="text-center text-sm text-[var(--main-text)]">
-            © {new Date().getFullYear()} Certilo
+            © {new Date().getFullYear()} BadgeSpot
           </p>
         </div>
       </footer>

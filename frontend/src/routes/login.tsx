@@ -67,6 +67,7 @@ export default function Login() {
           name,
           role,
           organization: role === "administrator" ? organization : "",
+          organizationId: "",
         });
         if (error) throw error;
 

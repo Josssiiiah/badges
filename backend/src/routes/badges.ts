@@ -196,4 +196,165 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         earningCriteria: t.Optional(t.String()),
       }),
     },
+  )
+  // Update an existing badge
+  .put(
+    "/update/:id",
+    async (context) => {
+      try {
+        const { params, body } = context;
+        const badgeId = params.id;
+        const {
+          name,
+          description,
+          image,
+          issuedBy,
+          courseLink,
+          skills,
+          earningCriteria,
+        } = body;
+        
+        const session = await userMiddleware(context);
+        
+        if (!session.user) {
+          return { error: "Unauthorized" };
+        }
+        
+        // Check if user is an administrator and has an organization ID
+        if (session.user.role !== "administrator") {
+          return { error: "Only administrators can update badges" };
+        }
+        
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
+        // Verify the badge exists and belongs to the administrator's organization
+        const existingBadge = await db
+          .select()
+          .from(createdBadges)
+          .where(
+            and(
+              eq(createdBadges.id, badgeId),
+              eq(createdBadges.organizationId, session.user.organizationId)
+            )
+          )
+          .limit(1);
+
+        if (!existingBadge.length) {
+          return { error: "Badge not found or you don't have permission to update it" };
+        }
+
+        // Prepare update data
+        const updateData: any = {
+          name,
+          issuedBy,
+          description,
+          courseLink,
+          skills,
+          earningCriteria,
+          updatedAt: new Date(),
+        };
+
+        // If image is provided, process it
+        if (image) {
+          // Validate file type (only images)
+          const allowedTypes = ["image/png", "image/jpeg", "image/gif"];
+          if (!allowedTypes.includes(image.type)) {
+            return {
+              error: "Invalid file type. Only PNG, JPEG, and GIF allowed.",
+            };
+          }
+
+          // Convert image to base64
+          const arrayBuffer = await image.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const base64Image = buffer.toString("base64");
+          const imageDataUrl = `data:${image.type};base64,${base64Image}`;
+          
+          // Add to update data
+          updateData.imageData = imageDataUrl;
+        }
+
+        // Update the badge
+        const updatedBadge = await db
+          .update(createdBadges)
+          .set(updateData)
+          .where(eq(createdBadges.id, badgeId))
+          .returning();
+
+        return { badge: updatedBadge[0] };
+      } catch (error) {
+        console.error("Error updating badge:", error);
+        return { error: String(error) };
+      }
+    },
+    {
+      body: t.Object({
+        name: t.String(),
+        description: t.Optional(t.String()),
+        image: t.Optional(t.File()),
+        issuedBy: t.String(),
+        courseLink: t.Optional(t.String()),
+        skills: t.Optional(t.String()),
+        earningCriteria: t.Optional(t.String()),
+      }),
+    },
+  )
+  // Delete a badge
+  .delete(
+    "/delete/:id",
+    async (context) => {
+      try {
+        const { params } = context;
+        const badgeId = params.id;
+        
+        const session = await userMiddleware(context);
+        
+        if (!session.user) {
+          return { error: "Unauthorized" };
+        }
+        
+        // Check if user is an administrator and has an organization ID
+        if (session.user.role !== "administrator") {
+          return { error: "Only administrators can delete badges" };
+        }
+        
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
+        // Verify the badge exists and belongs to the administrator's organization
+        const existingBadge = await db
+          .select()
+          .from(createdBadges)
+          .where(
+            and(
+              eq(createdBadges.id, badgeId),
+              eq(createdBadges.organizationId, session.user.organizationId)
+            )
+          )
+          .limit(1);
+
+        if (!existingBadge.length) {
+          return { error: "Badge not found or you don't have permission to delete it" };
+        }
+
+        // First delete any badge assignments that reference this badge
+        await db
+          .delete(badges)
+          .where(eq(badges.badgeId, badgeId));
+        
+        // Then delete the badge itself
+        const deleted = await db
+          .delete(createdBadges)
+          .where(eq(createdBadges.id, badgeId))
+          .returning();
+
+        return { success: true, deleted: deleted[0] };
+      } catch (error) {
+        console.error("Error deleting badge:", error);
+        return { error: String(error) };
+      }
+    }
   );

@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db/connection";
-import { createBadges, badges, user } from "../db/schema";
+import { createdBadges, badges, user } from "../db/schema";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 
@@ -8,7 +8,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
   // Get all badges
   .get("/all", async () => {
     try {
-      const result = await db.select().from(createBadges);
+      const result = await db.select().from(createdBadges);
       return { badges: result };
     } catch (error) {
       console.error("Error fetching badges:", error);
@@ -21,7 +21,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       // Get the badge details and user info
       const result = await db
         .select({
-          badge: createBadges,
+          badge: createdBadges,
           user: {
             name: user.name,
             email: user.email,
@@ -30,9 +30,9 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
           earnedAt: badges.earnedAt,
         })
         .from(badges)
-        .innerJoin(createBadges, eq(badges.badgeId, createBadges.id))
+        .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
         .innerJoin(user, eq(badges.userId, user.id))
-        .where(eq(createBadges.id, params.badgeId))
+        .where(eq(createdBadges.id, params.badgeId))
         .limit(1);
 
       if (!result.length) {
@@ -57,8 +57,8 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       // Verify the badge exists
       const badge = await db
         .select()
-        .from(createBadges)
-        .where(eq(createBadges.id, badgeId))
+        .from(createdBadges)
+        .where(eq(createdBadges.id, badgeId))
         .limit(1);
 
       if (!badge.length) {
@@ -79,6 +79,11 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       console.error("Error assigning badge:", error);
       return { error: String(error) };
     }
+  }, {
+    body: t.Object({
+      badgeId: t.String(),
+      userId: t.String()
+    })
   })
   // Upload a badge image
   .post(
@@ -111,7 +116,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
 
         // Save badge metadata and image data to the database
         const newBadge = await db
-          .insert(createBadges)
+          .insert(createdBadges)
           .values({
             name,
             description,

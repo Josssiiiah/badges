@@ -27,7 +27,7 @@ type Badge = {
   updatedAt: Date | null;
 };
 
-export function TemplatesDashboard() {
+export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -37,37 +37,6 @@ export function TemplatesDashboard() {
   const [earningCriteria, setEarningCriteria] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const { toast } = useToast();
-
-  // Fetch all badges
-  const {
-    data: badgesData,
-    isLoading: isBadgesLoading,
-    error: badgesError,
-  } = useQuery<Badge[], Error>({
-    queryKey: ["badges"],
-    queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/badges/all`,
-      );
-      if (!response.ok) {
-        throw new Error("Network response was not ok fetching badges");
-      }
-      const data = await response.json();
-      return data.badges || [];
-    },
-  });
-
-  // Handle query error effect
-  React.useEffect(() => {
-    if (badgesError) {
-      console.error("Error fetching badges:", badgesError);
-      toast({
-        variant: "destructive",
-        title: "Error Fetching Badges",
-        description: badgesError.message || "Failed to fetch badge templates.",
-      });
-    }
-  }, [badgesError, toast]);
 
   // Upload badge mutation
   const uploadBadge = useMutation<Badge, Error, void>({
@@ -88,7 +57,7 @@ export function TemplatesDashboard() {
           method: "POST",
           body: formData,
           credentials: "include",
-        },
+        }
       );
       const data = await response.json();
       if (!response.ok || data.error) {
@@ -301,20 +270,16 @@ export function TemplatesDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isBadgesLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[var(--main-text)]/80" />
-            </div>
-          ) : Array.isArray(badgesData) && badgesData.length === 0 ? (
+          {badges.length === 0 ? (
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 text-center">
               <p className="text-[var(--main-text)]/80">
                 No badge templates available yet. Upload one above to get
                 started.
               </p>
             </div>
-          ) : Array.isArray(badgesData) ? (
+          ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {badgesData.map((badge: Badge) => (
+              {badges.map((badge: Badge) => (
                 <Card key={badge.id} className="overflow-hidden group">
                   <CardContent className="p-0 aspect-square flex items-center justify-center bg-muted/40 group-hover:bg-muted/80 transition-colors">
                     <img
@@ -350,12 +315,6 @@ export function TemplatesDashboard() {
                   </CardHeader>
                 </Card>
               ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 text-center">
-              <p className="text-[var(--main-text)]/80">
-                Could not load badge templates.
-              </p>
             </div>
           )}
         </CardContent>

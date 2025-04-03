@@ -31,3 +31,8 @@ if (!rootElement.innerHTML) {
     </QueryClientProvider>,
   );
 }
+
+// if this is prod replace console.log with a empyt func
+if (import.meta.env.PROD) {
+  console.log = () => {};
+}

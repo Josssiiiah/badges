@@ -10,7 +10,51 @@ import { useToast } from "@/hooks/use-toast";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
+  beforeLoad: async ({ context }) => {
+    // Get the session synchronously to determine whether to render the route
+    const session = await authClient.getSession();
+
+    // For debugging - log the session structure
+    console.log("Session structure:", JSON.stringify(session, null, 2));
+
+    // Redirect if user is not authenticated or not an administrator
+    // Use type assertion to access the correct property
+    if (!session || (session as any).data?.user?.role !== "administrator") {
+      throw new Error("Unauthorized: Administrator access required");
+    }
+
+    return {};
+  },
+  onError: ({ error }) => {
+    // Handle any errors including authentication failures
+    console.error("Admin route error:", error);
+
+    return {
+      element: <AdminAccessDenied error={error} />,
+    };
+  },
 });
+
+// Component to display when access is denied
+function AdminAccessDenied({ error }: { error: Error }) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh]">
+      <h1 className="text-3xl font-bold text-red-500 mb-4">Access Denied</h1>
+      <p className="text-lg mb-6 text-center max-w-md">
+        {error.message ||
+          "You don't have permission to access this page. Administrator privileges are required."}
+      </p>
+      <button
+        onClick={() => navigate({ to: "/" })}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+      >
+        Return to Home
+      </button>
+    </div>
+  );
+}
 
 function AdminPage() {
   const { data: session, isPending: isSessionLoading } =
@@ -23,7 +67,7 @@ function AdminPage() {
     queryKey: ["badges"],
     queryFn: async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/badges/all`,
+        `${import.meta.env.VITE_BACKEND_URL}/badges/all`
       );
       const data = await response.json();
       return data.badges || [];
@@ -36,7 +80,7 @@ function AdminPage() {
     queryFn: async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/students/all`,
+          `${import.meta.env.VITE_BACKEND_URL}/students/all`
         );
         const data = await response.json();
         return data.students || [];
@@ -52,17 +96,7 @@ function AdminPage() {
     },
   });
 
-  useEffect(() => {
-    if (!isSessionLoading && !session) {
-      navigate({
-        to: "/login",
-        search: {
-          redirectTo: "/admin",
-        },
-      });
-    }
-  }, [session, isSessionLoading, navigate]);
-
+  // If the data is still loading, show a loading spinner
   if (isSessionLoading || isBadgesLoading || isStudentsLoading) {
     return (
       <div className="min-h-screen bg-oxford flex items-center justify-center">
@@ -71,59 +105,27 @@ function AdminPage() {
     );
   }
 
-  if (!session) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-primary text-pure">
-      <div className="container mx-auto p-6">
-        <div className=" rounded-lg bg-[var(--gray)]/10 backdrop-blur-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-2 text-[var(--main-text)]">
-            Dashboard
-          </h2>
-          <p className="text-[var(--main-text)]">
-            Manage students, badges, and view statistics.
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8 text-[var(--main-text)]">
+        Admin Dashboard
+      </h1>
 
-        {/* Tabs */}
-        <div className="bg-[var(--gray)]/10 backdrop-blur-lg rounded-lg shadow-md p-6">
-          <Tabs defaultValue="students" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6 bg-oxford/50 p-1 rounded-lg">
-              <TabsTrigger
-                value="students"
-                className="data-[state=active]:bg-[var(--violet-light)] data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
-              >
-                Students
-              </TabsTrigger>
-              <TabsTrigger
-                value="badges"
-                className="data-[state=active]:bg-[var(--violet)] data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
-              >
-                Badges
-              </TabsTrigger>
-              <TabsTrigger
-                value="stats"
-                className="data-[state=active]:bg-[var(--violet)] data-[state=active]:text-pure text-[var(--main-text)] rounded-md py-2"
-              >
-                Stats
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="students" className="mt-4">
-              <StudentDashboard initialStudents={students} badges={badges} />
-            </TabsContent>
-            <TabsContent value="badges" className="mt-4">
-              <TemplatesDashboard />
-            </TabsContent>
-            <TabsContent value="stats" className="mt-4">
-              <div className="text-center py-12">
-                <p className="text-pure/80">Statistics coming soon...</p>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+      <Tabs defaultValue="templates" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="templates">Badge Templates</TabsTrigger>
+          <TabsTrigger value="students">Students</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="templates" className="mt-6">
+          <TemplatesDashboard badges={badges || []} />
+        </TabsContent>
+
+        <TabsContent value="students" className="mt-6">
+          <StudentDashboard students={students || []} badges={badges || []} />
+        </TabsContent>
+      </Tabs>
+
       <Toaster />
     </div>
   );

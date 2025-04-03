@@ -22,6 +22,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session;
+  const isAdministrator = session?.user?.role === "administrator";
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--main-bg)]">
@@ -41,18 +42,18 @@ function RootComponent() {
             </Link>
 
             <nav className="hidden sm:flex items-center space-x-4">
-              {/* {isAuthenticated && (
+              {isAuthenticated && isAdministrator && (
                 <Link
                   to="/admin"
-                  className="text-[var(--main-text)]/80 hover:px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
                   activeProps={{
                     className:
-                      "text-[var(--main-text)] hover:text-[var(--main-text)]/80 px-3 py-2 rounded-md text-sm font-medium",
+                      "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
                   }}
                 >
-                  Admin
+                  Admin Dashboard
                 </Link>
-              )} */}
+              )}
             </nav>
           </div>
 
@@ -89,14 +90,17 @@ function RootComponent() {
                       Badges
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    asChild
-                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
-                  >
-                    <Link to="/admin" className="cursor-pointer">
-                      Admin Dashboard
-                    </Link>
-                  </DropdownMenuItem>
+
+                  {isAdministrator && (
+                    <DropdownMenuItem
+                      asChild
+                      className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
+                    >
+                      <Link to="/admin" className="cursor-pointer">
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
 
                   <DropdownMenuSeparator className="" />
                   <DropdownMenuItem

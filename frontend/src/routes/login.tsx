@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { GraduationCap, Shield } from "lucide-react";
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 if (!FRONTEND_URL) throw new Error("VITE_FRONTEND_URL is not set");
@@ -30,6 +33,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [role, setRole] = useState<"student" | "administrator">("student");
+  const [organization, setOrganization] = useState("");
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -50,12 +55,28 @@ export default function Login() {
 
     try {
       if (isSignUp) {
+        if (role === "administrator" && !organization) {
+          throw new Error(
+            "Organization is required for administrator accounts"
+          );
+        }
+
         const { data, error } = await authClient.signUp.email({
           email,
           password,
           name,
+          role,
+          organization: role === "administrator" ? organization : "",
         });
         if (error) throw error;
+
+        // Log the created account details
+        console.log("Created Account Details:", {
+          email,
+          name,
+          role,
+          organization: role === "administrator" ? organization : "N/A",
+        });
 
         setSuccessMessage("Account created successfully! Please sign in.");
         setTimeout(() => {
@@ -83,7 +104,6 @@ export default function Login() {
         <div className="w-full max-w-md">
           <Skeleton className="h-12 w-3/4 mx-auto mb-6" />
           <Skeleton className="h-4 w-1/2 mx-auto mb-10" />
-
           <div className="space-y-4">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
@@ -133,20 +153,95 @@ export default function Login() {
           <CardContent>
             <form onSubmit={handleEmailAuth} className="space-y-4">
               {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-[var(--main-text)]">
-                    Full Name
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="John Doe"
-                    required={isSignUp}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="text-black"
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-[var(--main-text)]">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="John Doe"
+                      required={isSignUp}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="text-black"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[var(--main-text)]">
+                      Account Type
+                    </Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setRole("student")}
+                        className={cn(
+                          "p-4 border rounded-lg transition-all duration-200",
+                          role === "student"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
+                        )}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <GraduationCap className="w-6 h-6" />
+                          <span className="font-medium">Student</span>
+                          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                            Track and showcase your achievements
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRole("administrator")}
+                        className={cn(
+                          "p-4 border rounded-lg transition-all duration-200",
+                          role === "administrator"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
+                        )}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <Shield className="w-6 h-6" />
+                          <span className="font-medium">Administrator</span>
+                          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                            Issue and manage badges
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {role === "administrator" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor="organization"
+                            className="text-[var(--main-text)]"
+                          >
+                            Organization
+                          </Label>
+                          <Input
+                            id="organization"
+                            type="text"
+                            placeholder="Your organization name"
+                            required={role === "administrator"}
+                            value={organization}
+                            onChange={(e) => setOrganization(e.target.value)}
+                            className="text-black"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
               )}
 
               <div className="space-y-2">

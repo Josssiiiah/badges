@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 // Create Badges table (previously badges)
-export const createBadges = sqliteTable("create_badges", {
+export const createdBadges = sqliteTable("created_badges", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => nanoid()),
@@ -29,7 +29,7 @@ export const badges = sqliteTable("badges", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   badgeId: text("badge_id")
-    .references(() => createBadges.id)
+    .references(() => createdBadges.id)
     .notNull(),
   userId: text("user_id")
     .references(() => user.id)
@@ -71,6 +71,10 @@ export const user = sqliteTable("user", {
     .default(false)
     .$type<boolean>(),
   image: text("image"),
+  role: text("role", { enum: ["student", "administrator"] })
+    .default("student")
+    .notNull(),
+  organization: text("organization"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),

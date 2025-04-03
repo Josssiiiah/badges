@@ -10,166 +10,187 @@
 
 // Import Routes
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as LogoutImport } from "./routes/logout";
-import { Route as LoginImport } from "./routes/login";
-import { Route as AdminImport } from "./routes/admin";
-import { Route as IndexImport } from "./routes/index";
-import { Route as UsersUsernameImport } from "./routes/users.$username";
-import { Route as BadgesBadgeIdImport } from "./routes/badges.$badgeId";
+import { Route as rootRoute } from './routes/__root'
+import { Route as PricingImport } from './routes/pricing'
+import { Route as LogoutImport } from './routes/logout'
+import { Route as LoginImport } from './routes/login'
+import { Route as AdminImport } from './routes/admin'
+import { Route as IndexImport } from './routes/index'
+import { Route as UsersUsernameImport } from './routes/users.$username'
+import { Route as BadgesBadgeIdImport } from './routes/badges.$badgeId'
 
 // Create/Update Routes
 
-const LogoutRoute = LogoutImport.update({
-  id: "/logout",
-  path: "/logout",
+const PricingRoute = PricingImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
+
+const LogoutRoute = LogoutImport.update({
+  id: '/logout',
+  path: '/logout',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LoginRoute = LoginImport.update({
-  id: "/login",
-  path: "/login",
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const AdminRoute = AdminImport.update({
-  id: "/admin",
-  path: "/admin",
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const IndexRoute = IndexImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const UsersUsernameRoute = UsersUsernameImport.update({
-  id: "/users/$username",
-  path: "/users/$username",
+  id: '/users/$username',
+  path: '/users/$username',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const BadgesBadgeIdRoute = BadgesBadgeIdImport.update({
-  id: "/badges/$badgeId",
-  path: "/badges/$badgeId",
+  id: '/badges/$badgeId',
+  path: '/badges/$badgeId',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 // Populate the FileRoutesByPath interface
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/admin": {
-      id: "/admin";
-      path: "/admin";
-      fullPath: "/admin";
-      preLoaderRoute: typeof AdminImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/login": {
-      id: "/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof LoginImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/logout": {
-      id: "/logout";
-      path: "/logout";
-      fullPath: "/logout";
-      preLoaderRoute: typeof LogoutImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/badges/$badgeId": {
-      id: "/badges/$badgeId";
-      path: "/badges/$badgeId";
-      fullPath: "/badges/$badgeId";
-      preLoaderRoute: typeof BadgesBadgeIdImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/users/$username": {
-      id: "/users/$username";
-      path: "/users/$username";
-      fullPath: "/users/$username";
-      preLoaderRoute: typeof UsersUsernameImport;
-      parentRoute: typeof rootRoute;
-    };
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminImport
+      parentRoute: typeof rootRoute
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutImport
+      parentRoute: typeof rootRoute
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingImport
+      parentRoute: typeof rootRoute
+    }
+    '/badges/$badgeId': {
+      id: '/badges/$badgeId'
+      path: '/badges/$badgeId'
+      fullPath: '/badges/$badgeId'
+      preLoaderRoute: typeof BadgesBadgeIdImport
+      parentRoute: typeof rootRoute
+    }
+    '/users/$username': {
+      id: '/users/$username'
+      path: '/users/$username'
+      fullPath: '/users/$username'
+      preLoaderRoute: typeof UsersUsernameImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
 // Create and export the route tree
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/admin": typeof AdminRoute;
-  "/login": typeof LoginRoute;
-  "/logout": typeof LogoutRoute;
-  "/badges/$badgeId": typeof BadgesBadgeIdRoute;
-  "/users/$username": typeof UsersUsernameRoute;
+  '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/pricing': typeof PricingRoute
+  '/badges/$badgeId': typeof BadgesBadgeIdRoute
+  '/users/$username': typeof UsersUsernameRoute
 }
 
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/admin": typeof AdminRoute;
-  "/login": typeof LoginRoute;
-  "/logout": typeof LogoutRoute;
-  "/badges/$badgeId": typeof BadgesBadgeIdRoute;
-  "/users/$username": typeof UsersUsernameRoute;
+  '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/pricing': typeof PricingRoute
+  '/badges/$badgeId': typeof BadgesBadgeIdRoute
+  '/users/$username': typeof UsersUsernameRoute
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute;
-  "/": typeof IndexRoute;
-  "/admin": typeof AdminRoute;
-  "/login": typeof LoginRoute;
-  "/logout": typeof LogoutRoute;
-  "/badges/$badgeId": typeof BadgesBadgeIdRoute;
-  "/users/$username": typeof UsersUsernameRoute;
+  __root__: typeof rootRoute
+  '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/pricing': typeof PricingRoute
+  '/badges/$badgeId': typeof BadgesBadgeIdRoute
+  '/users/$username': typeof UsersUsernameRoute
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/admin"
-    | "/login"
-    | "/logout"
-    | "/badges/$badgeId"
-    | "/users/$username";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/logout'
+    | '/pricing'
+    | '/badges/$badgeId'
+    | '/users/$username'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/admin"
-    | "/login"
-    | "/logout"
-    | "/badges/$badgeId"
-    | "/users/$username";
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/logout'
+    | '/pricing'
+    | '/badges/$badgeId'
+    | '/users/$username'
   id:
-    | "__root__"
-    | "/"
-    | "/admin"
-    | "/login"
-    | "/logout"
-    | "/badges/$badgeId"
-    | "/users/$username";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/logout'
+    | '/pricing'
+    | '/badges/$badgeId'
+    | '/users/$username'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AdminRoute: typeof AdminRoute;
-  LoginRoute: typeof LoginRoute;
-  LogoutRoute: typeof LogoutRoute;
-  BadgesBadgeIdRoute: typeof BadgesBadgeIdRoute;
-  UsersUsernameRoute: typeof UsersUsernameRoute;
+  IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
+  PricingRoute: typeof PricingRoute
+  BadgesBadgeIdRoute: typeof BadgesBadgeIdRoute
+  UsersUsernameRoute: typeof UsersUsernameRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -177,13 +198,14 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
+  PricingRoute: PricingRoute,
   BadgesBadgeIdRoute: BadgesBadgeIdRoute,
   UsersUsernameRoute: UsersUsernameRoute,
-};
+}
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
 /* ROUTE_MANIFEST_START
 {
@@ -195,6 +217,7 @@ export const routeTree = rootRoute
         "/admin",
         "/login",
         "/logout",
+        "/pricing",
         "/badges/$badgeId",
         "/users/$username"
       ]
@@ -210,6 +233,9 @@ export const routeTree = rootRoute
     },
     "/logout": {
       "filePath": "logout.tsx"
+    },
+    "/pricing": {
+      "filePath": "pricing.tsx"
     },
     "/badges/$badgeId": {
       "filePath": "badges.$badgeId.tsx"

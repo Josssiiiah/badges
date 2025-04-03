@@ -52,14 +52,14 @@ type Student = {
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/students`;
 
 export function StudentDashboard({
-  initialStudents = [],
+  students = [],
   badges = [],
 }: {
-  initialStudents?: Student[];
+  students?: Student[];
   badges?: Badge[];
 }) {
-  const [students, setStudents] = useState<Student[]>(initialStudents);
-  const [loading, setLoading] = useState<boolean>(initialStudents.length === 0);
+  const [localStudents, setLocalStudents] = useState<Student[]>(students);
+  const [loading, setLoading] = useState<boolean>(students.length === 0);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [newStudent, setNewStudent] = useState<Student>({
     studentId: "",
@@ -69,20 +69,20 @@ export function StudentDashboard({
   });
   const { toast } = useToast();
 
-  // Update students state when initialStudents prop changes
+  // Update students state when students prop changes
   useEffect(() => {
-    if (initialStudents.length > 0) {
-      setStudents(initialStudents);
+    if (students.length > 0) {
+      setLocalStudents(students);
       setLoading(false);
-    } else if (students.length === 0) {
+    } else if (localStudents.length === 0) {
       fetchStudents();
     }
-  }, [initialStudents]);
+  }, [students]);
 
-  // Update fetchStudents function to only fetch if we don't have initialStudents
+  // Update fetchStudents function to only fetch if we don't have students
   const fetchStudents = async () => {
-    if (initialStudents.length > 0) {
-      setStudents(initialStudents);
+    if (students.length > 0) {
+      setLocalStudents(students);
       setLoading(false);
       return;
     }
@@ -93,7 +93,7 @@ export function StudentDashboard({
       const data = await response.json();
 
       if (data.students) {
-        setStudents(data.students);
+        setLocalStudents(data.students);
       }
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -135,7 +135,7 @@ export function StudentDashboard({
       const result = await response.json();
 
       // Update local state
-      setStudents([...students, result.student]);
+      setLocalStudents([...localStudents, result.student]);
 
       // Reset form
       setNewStudent({
@@ -217,8 +217,8 @@ export function StudentDashboard({
       }
 
       // Update local state
-      setStudents(
-        students.map((s) =>
+      setLocalStudents(
+        localStudents.map((s) =>
           s.studentId === editingStudent.studentId ? result.student : s
         )
       );
@@ -251,7 +251,7 @@ export function StudentDashboard({
       }
 
       // Update local state
-      setStudents(students.filter((s) => s.studentId !== studentId));
+      setLocalStudents(localStudents.filter((s) => s.studentId !== studentId));
 
       toast({
         title: "Success",
@@ -374,7 +374,7 @@ export function StudentDashboard({
                     Loading...
                   </TableCell>
                 </TableRow>
-              ) : students.length === 0 ? (
+              ) : localStudents.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={5}
@@ -384,7 +384,7 @@ export function StudentDashboard({
                   </TableCell>
                 </TableRow>
               ) : (
-                students.map((student) => (
+                localStudents.map((student) => (
                   <TableRow key={student.studentId}>
                     <TableCell className="font-medium text-[var(--main-text)]">
                       {student.studentId}

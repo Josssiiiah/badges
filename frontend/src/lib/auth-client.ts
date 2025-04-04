@@ -22,6 +22,12 @@ export const authClient = createAuthClient({
         organizationId: {
           type: "string",
         },
+        shortCode: {
+          type: "string",
+        },
+        orgOption: {
+          type: "string",
+        },
       },
     }),
   ],

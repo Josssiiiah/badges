@@ -226,14 +226,14 @@ function BadgeViewComponent() {
         </div>
 
         {/* Main Badge Content */}
-        <div className="grid md:grid-cols-[350px_1fr] gap-4 items-start">
+        <div className="grid md:grid-cols-[350px_1fr] gap-4 items-start md:pt-4">
           {/* Badge Image (Left Column) */}
           <div className="w-full flex flex-col items-center gap-4">
             {badge.imageData ? (
               <img
                 src={badge.imageData}
                 alt={badge.name}
-                className="w-full max-w-[300px] sm:max-w-[350px] h-auto object-contain"
+                className="w-full max-w-[250px] h-auto object-contain"
               />
             ) : (
               <div className="w-full h-full rounded-full bg-[var(--accent-bg)] flex items-center justify-center text-[var(--dark-gray)]/80">
@@ -257,7 +257,7 @@ function BadgeViewComponent() {
           </div>
 
           {/* Badge Info (Right Column) */}
-          <div className="space-y-4 md:pt-12 sm:pr-14">
+          <div className="space-y-4 sm:pr-14">
             <h2 className="text-xl sm:text-2xl font-bold text-[var(--dark-gray)]">
               {badge.name}
             </h2>

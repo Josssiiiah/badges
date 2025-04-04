@@ -8,6 +8,7 @@ export const organizations = sqliteTable("organizations", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   name: text("name").notNull(),
+  short_code: text("short_code").unique(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),

@@ -557,11 +557,11 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                 className="overflow-hidden border border-black/ group cursor-pointer h-full bg-white/10 backdrop-filter backdrop-blur-sm hover:bg-white/20 transition-all hover:shadow-lg hover:scale-[1.02]"
                 onClick={() => openEditDialog(badge)}
               >
-                <CardContent className="p-0 aspect-square flex items-center justify-center bg-muted/20 group-hover:bg-muted/40 transition-colors relative">
+                <CardContent className="p-4 aspect-square flex items-center justify-center bg-muted/20 group-hover:bg-muted/40 transition-colors relative">
                   <img
                     src={badge.imageData}
                     alt={`Badge for ${badge.name}`}
-                    className="max-w-[100%] max-h-[100%] object-contain transition-transform group-hover:scale-110"
+                    className="max-w-[100%] max-h-[100%] object-contain transition-transform group-hover:scale-105"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">

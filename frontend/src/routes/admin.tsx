@@ -62,6 +62,31 @@ function AdminPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Fetch organization data
+  const { data: organization, isLoading: isOrganizationLoading } = useQuery({
+    queryKey: ["organization"],
+    queryFn: async () => {
+      try {
+        const response = await fetchWithAuth("organizations/current");
+        if (!response.ok) {
+          console.error("Organization API error:", response.status);
+          throw new Error("Failed to fetch organization data");
+        }
+        const data = await response.json();
+        console.log("Organization data:", data);
+        return data.organization || null;
+      } catch (error) {
+        console.error("Error fetching organization:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch organization data",
+        });
+        return null;
+      }
+    },
+  });
+
   // Fetch badges
   const { data: badges, isLoading: isBadgesLoading } = useQuery({
     queryKey: ["badges"],
@@ -93,7 +118,12 @@ function AdminPage() {
   });
 
   // If the data is still loading, show a loading spinner
-  if (isSessionLoading || isBadgesLoading || isStudentsLoading) {
+  if (
+    isSessionLoading ||
+    isBadgesLoading ||
+    isStudentsLoading ||
+    isOrganizationLoading
+  ) {
     return (
       <div className="min-h-screen bg-oxford flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pure"></div>
@@ -101,13 +131,15 @@ function AdminPage() {
     );
   }
 
+  console.log("Current organization:", organization);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-2 text-[var(--main-text)]">
         Admin Dashboard
       </h1>
       <p className="text-gray-500 mb-8">
-        Organization: {session?.user?.organization || "No organization"}
+        Organization: {organization?.name || "No organization"}
       </p>
 
       <Tabs defaultValue="templates" className="w-full">

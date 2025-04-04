@@ -4,6 +4,7 @@ import { auth } from "./routes/auth";
 import { studentRoutes } from "./routes/students";
 import { badgeRoutes } from "./routes/badges";
 import { organizationRoutes } from "./routes/organizations";
+import { userRoutes } from "./routes/users";
 import { join } from "path";
 
 // Create a new Elysia app
@@ -15,6 +16,7 @@ const app = new Elysia()
        .use(studentRoutes)
        .use(badgeRoutes)
        .use(organizationRoutes)
+       .use(userRoutes)
   )
 
   // Static assets

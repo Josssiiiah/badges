@@ -24,11 +24,14 @@ import {
   CalendarDays,
   Shield,
   GraduationCap,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { fetchWithAuth } from "@/lib/api-client";
+import { useState } from "react";
 
 // Get the backend URL from environment variables
 const BACKEND_URL =
@@ -37,6 +40,7 @@ const BACKEND_URL =
 type Organization = {
   id: string;
   name: string;
+  short_code?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -52,6 +56,7 @@ type OrganizationUser = {
 export function OrganizationsDashboard() {
   const { data: session } = authClient.useSession();
   const { toast } = useToast();
+  const [copiedShortCode, setCopiedShortCode] = useState(false);
 
   // Check if the organizations API is working correctly
   const { data: healthCheck } = useQuery({
@@ -90,29 +95,27 @@ export function OrganizationsDashboard() {
           return null;
         }
 
-        const orgId = session.user.organizationId;
-        const orgName = session.user.organization;
+        // Fetch organization data from the backend API
+        console.log("Fetching organization data from API");
+        const response = await fetchWithAuth("organizations/current");
 
-        console.log("Session organization data:", {
-          id: orgId,
-          name: orgName,
-          user: {
-            id: session.user.id,
-            role: session.user.role,
-          },
-        });
-
-        if (!orgId && !orgName) {
-          console.log("User doesn't have organization data");
-          return null;
+        if (!response.ok) {
+          console.error("Organization API error:", response.status);
+          throw new Error("Failed to fetch organization data");
         }
 
-        // We're just using the organization info from the session for now
-        // In a more complete implementation, we would fetch detailed organization data
-        return {
-          id: orgId || "unknown",
-          name: orgName || "No organization",
-        } as Organization;
+        const data = await response.json();
+        console.log("Organization data from API:", data);
+
+        if (!data.organization) {
+          console.log("No organization returned from API");
+          return {
+            id: "unknown",
+            name: "No organization",
+          } as Organization;
+        }
+
+        return data.organization as Organization;
       } catch (error) {
         console.error("Error fetching organization:", error);
         toast({
@@ -120,7 +123,10 @@ export function OrganizationsDashboard() {
           title: "Error",
           description: "Failed to fetch organization details",
         });
-        return null;
+        return {
+          id: "unknown",
+          name: "Error loading organization",
+        } as Organization;
       }
     },
     enabled: !!session?.user,
@@ -239,6 +245,19 @@ export function OrganizationsDashboard() {
       .substring(0, 2);
   };
 
+  const handleCopyShortCode = () => {
+    if (organization?.short_code) {
+      navigator.clipboard.writeText(organization.short_code);
+      setCopiedShortCode(true);
+      setTimeout(() => setCopiedShortCode(false), 2000);
+
+      toast({
+        title: "Short code copied",
+        description: "Organization short code copied to clipboard",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -284,14 +303,27 @@ export function OrganizationsDashboard() {
 
                 <div className="flex justify-between items-center p-4 rounded-lg bg-[var(--accent-bg)]/10">
                   <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-[var(--main-text)]/70" />
+                    <Building className="h-5 w-5 text-[var(--main-text)]/70" />
                     <span className="text-sm font-medium text-[var(--main-text)]/60">
-                      Members
+                      Organization Code
                     </span>
                   </div>
-                  <span className="text-base font-semibold text-[var(--main-text)]">
-                    {orgUsers?.length || 0} members
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-semibold text-[var(--main-text)]">
+                      {organization?.short_code || "No code available"}
+                    </span>
+                    <button
+                      onClick={handleCopyShortCode}
+                      className="p-1 rounded-md hover:bg-[var(--accent-bg)]/20 transition-colors"
+                      aria-label="Copy organization code"
+                    >
+                      {copiedShortCode ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4 text-[var(--main-text)]/70" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

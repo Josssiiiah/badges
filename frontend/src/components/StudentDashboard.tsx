@@ -80,6 +80,7 @@ export function StudentDashboard({
   const [isBulkImporting, setIsBulkImporting] = useState<boolean>(false);
   const [bulkAssignBadge, setBulkAssignBadge] = useState<boolean>(false);
   const [bulkBadgeId, setBulkBadgeId] = useState<string>("");
+  const [isLookingUpUser, setIsLookingUpUser] = useState<boolean>(false);
 
   // Update students state when students prop changes
   useEffect(() => {
@@ -149,6 +150,77 @@ export function StudentDashboard({
     }
   };
 
+  // Function to look up a user by email
+  const lookupUserByEmail = async (email: string) => {
+    if (!email) return;
+
+    try {
+      setIsLookingUpUser(true);
+      // Make API call to look up user by email in the users table
+      const response = await fetchWithAuth(
+        `users/by-email?email=${encodeURIComponent(email)}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user && data.user.name) {
+          // If user found, use their name
+          return data.user.name;
+        }
+      }
+      // If no user found or response not ok, return null
+      return null;
+    } catch (error) {
+      console.error("Error looking up user:", error);
+      return null;
+    } finally {
+      setIsLookingUpUser(false);
+    }
+  };
+
+  // Handle email change for the new student form
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    setNewStudent({ ...newStudent, email });
+  };
+
+  // Handle email blur to lookup user info
+  const handleEmailBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    if (email && !newStudent.name) {
+      const userName = await lookupUserByEmail(email);
+      if (userName) {
+        setNewStudent((prev) => ({
+          ...prev,
+          name: userName,
+        }));
+      }
+    }
+  };
+
+  // Handle editing student email blur
+  const handleEditEmailBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    if (!editingStudent) return;
+
+    const email = e.target.value;
+    // Only try to update the name if it wasn't changed by the admin
+    const currentName = editingStudent.name || "";
+    const originalName =
+      localStudents.find((s) => s.studentId === editingStudent.studentId)
+        ?.name || "";
+
+    // Only lookup if the name hasn't been manually changed
+    if (email && (currentName === originalName || !currentName)) {
+      const userName = await lookupUserByEmail(email);
+      if (userName) {
+        setEditingStudent({
+          ...editingStudent,
+          name: userName,
+        });
+      }
+    }
+  };
+
   const addStudent = async () => {
     try {
       // Only validate email now, generate ID if needed
@@ -165,7 +237,7 @@ export function StudentDashboard({
       const studentToAdd = {
         ...newStudent,
         studentId: newStudent.studentId || nanoid(8),
-        // Use email as name if name isn't provided
+        // Only use email as name if name isn't provided after lookup
         name: newStudent.name || newStudent.email.split("@")[0],
       };
 
@@ -610,16 +682,18 @@ export function StudentDashboard({
                     id="email"
                     type="email"
                     value={newStudent.email}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, email: e.target.value })
-                    }
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
                     className="col-span-3"
                     placeholder="student@example.com"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right text-gray-500">
-                    Name (Optional)
+                    Name{" "}
+                    {isLookingUpUser && (
+                      <span className="text-xs">(looking up...)</span>
+                    )}
                   </Label>
                   <Input
                     id="name"
@@ -796,6 +870,7 @@ export function StudentDashboard({
                                         : null
                                     )
                                   }
+                                  onBlur={handleEditEmailBlur}
                                   className="col-span-3"
                                 />
                               </div>

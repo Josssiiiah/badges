@@ -45,6 +45,7 @@ export const organizationRoutes = new Elysia({ prefix: "/organizations" })
         .select({
           id: organizations.id,
           name: organizations.name,
+          short_code: organizations.short_code,
           createdAt: organizations.createdAt
         })
         .from(organizations)

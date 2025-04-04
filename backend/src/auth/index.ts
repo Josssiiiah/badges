@@ -6,6 +6,12 @@ import { APIError } from "better-auth/api";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 
+// Helper to generate a random short code for organizations
+function generateShortCode() {
+  // Generate a 6-character alphanumeric code
+  return nanoid(6).toUpperCase();
+}
+
 // Extended user type that includes our custom fields
 interface ExtendedUser {
   id: string;
@@ -59,84 +65,152 @@ export const auth = betterAuth({
         required: false,
         input: false,
       },
+      shortCode: {
+        type: "string",
+        required: false,
+        input: true,
+      },
+      orgOption: {
+        type: "string",
+        required: false,
+        input: true,
+      },
     },
   },
   databaseHooks: {
     user: {
       create: {
         before: async (userData, ctx) => {
-          // Extract role and organization from ctx?.params
-          console.log("Database Hook - userData:", JSON.stringify(userData));
-          console.log("Database Hook - ctx:", ctx ? JSON.stringify({
-            method: ctx.method,
-            path: ctx.path,
-            params: ctx.params,
-            body: ctx.body
-          }) : "undefined");
-          
           const params = ctx?.params || {};
           const { additionalFields } = ctx?.body || {};
-          console.log("Database Hook - additionalFields:", additionalFields);
           
           // Try to get role and organization from different possible sources
           const role = params.role || (additionalFields && additionalFields.role) || (userData as any).role;
           const organization = params.organization || (additionalFields && additionalFields.organization) || (userData as any).organization;
           
-          console.log("Extracted role:", role, "and organization:", organization);
+          // Get the new fields for the organization flow
+          const orgOption = params.orgOption || (additionalFields && additionalFields.orgOption);
+          const shortCode = params.shortCode || (additionalFields && additionalFields.shortCode);
           
-          // Validate role and organization
+          // Validate role
           if (role && !["student", "administrator"].includes(role)) {
             throw new APIError("BAD_REQUEST", {
               message: "Invalid role. Must be 'student' or 'administrator'.",
             });
           }
           
-          if (role === "administrator" && !organization) {
-            throw new APIError("BAD_REQUEST", {
-              message: "Organization is required for administrator accounts.",
-            });
-          }
-          
           let organizationId = null;
           
-          // If the user is an administrator and has an organization, create or retrieve the organization
-          if (role === "administrator" && organization) {
-            try {
-              // First check if organization already exists with this name
-              const existingOrgs = await db
-                .select({ id: organizations.id })
-                .from(organizations)
-                .where(eq(organizations.name, organization));
+          // Handle administrator accounts based on orgOption
+          if (role === "administrator") {
+            if (orgOption === "create") {
+              // Creating a new organization
+              if (!organization) {
+                throw new APIError("BAD_REQUEST", {
+                  message: "Organization name is required when creating a new organization.",
+                });
+              }
               
-              // If organization exists, use its ID
-              if (existingOrgs.length > 0) {
-                organizationId = existingOrgs[0].id;
-                console.log("Using existing organization with ID:", organizationId);
-              } else {
-                // Create a new organization record if it doesn't exist
-                const orgResult = await db.insert(organizations)
-                  .values({
-                    id: nanoid(),
-                    name: organization,
-                  })
-                  .returning();
+              try {
+                // Check if organization already exists with this name
+                const existingOrgs = await db
+                  .select({ id: organizations.id })
+                  .from(organizations)
+                  .where(eq(organizations.name, organization));
                 
-                if (orgResult.length > 0) {
-                  organizationId = orgResult[0].id;
-                  console.log("Created new organization with ID:", organizationId);
+                if (existingOrgs.length > 0) {
+                  // Organization with this name already exists, use it
+                  organizationId = existingOrgs[0].id;
                 } else {
-                  console.error("Failed to create organization record");
+                  // Create a new organization with a unique short code
+                  const newShortCode = generateShortCode();
+                  const orgResult = await db.insert(organizations)
+                    .values({
+                      id: nanoid(),
+                      name: organization,
+                      short_code: newShortCode
+                    })
+                    .returning();
+                  
+                  if (orgResult.length > 0) {
+                    organizationId = orgResult[0].id;
+                  } else {
+                    throw new APIError("INTERNAL_SERVER_ERROR", {
+                      message: "Failed to create organization.",
+                    });
+                  }
+                }
+              } catch (error) {
+                throw new APIError("INTERNAL_SERVER_ERROR", {
+                  message: "Failed to process organization record.",
+                });
+              }
+            } else if (orgOption === "join") {
+              // Joining an existing organization
+              if (!shortCode) {
+                throw new APIError("BAD_REQUEST", {
+                  message: "Organization short code is required when joining an existing organization.",
+                });
+              }
+              
+              try {
+                // Find organization by short code
+                const existingOrgs = await db
+                  .select({ id: organizations.id, name: organizations.name })
+                  .from(organizations)
+                  .where(eq(organizations.short_code, shortCode));
+                
+                if (existingOrgs.length === 0) {
+                  throw new APIError("BAD_REQUEST", {
+                    message: "No organization found with the provided short code.",
+                  });
+                }
+                
+                organizationId = existingOrgs[0].id;
+              } catch (error) {
+                throw new APIError("INTERNAL_SERVER_ERROR", {
+                  message: "Failed to verify organization short code.",
+                });
+              }
+            } else if (!orgOption) {
+              // Backwards compatibility for old flow if no orgOption specified
+              if (organization) {
+                try {
+                  // Check if organization already exists with this name
+                  const existingOrgs = await db
+                    .select({ id: organizations.id })
+                    .from(organizations)
+                    .where(eq(organizations.name, organization));
+                  
+                  if (existingOrgs.length > 0) {
+                    organizationId = existingOrgs[0].id;
+                  } else {
+                    // Create a new organization with a unique short code
+                    const newShortCode = generateShortCode();
+                    const orgResult = await db.insert(organizations)
+                      .values({
+                        id: nanoid(),
+                        name: organization,
+                        short_code: newShortCode
+                      })
+                      .returning();
+                    
+                    if (orgResult.length > 0) {
+                      organizationId = orgResult[0].id;
+                    }
+                  }
+                } catch (error) {
+                  throw new APIError("INTERNAL_SERVER_ERROR", {
+                    message: "Failed to process organization record.",
+                  });
                 }
               }
-            } catch (error) {
-              console.error("Error handling organization:", error);
-              throw new APIError("INTERNAL_SERVER_ERROR", {
-                message: "Failed to process organization record.",
+            } else {
+              throw new APIError("BAD_REQUEST", {
+                message: "Invalid organization option. Must be 'create' or 'join'.",
               });
             }
           }
-          
-          console.log("Creating user with role:", role, "organization:", organization, "and organizationId:", organizationId);
           
           // Add role, organization and organizationId to the user data
           return {
@@ -149,8 +223,6 @@ export const auth = betterAuth({
           };
         },
         after: async (user) => {
-          console.log("Created user:", user);
-          
           // Add user to organization_users table if they have an organizationId
           const extendedUser = user as unknown as ExtendedUser;
           if (extendedUser.organizationId) {
@@ -167,9 +239,8 @@ export const auth = betterAuth({
                   role: role,
                 })
                 .returning();
-              console.log(`Added user ${extendedUser.id} to organization ${extendedUser.organizationId}`);
             } catch (error) {
-              console.error("Error adding user to organization:", error);
+              // We don't want to fail if this fails, as user is already created
             }
           }
         },

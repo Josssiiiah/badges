@@ -48,7 +48,7 @@ type Badge = {
   updatedAt: Date | null;
 };
 
-export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
+export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -488,7 +488,7 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
 
       {/* Create Badge Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-[var(--main-text)]">
               Create New Badge
@@ -511,7 +511,7 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-[var(--main-text)]">
               Edit Badge
@@ -525,7 +525,7 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
       </Dialog>
 
       {/* Badge Grid Card */}
-      <Card className="bg-white/10 backdrop-filter backdrop-blur-md border border-white/20 shadow-xl">
+      <Card className="bg-white/10 backdrop-filter backdrop-blur-">
         <CardHeader>
           <CardTitle>Available Badges</CardTitle>
           <CardDescription>
@@ -536,7 +536,7 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {/* Create New Badge Card */}
             <Card
-              className="overflow-hidden border-dashed border-2 cursor-pointer group h-full flex flex-col bg-white/5 backdrop-filter backdrop-blur-sm hover:bg-white/10 transition-colors"
+              className="overflow-hidden border-dashed border-2 border-black/40 cursor-pointer group h-full flex flex-col bg-white/5 backdrop-filter backdrop-blur-sm hover:bg-white/15 transition-all hover:shadow-lg hover:scale-[1.02]"
               onClick={() => {
                 resetForm();
                 setIsCreateOpen(true);
@@ -544,8 +544,8 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
             >
               <CardContent className="p-0 flex-1 aspect-square flex items-center justify-center bg-muted/10 group-hover:bg-muted/20 transition-colors">
                 <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
-                  <Plus className="h-12 w-12 mb-2" />
-                  <p className="text-sm font-medium">Create New Badge</p>
+                  <Plus className="h-12 w-12 mb-2 text-black/40" />
+                  <p className="text-sm font-medium text-black/40">Create New Badge</p>
                 </div>
               </CardContent>
             </Card>
@@ -554,14 +554,14 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
             {badges.map((badge: Badge) => (
               <Card
                 key={badge.id}
-                className="overflow-hidden border group cursor-pointer h-full bg-white/10 backdrop-filter backdrop-blur-sm hover:bg-white/20 transition-colors"
+                className="overflow-hidden border border-black/ group cursor-pointer h-full bg-white/10 backdrop-filter backdrop-blur-sm hover:bg-white/20 transition-all hover:shadow-lg hover:scale-[1.02]"
                 onClick={() => openEditDialog(badge)}
               >
-                <CardContent className="p-0 aspect-square flex items-center justify-center bg-muted/40 group-hover:bg-muted/80 transition-colors relative">
+                <CardContent className="p-0 aspect-square flex items-center justify-center bg-muted/20 group-hover:bg-muted/40 transition-colors relative">
                   <img
                     src={badge.imageData}
                     alt={`Badge for ${badge.name}`}
-                    className="max-w-[75%] max-h-[75%] object-contain transition-transform group-hover:scale-105"
+                    className="max-w-[100%] max-h-[100%] object-contain transition-transform group-hover:scale-110"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -575,28 +575,29 @@ export function TemplatesDashboard({ badges = [] }: { badges: Badge[] }) {
                   >
                     {badge.name}
                   </CardTitle>
-                  <p className="text-sm text-[var(--main-text)]/80">
+                  {/* <p className="text-sm text-[var(--main-text)]/80">
                     Issued by: {badge.issuedBy}
-                  </p>
+                  </p> */}
                   {badge.description && (
                     <CardDescription
-                      className="text-xs mt-1 line-clamp-2 text-[var(--main-text)]/80"
+                      className="text-xs mt-1 line-clamp-1 text-[var(--main-text)]/80"
                       title={badge.description}
                     >
-                      {badge.description}
+                      {badge.description.split(' ').slice(0, 20).join(' ')}
+                      {badge.description.split(' ').length > 20 ? '...' : ''}
                     </CardDescription>
                   )}
-                  {badge.skills && (
+                  {/* {badge.skills && (
                     <p className="text-xs mt-1 text-[var(--main-text)]/80">
                       Skills: {badge.skills}
                     </p>
-                  )}
+                  )} */}
                 </CardHeader>
               </Card>
             ))}
 
             {badges.length === 0 && (
-              <div className="col-span-full rounded-lg border bg-card text-card-foreground shadow-sm p-6 text-center">
+              <div className="col-span-full rounded-lg bg-white/5 backdrop-filter backdrop-blur-sm border border-white/20 p-6 text-center shadow-md">
                 <p className="text-[var(--main-text)]/80">
                   No badge templates available yet. Click the "Create New Badge"
                   card to get started.

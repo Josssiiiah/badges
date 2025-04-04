@@ -34,10 +34,10 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       return { error: String(error) };
     }
   })
-  // Get a specific badge with its user
+  // Get a specific badge with its user - now using the badge assignment ID
   .get("/:badgeId", async ({ params }) => {
     try {
-      // Get the badge details and user info
+      // Get the badge details and user info using the badge assignment ID
       const result = await db
         .select({
           badge: createdBadges,
@@ -51,7 +51,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         .from(badges)
         .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
         .innerJoin(user, eq(badges.userId, user.id))
-        .where(eq(createdBadges.id, params.badgeId))
+        .where(eq(badges.id, params.badgeId)) // Changed: now searching by badge assignment ID
         .limit(1);
 
       if (!result.length) {
@@ -117,6 +117,70 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
     body: t.Object({
       badgeId: t.String(),
       userId: t.String()
+    })
+  })
+  // Assign a badge to a user by email - new endpoint
+  .post("/assign-by-email", async (context) => {
+    try {
+      const { body } = context;
+      const { badgeId, email } = body;
+      const session = await userMiddleware(context);
+      
+      if (!session.user) {
+        return { error: "Unauthorized" };
+      }
+
+      // Find the user by email
+      const userResult = await db
+        .select()
+        .from(user)
+        .where(eq(user.email, email))
+        .limit(1);
+
+      if (!userResult.length) {
+        return { error: "User not found with this email" };
+      }
+
+      const userId = userResult[0].id;
+
+      // Verify the badge exists
+      const badge = await db
+        .select()
+        .from(createdBadges)
+        .where(eq(createdBadges.id, badgeId))
+        .limit(1);
+
+      if (!badge.length) {
+        return { error: "Badge not found" };
+      }
+      
+      // If administrator, verify the badge belongs to their organization
+      if (
+        session.user.role === "administrator" && 
+        session.user.organizationId && 
+        badge[0].organizationId !== session.user.organizationId
+      ) {
+        return { error: "Badge does not belong to your organization" };
+      }
+
+      // Create the assignment
+      const assignment = await db
+        .insert(badges)
+        .values({
+          badgeId,
+          userId,
+        })
+        .returning();
+
+      return { assignment: assignment[0] };
+    } catch (error) {
+      console.error("Error assigning badge:", error);
+      return { error: String(error) };
+    }
+  }, {
+    body: t.Object({
+      badgeId: t.String(),
+      email: t.String()
     })
   })
   // Upload a badge image

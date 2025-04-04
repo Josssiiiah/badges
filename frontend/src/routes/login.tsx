@@ -101,7 +101,7 @@ export default function Login() {
 
   if (isPending) {
     return (
-      <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[80vh]">
+      <div className="container mx-auto px-4 py-8 md:py-12 flex justify-center items-center min-h-[80vh]">
         <div className="w-full max-w-md">
           <Skeleton className="h-12 w-3/4 mx-auto mb-6" />
           <Skeleton className="h-4 w-1/2 mx-auto mb-10" />
@@ -118,19 +118,19 @@ export default function Login() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[80vh]">
-      <div className="flex flex-row justify-center w-full">
-        <div className="w-1/2 p-8 pr-12">
-          <h1 className="text-6xl font-bold mb-6 text-[var(--main-text)]">
+    <div className="container mx-auto px-4 py-6 md:py-12 flex justify-center items-center min-h-[80vh]">
+      <div className="flex flex-col lg:flex-row justify-center w-full gap-6 lg:gap-0">
+        <div className="w-full lg:w-1/2 p-4 lg:p-8 lg:pr-12 order-1 lg:order-1">
+          <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-4 md:mb-6 text-[var(--main-text)]">
             Protect Your Resume-worthy Achievements
           </h1>
-          <p className="text-xl text-[var(--main-text)]/80">
-            Track your earned badges and certifiations. Or issue secure,
+          <p className="text-lg md:text-xl text-[var(--main-text)]/80">
+            Track your earned badges and certifications. Or issue secure,
             verifiable badges and certification links to showcase and validate
             course completion anywhere online.
           </p>
         </div>
-        <Card className="w-1/2">
+        <Card className="w-full lg:w-1/2 order-2 lg:order-2">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center text-[var(--main-text)]">
               {isSignUp ? "Create an account" : "Sign in"}
@@ -174,21 +174,21 @@ export default function Login() {
                     <Label className="text-[var(--main-text)]">
                       Account Type
                     </Label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <button
                         type="button"
                         onClick={() => setRole("student")}
                         className={cn(
-                          "p-4 border rounded-lg transition-all duration-200",
+                          "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "student"
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                             : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
                         )}
                       >
-                        <div className="flex flex-col items-center gap-2">
-                          <GraduationCap className="w-6 h-6" />
+                        <div className="flex flex-col items-center gap-1 md:gap-2">
+                          <GraduationCap className="w-5 h-5 md:w-6 md:h-6" />
                           <span className="font-medium">Student</span>
-                          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                          <p className="text-xs md:text-sm text-center text-gray-500 dark:text-gray-400">
                             Track and showcase your achievements
                           </p>
                         </div>
@@ -197,16 +197,16 @@ export default function Login() {
                         type="button"
                         onClick={() => setRole("administrator")}
                         className={cn(
-                          "p-4 border rounded-lg transition-all duration-200",
+                          "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "administrator"
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                             : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
                         )}
                       >
-                        <div className="flex flex-col items-center gap-2">
-                          <Shield className="w-6 h-6" />
+                        <div className="flex flex-col items-center gap-1 md:gap-2">
+                          <Shield className="w-5 h-5 md:w-6 md:h-6" />
                           <span className="font-medium">Administrator</span>
-                          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                          <p className="text-xs md:text-sm text-center text-gray-500 dark:text-gray-400">
                             Issue and manage badges
                           </p>
                         </div>
@@ -308,7 +308,7 @@ export default function Login() {
             </form>
           </CardContent>
           <Separator />
-          <CardFooter className="flex justify-center p-6">
+          <CardFooter className="flex justify-center p-4 md:p-6">
             <Button
               variant="link"
               onClick={() => setIsSignUp(!isSignUp)}

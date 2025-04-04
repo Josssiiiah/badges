@@ -1,5 +1,11 @@
 import * as React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +17,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Building,
+  Users,
+  User,
+  CalendarDays,
+  Shield,
+  GraduationCap,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { fetchWithAuth } from "@/lib/api-client";
 
 // Get the backend URL from environment variables
 const BACKEND_URL =
@@ -172,7 +190,54 @@ export function OrganizationsDashboard() {
       healthCheck?.status === "ok",
   });
 
-  const isLoading = isLoadingOrg || isLoadingUsers;
+  // Fetch students from the students table
+  const { data: students, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ["students"],
+    queryFn: async () => {
+      try {
+        if (!organization?.id || organization.id === "unknown") {
+          console.log("No valid organization ID for fetching students");
+          return [];
+        }
+
+        const response = await fetchWithAuth("students/all");
+        const data = await response.json();
+        return data.students || [];
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch students",
+        });
+        return [];
+      }
+    },
+    enabled: !!organization?.id && organization.id !== "unknown",
+  });
+
+  const isLoading = isLoadingOrg || isLoadingUsers || isLoadingStudents;
+
+  const getRoleColor = (role: string) => {
+    switch (role.toLowerCase()) {
+      case "administrator":
+        return "bg-blue-100 text-black dark:bg-blue-900/30 dark:text-black";
+      case "student":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return "??";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   if (isLoading) {
     return (
@@ -183,71 +248,201 @@ export function OrganizationsDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-[var(--main-text)]">
-          Organization Details
-        </h2>
+    <div className="space-y-8">
+      {/* Organization Overview Card */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="bg-gradient-to-br from-white/20 to-white/5 backdrop-filter backdrop-blur-md border border-white/30 shadow-xl overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-full bg-[var(--accent-bg)]/20">
+                  <Building className="h-6 w-6 text-[var(--main-text)]" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">
+                    Organization Profile
+                  </CardTitle>
+                  <CardDescription>Basic organization details</CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 mt-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center p-4 rounded-lg bg-[var(--accent-bg)]/10">
+                  <div className="flex items-center gap-3">
+                    <Building className="h-5 w-5 text-[var(--main-text)]/70" />
+                    <span className="text-sm font-medium text-[var(--main-text)]/60">
+                      Organization
+                    </span>
+                  </div>
+                  <span className="text-base font-semibold text-[var(--main-text)]">
+                    {organization?.name || "No organization"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-4 rounded-lg bg-[var(--accent-bg)]/10">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-[var(--main-text)]/70" />
+                    <span className="text-sm font-medium text-[var(--main-text)]/60">
+                      Members
+                    </span>
+                  </div>
+                  <span className="text-base font-semibold text-[var(--main-text)]">
+                    {orgUsers?.length || 0} members
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-white/20 to-white/5 backdrop-filter backdrop-blur-md border border-white/30 shadow-xl">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-full bg-[var(--accent-bg)]/20">
+                  <Users className="h-6 w-6 text-[var(--main-text)]" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Member Statistics</CardTitle>
+                  <CardDescription>
+                    Overview of organization members
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-[var(--accent-bg)]/10 flex flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-[var(--main-text)]">
+                    {orgUsers?.filter(
+                      (u: OrganizationUser) => u.role === "administrator"
+                    ).length || 0}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-[var(--main-text)]/60 font-medium">
+                    <Shield className="h-3.5 w-3.5" />
+                    <span>Administrators</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[var(--accent-bg)]/10 flex flex-col items-center justify-center">
+                  <div className="text-3xl font-bold text-[var(--main-text)]">
+                    {students?.length || 0}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-[var(--main-text)]/60 font-medium">
+                    <GraduationCap className="h-3.5 w-3.5" />
+                    <span>Students</span>
+                  </div>
+                </div>
+              </div>
+
+              <Button className="w-full" variant="outline">
+                <User className="h-4 w-4 mr-2" />
+                Invite New Administrator
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card className="bg-white/10 backdrop-filter backdrop-blur-md border border-white/20 shadow-xl">
+      {/* Organization Members Card */}
+      <Card className="bg-gradient-to-br from-white/20 to-white/5 backdrop-filter backdrop-blur-md border border-white/30 shadow-xl overflow-hidden">
         <CardHeader>
-          <CardTitle>Organization Info</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-[var(--main-text)]/70">
-                Organization Name
-              </h3>
-              <p className="text-lg font-medium text-[var(--main-text)]">
-                {organization?.name || "No organization"}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-[var(--main-text)]/70">
-                Organization ID
-              </h3>
-              <p className="text-lg font-medium text-[var(--main-text)]">
-                {organization?.id || "N/A"}
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-[var(--accent-bg)]/20">
+                <Users className="h-5 w-5 text-[var(--main-text)]" />
+              </div>
+              <div>
+                <CardTitle>Organization Members</CardTitle>
+                <CardDescription>
+                  Manage your organization's users
+                </CardDescription>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-white/10 backdrop-filter backdrop-blur-md border border-white/20 shadow-xl">
-        <CardHeader>
-          <CardTitle>Organization Members</CardTitle>
         </CardHeader>
         <CardContent>
           {orgUsers && orgUsers.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orgUsers.map((user: OrganizationUser) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.name || "No name"}</TableCell>
-                    <TableCell>{user.email || "No email"}</TableCell>
-                    <TableCell className="capitalize">{user.role}</TableCell>
-                    <TableCell>
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </TableCell>
+            <div className="rounded-xl overflow-hidden border border-white/20">
+              <Table>
+                <TableHeader className="bg-[var(--accent-bg)]/15">
+                  <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
+                    <TableHead className="w-12"></TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Join Date</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {orgUsers.map((user: OrganizationUser) => (
+                    <TableRow
+                      key={user.id}
+                      className="hover:bg-[var(--accent-bg)]/5"
+                    >
+                      <TableCell className="font-medium p-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-[var(--accent-bg)]/30 text-[var(--main-text)]">
+                            {getInitials(user.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-[var(--main-text)]">
+                            {user.name || "No name"}
+                          </span>
+                          <span className="text-sm text-[var(--main-text)]/60">
+                            {user.email || "No email"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={`${getRoleColor(user.role)} capitalize px-2 py-1`}
+                        >
+                          {user.role === "administrator" ? (
+                            <Shield className="inline h-3 w-3 mr-1" />
+                          ) : (
+                            <User className="inline h-3 w-3 mr-1" />
+                          )}
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <CalendarDays className="h-4 w-4 mr-2 text-[var(--main-text)]/50" />
+                          <span className="text-sm">
+                            {new Date(user.createdAt).toLocaleDateString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="text-center py-4 text-[var(--main-text)]/70">
-              No members found for this organization.
+            <div className="flex flex-col items-center justify-center py-10 bg-[var(--accent-bg)]/5 rounded-lg">
+              <Users className="h-10 w-10 text-[var(--main-text)]/40 mb-2" />
+              <p className="text-center text-[var(--main-text)]/70 mb-4">
+                No members found for this organization.
+              </p>
+              <Button variant="outline" size="sm">
+                <User className="h-4 w-4 mr-2" />
+                Add Administrators
+              </Button>
             </div>
           )}
         </CardContent>

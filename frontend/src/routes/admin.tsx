@@ -2,13 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useNavigate } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TemplatesDashboard } from "@/components/TemplatesDashboard";
+import { BadgesDashboard } from "@/components/BadgesDashboard";
 import { StudentDashboard } from "@/components/StudentDashboard";
 import { OrganizationsDashboard } from "@/components/OrganizationsDashboard";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/api-client";
+import { Award, GraduationCap, Building } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoute,
@@ -16,7 +18,6 @@ export const Route = createFileRoute("/admin")({
 
 function AdminRoute() {
   const { data: session, isPending } = authClient.useSession();
-  const navigate = useNavigate();
 
   if (isPending) {
     return (
@@ -110,17 +111,47 @@ function AdminPage() {
       </p>
 
       <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="templates">Badges</TabsTrigger>
-          <TabsTrigger value="students">Students</TabsTrigger>
-          <TabsTrigger value="organization">Organization</TabsTrigger>
+        <TabsList className="w-full max-w-md mx-auto mb-6 bg-[var(--accent-bg)]/10 p-1 rounded-lg">
+          <TabsTrigger
+            value="templates"
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
+              "data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--main-text)]",
+              "data-[state=inactive]:text-[var(--dark-gray)]/70 hover:text-[var(--dark-gray)]"
+            )}
+          >
+            <Award className="h-4 w-4" />
+            <span>Badges</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="students"
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
+              "data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--main-text)]",
+              "data-[state=inactive]:text-[var(--dark-gray)]/70 hover:text-[var(--dark-gray)]"
+            )}
+          >
+            <GraduationCap className="h-4 w-4" />
+            <span>Students</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="organization"
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
+              "data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--main-text)]",
+              "data-[state=inactive]:text-[var(--dark-gray)]/70 hover:text-[var(--dark-gray)]"
+            )}
+          >
+            <Building className="h-4 w-4" />
+            <span>Organization</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent
           value="templates"
           className="mt-6 rounded-xl p-6 bg-white/10 backdrop-filter backdrop-blur-lg border-2 border-white/30 shadow-xl ring-1 ring-white/50"
         >
-          <TemplatesDashboard badges={badges || []} />
+          <BadgesDashboard badges={badges || []} />
         </TabsContent>
 
         <TabsContent

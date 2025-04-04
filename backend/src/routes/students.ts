@@ -23,7 +23,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             name: students.name,
             email: students.email,
             hasBadge: students.hasBadge,
-            badgeId: students.badgeId,
+            badgeId: students.badgeId, // This is the badge assignment ID
             badge: createdBadges,
             createdAt: students.createdAt,
             updatedAt: students.updatedAt,
@@ -44,7 +44,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           name: students.name,
           email: students.email,
           hasBadge: students.hasBadge,
-          badgeId: students.badgeId,
+          badgeId: students.badgeId, // This is the badge assignment ID
           badge: createdBadges,
           createdAt: students.createdAt,
           updatedAt: students.updatedAt,
@@ -71,7 +71,15 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         }
 
         // Get student with optional organization filter for administrators
-        let query = db
+        let whereConditions = [eq(students.studentId, params.studentId)];
+        
+        // Add organization filter for administrators
+        if (session.user.role === "administrator" && session.user.organizationId) {
+          whereConditions.push(eq(students.organizationId, session.user.organizationId));
+        }
+        
+        // Build the query with all conditions
+        const student = await db
           .select({
             studentId: students.studentId,
             name: students.name,
@@ -86,14 +94,8 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           .from(students)
           .leftJoin(badges, eq(students.badgeId, badges.id))
           .leftJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
-          .where(eq(students.studentId, params.studentId));
-        
-        // Add organization filter for administrators
-        if (session.user.role === "administrator" && session.user.organizationId) {
-          query = query.where(eq(students.organizationId, session.user.organizationId));
-        }
-        
-        const student = await query.limit(1);
+          .where(and(...whereConditions))
+          .limit(1);
 
         if (student.length === 0) {
           return { error: "Student not found" };

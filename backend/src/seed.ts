@@ -220,7 +220,7 @@ async function seedAssignedBadges() {
   
   for (const assignment of seedData.badges) {
     await db.insert(schema.badges).values({
-      id: nanoid(),
+      id: assignment.id,
       badgeId: assignment.badgeId,
       userId: assignment.userId,
     });

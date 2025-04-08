@@ -15,6 +15,7 @@ import { Route as ProfileImport } from './routes/profile'
 import { Route as PricingImport } from './routes/pricing'
 import { Route as LogoutImport } from './routes/logout'
 import { Route as LoginImport } from './routes/login'
+import { Route as DashboardImport } from './routes/dashboard'
 import { Route as AdminImport } from './routes/admin'
 import { Route as IndexImport } from './routes/index'
 import { Route as UsersUsernameImport } from './routes/users.$username'
@@ -43,6 +44,12 @@ const LogoutRoute = LogoutImport.update({
 const LoginRoute = LoginImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DashboardRoute = DashboardImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -86,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminImport
+      parentRoute: typeof rootRoute
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardImport
       parentRoute: typeof rootRoute
     }
     '/login': {
@@ -138,6 +152,7 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/pricing': typeof PricingRoute
@@ -149,6 +164,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/pricing': typeof PricingRoute
@@ -161,6 +177,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/pricing': typeof PricingRoute
@@ -174,6 +191,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/dashboard'
     | '/login'
     | '/logout'
     | '/pricing'
@@ -184,6 +202,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/dashboard'
     | '/login'
     | '/logout'
     | '/pricing'
@@ -194,6 +213,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/dashboard'
     | '/login'
     | '/logout'
     | '/pricing'
@@ -206,6 +226,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   PricingRoute: typeof PricingRoute
@@ -217,6 +238,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   PricingRoute: PricingRoute,
@@ -237,6 +259,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/admin",
+        "/dashboard",
         "/login",
         "/logout",
         "/pricing",
@@ -250,6 +273,9 @@ export const routeTree = rootRoute
     },
     "/admin": {
       "filePath": "admin.tsx"
+    },
+    "/dashboard": {
+      "filePath": "dashboard.tsx"
     },
     "/login": {
       "filePath": "login.tsx"

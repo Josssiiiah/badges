@@ -1,5 +1,5 @@
 import * as React from "react";
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -155,8 +155,14 @@ function BadgeViewComponent() {
         <div className="bg-[var(--accent-bg)]/10 rounded-lg p-6 flex flex-col sm:mx-14 sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
           <p className="font-medium text-sm text-[var(--dark-gray)]">
             This badge was issued to{" "}
-            <span className="text-[var(--main-text)]">{user.name}</span> on
-            April 1, 2025
+            <Link
+              to="/users/$username"
+              params={{ username: user.name }}
+              className="text-[var(--main-text)] hover:underline"
+            >
+              {user.name}
+            </Link>{" "}
+            on April 1, 2025
           </p>
           <div className="flex items-center gap-2">
             <Dialog>

@@ -158,6 +158,7 @@ async function seedUsers() {
       role: userData.role as "student" | "administrator",
       organization: userData.organization, // Handle optional organization name
       organizationId: userData.organizationId,
+      isPublic: true, // All users are public by default
     });
     
     console.log(`Added user: ${userData.name} (${userData.id}) ${userData.organization ? `in organization ${userData.organization}` : ''}`);

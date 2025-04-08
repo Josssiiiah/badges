@@ -44,16 +44,28 @@ function RootComponent() {
 
             <nav className="hidden sm:flex items-center space-x-4">
               {isAuthenticated && (
-                <Link
-                  to="/profile"
-                  className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
-                  activeProps={{
-                    className:
-                      "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
-                  }}
-                >
-                  Profile
-                </Link>
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
+                    activeProps={{
+                      className:
+                        "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
+                    }}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
+                    activeProps={{
+                      className:
+                        "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
+                    }}
+                  >
+                    Profile
+                  </Link>
+                </>
               )}
               {isAuthenticated && isAdministrator && (
                 <Link
@@ -95,24 +107,18 @@ function RootComponent() {
                     asChild
                     className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
                   >
-                    <Link to="/profile" className="cursor-pointer">
-                      My Profile
+                    <Link to="/dashboard" className="cursor-pointer">
+                      Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  {!isAdministrator && (
-                    <DropdownMenuItem
-                      asChild
-                      className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
-                    >
-                      <Link
-                        to="/users/$username"
-                        params={{ username: session?.user?.name || "" }}
-                        className="cursor-pointer"
-                      >
-                        My Badges
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem
+                    asChild
+                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
+                  >
+                    <Link to="/profile" className="cursor-pointer">
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
 
                   {isAdministrator && (
                     <DropdownMenuItem

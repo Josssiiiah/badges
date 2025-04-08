@@ -27,6 +27,7 @@ export const userRoutes = new Elysia({ prefix: "/users" })
           biography: user.biography,
           organization: user.organization,
           image: user.image,
+          isPublic: user.isPublic,
         })
         .from(user)
         .where(eq(user.id, session.user.id))
@@ -115,6 +116,7 @@ export const userRoutes = new Elysia({ prefix: "/users" })
           role: user.role,
           biography: user.biography,
           organization: user.organization,
+          isPublic: user.isPublic,
         })
         .from(user)
         .where(eq(user.name, username))
@@ -171,5 +173,37 @@ export const userRoutes = new Elysia({ prefix: "/users" })
   }, {
     body: t.Object({
       biography: t.String(),
+    }),
+  })
+  // Update user profile visibility
+  .post("/update-visibility", async (context) => {
+    try {
+      // Ensure the user is authenticated
+      const session = await userMiddleware(context);
+      if (!session.user) {
+        context.set.status = 401;
+        return { error: "Unauthorized" };
+      }
+      
+      const { isPublic } = context.body;
+      
+      // Update the user's visibility setting
+      await db
+        .update(user)
+        .set({ 
+          isPublic,
+          updatedAt: new Date() 
+        })
+        .where(eq(user.id, session.user.id));
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating visibility settings:", error);
+      context.set.status = 500;
+      return { error: String(error) };
+    }
+  }, {
+    body: t.Object({
+      isPublic: t.Boolean(),
     }),
   });

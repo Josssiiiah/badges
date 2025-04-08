@@ -72,6 +72,7 @@ export const badges = sqliteTable("badges", {
   earnedAt: integer("earned_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
+  sharesCount: integer("shares_count").default(0).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
@@ -108,6 +109,9 @@ export const user = sqliteTable("user", {
     .$type<boolean>(),
   image: text("image"),
   biography: text("biography"),
+  isPublic: integer("is_public", { mode: "boolean" })
+    .default(true)
+    .$type<boolean>(),
   role: text("role", { enum: ["student", "administrator"] })
     .default("student")
     .notNull(),

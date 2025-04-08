@@ -27,6 +27,15 @@ type Badge = {
   updatedAt: Date | null;
 };
 
+type UserData = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  biography?: string | null;
+  organization?: string | null;
+};
+
 export const Route = createFileRoute("/users/$username")({
   component: UserProfileComponent,
 });
@@ -53,9 +62,26 @@ function UserProfileComponent() {
     }
   };
 
+  const { data: userData, isLoading: isUserLoading } = useQuery({
+    queryKey: ["user", username],
+    queryFn: async () => {
+      const response = await fetchWithAuth(
+        `users/by-username?username=${encodeURIComponent(username)}`
+      );
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data.user as UserData;
+    },
+    enabled: !!username,
+  });
+
   const {
     data: badges,
-    isLoading,
+    isLoading: isBadgesLoading,
     error,
   } = useQuery({
     queryKey: ["badges"],
@@ -70,6 +96,8 @@ function UserProfileComponent() {
       return data.badges as Badge[];
     },
   });
+
+  const isLoading = isUserLoading || isBadgesLoading;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -96,124 +124,149 @@ function UserProfileComponent() {
                 <Skeleton className="h-[200px] w-full" />
                 <Skeleton className="h-[200px] w-full" />
               </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-[var(--main-text)]/80">
-                  Error loading badges
-                </p>
-              </div>
-            ) : badges && badges.length > 0 ? (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 gap-8">
-                  {badges.map((badge) => (
-                    <div
-                      key={badge.id}
-                      className="bg-[var(--main-bg)] rounded-xl border border-[var(--accent-bg)] overflow-hidden"
-                    >
-                      <div className="grid md:grid-cols-[300px,1fr] gap-6">
-                        {/* Badge Image Section */}
-                        <div className="p-8 bg-[var(--accent-bg)]/5 flex flex-col items-center justify-center space-y-4">
-                          <div className="w-full aspect-square max-w-[300px] relative">
-                            {badge.imageData ? (
-                              <img
-                                src={badge.imageData}
-                                alt={badge.name}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/80">
-                                No Image
-                              </div>
-                            )}
-                          </div>
-                          <Link
-                            to="/badges/$badgeId"
-                            params={{ badgeId: badge.id }}
-                            className="w-full"
-                          >
-                            <Button
-                              className="w-full flex items-center justify-center gap-2"
-                              variant="default"
-                            >
-                              <Eye className="h-4 w-4" />
-                              Preview Badge
-                            </Button>
-                          </Link>
-                        </div>
-
-                        {/* Badge Info Section */}
-                        <div className="p-8 space-y-6">
-                          <div>
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="text-xl font-semibold text-[var(--main-text)]">
-                                {badge.name}
-                              </h4>
-                            </div>
-                            <p className="text-sm text-[var(--main-text)]/80 flex items-center gap-2">
-                              <Award className="h-4 w-4" />
-                              Issued by {badge.issuedBy}
-                            </p>
-                          </div>
-
-                          {badge.description && (
-                            <p className="text-sm text-[var(--main-text)]/80">
-                              {badge.description}
-                            </p>
-                          )}
-
-                          {badge.skills && (
-                            <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-[var(--main-text)]">
-                                Skills
-                              </h5>
-                              <div className="flex flex-wrap gap-2">
-                                {badge.skills.split(",").map((skill, index) => (
-                                  <BadgeUI
-                                    key={index}
-                                    variant="outline"
-                                    className="bg-[var(--accent-bg)]/10"
-                                  >
-                                    {skill.trim()}
-                                  </BadgeUI>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {badge.earningCriteria && (
-                            <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-[var(--main-text)]">
-                                Earning Criteria
-                              </h5>
-                              <p className="text-sm text-[var(--main-text)]/80">
-                                {badge.earningCriteria}
-                              </p>
-                            </div>
-                          )}
-
-                          {badge.courseLink && (
-                            <div className="pt-4">
-                              <a
-                                href={badge.courseLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-sm text-primary hover:underline"
-                              >
-                                Learn more
-                                <ExternalLink className="ml-1 h-3 w-3" />
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-[var(--main-text)]/80">No badges found</p>
-              </div>
+              <>
+                {userData?.biography && (
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-[var(--main-text)] mb-4">
+                      About Me
+                    </h3>
+                    <div className="bg-[var(--main-bg)] rounded-md p-4 border border-[var(--accent-bg)]">
+                      <p className="text-[var(--main-text)]/80">
+                        {userData.biography}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <h3 className="text-xl font-semibold text-[var(--main-text)] mb-4">
+                  Badges
+                </h3>
+
+                {error ? (
+                  <div className="text-center py-8">
+                    <p className="text-[var(--main-text)]/80">
+                      Error loading badges
+                    </p>
+                  </div>
+                ) : badges && badges.length > 0 ? (
+                  <div className="space-y-8">
+                    <div className="grid grid-cols-1 gap-8">
+                      {badges.map((badge) => (
+                        <div
+                          key={badge.id}
+                          className="bg-[var(--main-bg)] rounded-xl border border-[var(--accent-bg)] overflow-hidden"
+                        >
+                          <div className="grid md:grid-cols-[300px,1fr] gap-6">
+                            {/* Badge Image Section */}
+                            <div className="p-8 bg-[var(--accent-bg)]/5 flex flex-col items-center justify-center space-y-4">
+                              <div className="w-full aspect-square max-w-[300px] relative">
+                                {badge.imageData ? (
+                                  <img
+                                    src={badge.imageData}
+                                    alt={badge.name}
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/80">
+                                    No Image
+                                  </div>
+                                )}
+                              </div>
+                              <Link
+                                to="/badges/$badgeId"
+                                params={{ badgeId: badge.id }}
+                                className="w-full"
+                              >
+                                <Button
+                                  className="w-full flex items-center justify-center gap-2"
+                                  variant="default"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Preview Badge
+                                </Button>
+                              </Link>
+                            </div>
+
+                            {/* Badge Info Section */}
+                            <div className="p-8 space-y-6">
+                              <div>
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="text-xl font-semibold text-[var(--main-text)]">
+                                    {badge.name}
+                                  </h4>
+                                </div>
+                                <p className="text-sm text-[var(--main-text)]/80 flex items-center gap-2">
+                                  <Award className="h-4 w-4" />
+                                  Issued by {badge.issuedBy}
+                                </p>
+                              </div>
+
+                              {badge.description && (
+                                <p className="text-sm text-[var(--main-text)]/80">
+                                  {badge.description}
+                                </p>
+                              )}
+
+                              {badge.skills && (
+                                <div className="space-y-2">
+                                  <h5 className="text-sm font-medium text-[var(--main-text)]">
+                                    Skills
+                                  </h5>
+                                  <div className="flex flex-wrap gap-2">
+                                    {badge.skills
+                                      .split(",")
+                                      .map((skill, index) => (
+                                        <BadgeUI
+                                          key={index}
+                                          variant="outline"
+                                          className="bg-[var(--accent-bg)]/10"
+                                        >
+                                          {skill.trim()}
+                                        </BadgeUI>
+                                      ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {badge.earningCriteria && (
+                                <div className="space-y-2">
+                                  <h5 className="text-sm font-medium text-[var(--main-text)]">
+                                    Earning Criteria
+                                  </h5>
+                                  <p className="text-sm text-[var(--main-text)]/80">
+                                    {badge.earningCriteria}
+                                  </p>
+                                </div>
+                              )}
+
+                              {badge.courseLink && (
+                                <div className="pt-4">
+                                  <a
+                                    href={badge.courseLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center text-sm text-primary hover:underline"
+                                  >
+                                    Learn more
+                                    <ExternalLink className="ml-1 h-3 w-3" />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-[var(--main-text)]/80">
+                      No badges found
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

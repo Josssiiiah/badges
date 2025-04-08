@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -12,6 +12,9 @@ import { getInitials } from "@/lib/utils";
 import { Badge as BadgeUI } from "@/components/ui/badge";
 import { fetchWithAuth } from "@/lib/api-client";
 import { Link } from "@tanstack/react-router";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 type Badge = {
   // ID from the badges table (assignment ID)
@@ -31,6 +34,16 @@ type Badge = {
   updatedAt: Date | null;
 };
 
+type UserData = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  biography: string | null;
+  organization: string | null;
+  image?: string | null;
+};
+
 export const Route = createFileRoute("/profile")({
   component: ProfileComponent,
 });
@@ -38,6 +51,31 @@ export const Route = createFileRoute("/profile")({
 function ProfileComponent() {
   const { data: session, isPending: isSessionLoading } =
     authClient.useSession();
+  const [biography, setBiography] = React.useState("");
+  const [initialBiography, setInitialBiography] = React.useState("");
+  const [isSaving, setIsSaving] = React.useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch user data directly from the backend
+  const { data: userData, isLoading: isUserLoading } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: async () => {
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetchWithAuth("users/profile");
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data.user as UserData;
+    },
+    enabled: !!session?.user?.id,
+  });
 
   const {
     data: badges,
@@ -60,7 +98,73 @@ function ProfileComponent() {
     enabled: !!session?.user,
   });
 
-  if (isSessionLoading) {
+  // Update biography state when user data is loaded
+  React.useEffect(() => {
+    if (userData) {
+      setBiography(userData.biography || "");
+      setInitialBiography(userData.biography || "");
+    } else if (session?.user) {
+      // Fallback to session data if userData not available yet
+      setBiography(session.user.biography || "");
+      setInitialBiography(session.user.biography || "");
+    }
+  }, [userData, session]);
+
+  const handleSaveBiography = async () => {
+    if (!session?.user) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetchWithAuth("users/update-biography", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ biography }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Biography updated successfully",
+        });
+        setInitialBiography(biography);
+
+        // Update the query cache with the new biography
+        queryClient.setQueryData(
+          ["user-profile"],
+          (oldData: UserData | undefined) => {
+            if (!oldData) return undefined;
+            return {
+              ...oldData,
+              biography,
+            };
+          }
+        );
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update biography",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const hasChanges = biography !== initialBiography;
+  const isLoading = isSessionLoading || isUserLoading;
+
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
@@ -90,6 +194,9 @@ function ProfileComponent() {
     );
   }
 
+  // Use userData if available, otherwise fall back to session user
+  const user = userData || session.user;
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-5xl mx-auto">
@@ -98,21 +205,19 @@ function ProfileComponent() {
           <CardContent className="pt-8 pb-4">
             <div className="flex flex-col items-center justify-center space-y-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={session.user.image || ""} />
+                <AvatarImage src={user.image || ""} />
                 <AvatarFallback className="bg-[var(--accent-bg)] text-[var(--main-text)] text-xl">
-                  {getInitials(session.user.name || "")}
+                  {getInitials(user.name || "")}
                 </AvatarFallback>
               </Avatar>
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-[var(--main-text)]">
-                  {session.user.name}
+                  {user.name}
                 </h2>
-                <p className="text-[var(--main-text)]/80 mt-1">
-                  {session.user.email}
-                </p>
-                {session.user.organization && (
+                <p className="text-[var(--main-text)]/80 mt-1">{user.email}</p>
+                {user.organization && (
                   <BadgeUI variant="outline" className="mt-3">
-                    {session.user.organization}
+                    {user.organization}
                   </BadgeUI>
                 )}
               </div>
@@ -132,21 +237,49 @@ function ProfileComponent() {
                     Role
                   </p>
                   <p className="text-sm text-[var(--main-text)]">
-                    {session.user.role === "administrator"
+                    {user.role === "administrator"
                       ? "Administrator"
                       : "Student"}
                   </p>
                 </div>
-                {session.user.organization && (
+                {user.organization && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <p className="text-sm font-medium text-[var(--main-text)]/60">
                       Organization
                     </p>
                     <p className="text-sm text-[var(--main-text)]">
-                      {session.user.organization}
+                      {user.organization}
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Biography Section */}
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-[var(--main-text)] mb-4">
+                About Me
+              </h3>
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Share a bit about yourself, your interests, or your achievements..."
+                  className="min-h-[120px] resize-none"
+                  value={biography}
+                  onChange={(e) => setBiography(e.target.value)}
+                  maxLength={300}
+                />
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-[var(--main-text)]/60">
+                    {biography.length}/300 characters
+                  </p>
+                  <Button
+                    onClick={handleSaveBiography}
+                    disabled={!hasChanges || isSaving}
+                    size="sm"
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -273,6 +406,7 @@ function ProfileComponent() {
           </CardContent>
         </Card>
       </div>
+      <Toaster />
     </div>
   );
 }

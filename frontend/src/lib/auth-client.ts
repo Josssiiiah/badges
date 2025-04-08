@@ -28,6 +28,9 @@ export const authClient = createAuthClient({
         orgOption: {
           type: "string",
         },
+        biography: {
+          type: "string",
+        },
       },
     }),
   ],

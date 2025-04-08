@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Toaster } from "@/components/ui/toaster";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -166,6 +167,7 @@ function RootComponent() {
       </footer>
 
       {/* <TanStackRouterDevtools position="bottom-right" /> */}
+      <Toaster />
     </div>
   );
 }

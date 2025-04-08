@@ -107,6 +107,7 @@ export const user = sqliteTable("user", {
     .default(false)
     .$type<boolean>(),
   image: text("image"),
+  biography: text("biography"),
   role: text("role", { enum: ["student", "administrator"] })
     .default("student")
     .notNull(),

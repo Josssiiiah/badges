@@ -25,7 +25,7 @@ const seedData = {
     {
         id: "wnPGLZMBEjLNSXzqVJ5usnB6i7yg7e11", // User ID
         name: "Josiah Griggs",
-        email: "josiahgriggs8@stanford.edu",
+        email: "josiah@test.com",
         role: "student",
     },
     {

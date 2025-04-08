@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as ProfileImport } from './routes/profile'
 import { Route as PricingImport } from './routes/pricing'
 import { Route as LogoutImport } from './routes/logout'
 import { Route as LoginImport } from './routes/login'
@@ -20,6 +21,12 @@ import { Route as UsersUsernameImport } from './routes/users.$username'
 import { Route as BadgesBadgeIdImport } from './routes/badges.$badgeId'
 
 // Create/Update Routes
+
+const ProfileRoute = ProfileImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const PricingRoute = PricingImport.update({
   id: '/pricing',
@@ -102,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingImport
       parentRoute: typeof rootRoute
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileImport
+      parentRoute: typeof rootRoute
+    }
     '/badges/$badgeId': {
       id: '/badges/$badgeId'
       path: '/badges/$badgeId'
@@ -127,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/pricing': typeof PricingRoute
+  '/profile': typeof ProfileRoute
   '/badges/$badgeId': typeof BadgesBadgeIdRoute
   '/users/$username': typeof UsersUsernameRoute
 }
@@ -137,6 +152,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/pricing': typeof PricingRoute
+  '/profile': typeof ProfileRoute
   '/badges/$badgeId': typeof BadgesBadgeIdRoute
   '/users/$username': typeof UsersUsernameRoute
 }
@@ -148,6 +164,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/pricing': typeof PricingRoute
+  '/profile': typeof ProfileRoute
   '/badges/$badgeId': typeof BadgesBadgeIdRoute
   '/users/$username': typeof UsersUsernameRoute
 }
@@ -160,6 +177,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/pricing'
+    | '/profile'
     | '/badges/$badgeId'
     | '/users/$username'
   fileRoutesByTo: FileRoutesByTo
@@ -169,6 +187,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/pricing'
+    | '/profile'
     | '/badges/$badgeId'
     | '/users/$username'
   id:
@@ -178,6 +197,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/pricing'
+    | '/profile'
     | '/badges/$badgeId'
     | '/users/$username'
   fileRoutesById: FileRoutesById
@@ -189,6 +209,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   PricingRoute: typeof PricingRoute
+  ProfileRoute: typeof ProfileRoute
   BadgesBadgeIdRoute: typeof BadgesBadgeIdRoute
   UsersUsernameRoute: typeof UsersUsernameRoute
 }
@@ -199,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   PricingRoute: PricingRoute,
+  ProfileRoute: ProfileRoute,
   BadgesBadgeIdRoute: BadgesBadgeIdRoute,
   UsersUsernameRoute: UsersUsernameRoute,
 }
@@ -218,6 +240,7 @@ export const routeTree = rootRoute
         "/login",
         "/logout",
         "/pricing",
+        "/profile",
         "/badges/$badgeId",
         "/users/$username"
       ]
@@ -236,6 +259,9 @@ export const routeTree = rootRoute
     },
     "/pricing": {
       "filePath": "pricing.tsx"
+    },
+    "/profile": {
+      "filePath": "profile.tsx"
     },
     "/badges/$badgeId": {
       "filePath": "badges.$badgeId.tsx"

@@ -42,6 +42,18 @@ function RootComponent() {
             </Link>
 
             <nav className="hidden sm:flex items-center space-x-4">
+              {isAuthenticated && (
+                <Link
+                  to="/profile"
+                  className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
+                  activeProps={{
+                    className:
+                      "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
+                  }}
+                >
+                  Profile
+                </Link>
+              )}
               {isAuthenticated && isAdministrator && (
                 <Link
                   to="/admin"
@@ -78,6 +90,14 @@ function RootComponent() {
                     My Account
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="" />
+                  <DropdownMenuItem
+                    asChild
+                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
+                  >
+                    <Link to="/profile" className="cursor-pointer">
+                      My Profile
+                    </Link>
+                  </DropdownMenuItem>
                   {!isAdministrator && (
                     <DropdownMenuItem
                       asChild

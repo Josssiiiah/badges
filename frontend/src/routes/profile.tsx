@@ -11,9 +11,15 @@ import { Share2, Clock, Book, Award, ExternalLink, Eye } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { Badge as BadgeUI } from "@/components/ui/badge";
 import { fetchWithAuth } from "@/lib/api-client";
+import { Link } from "@tanstack/react-router";
 
 type Badge = {
+  // ID from the badges table (assignment ID)
   id: string;
+  // ID from the createdBadges table (badge template ID)
+  badgeId: string;
+  earnedAt: Date;
+  // Badge details from createdBadges
   issuedBy: string;
   name: string;
   description: string | null;
@@ -46,6 +52,8 @@ function ProfileComponent() {
       if (data.error) {
         throw new Error(data.error);
       }
+
+      console.log("Badges: ", data.badges);
 
       return data.badges as Badge[];
     },
@@ -84,28 +92,35 @@ function ProfileComponent() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <Card>
-          <CardHeader className="flex flex-row items-center space-x-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={session.user.image || ""} />
-              <AvatarFallback className="bg-[var(--accent-bg)] text-[var(--main-text)]">
-                {getInitials(session.user.name || "")}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-2xl font-bold text-[var(--main-text)]">
-                {session.user.name}
-              </h2>
-              <p className="text-[var(--main-text)]/80">{session.user.email}</p>
-              {session.user.organization && (
-                <BadgeUI variant="outline" className="mt-2">
-                  {session.user.organization}
-                </BadgeUI>
-              )}
+          {/* Centered User Info Section */}
+          <CardContent className="pt-8 pb-4">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={session.user.image || ""} />
+                <AvatarFallback className="bg-[var(--accent-bg)] text-[var(--main-text)] text-xl">
+                  {getInitials(session.user.name || "")}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-[var(--main-text)]">
+                  {session.user.name}
+                </h2>
+                <p className="text-[var(--main-text)]/80 mt-1">
+                  {session.user.email}
+                </p>
+                {session.user.organization && (
+                  <BadgeUI variant="outline" className="mt-3">
+                    {session.user.organization}
+                  </BadgeUI>
+                )}
+              </div>
             </div>
-          </CardHeader>
+          </CardContent>
+
           <Separator className="bg-[var(--accent-bg)]" />
+
           <CardContent className="pt-6">
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-[var(--main-text)] mb-4">
@@ -140,9 +155,10 @@ function ProfileComponent() {
             </h3>
 
             {isBadgesLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-[200px] w-full" />
-                <Skeleton className="h-[200px] w-full" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[300px] w-full" />
+                <Skeleton className="h-[300px] w-full" />
               </div>
             ) : error ? (
               <div className="text-center py-8">
@@ -151,99 +167,103 @@ function ProfileComponent() {
                 </p>
               </div>
             ) : badges && badges.length > 0 ? (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 gap-8">
-                  {badges.map((badge) => (
-                    <div
-                      key={badge.id}
-                      className="bg-[var(--main-bg)] rounded-xl border border-[var(--accent-bg)] overflow-hidden"
-                    >
-                      <div className="grid md:grid-cols-[300px,1fr] gap-6">
-                        {/* Badge Image Section */}
-                        <div className="p-8 bg-[var(--accent-bg)]/5 flex flex-col items-center justify-center space-y-4">
-                          <div className="w-full aspect-square max-w-[300px] relative">
-                            {badge.imageData ? (
-                              <img
-                                src={badge.imageData}
-                                alt={badge.name}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/80">
-                                No Image
-                              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {badges.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className="bg-[var(--main-bg)] rounded-xl border border-[var(--accent-bg)] overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow"
+                  >
+                    {/* Badge Image */}
+                    <div className="p-6 bg-[var(--accent-bg)]/5 flex items-center justify-center">
+                      <div className="w-full aspect-square relative max-w-[180px]">
+                        {badge.imageData ? (
+                          <img
+                            src={badge.imageData}
+                            alt={badge.name}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/80">
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Badge Details */}
+                    <div className="p-4 flex-1 flex flex-col">
+                      <div className="mb-3">
+                        <h4 className="text-lg font-semibold text-[var(--main-text)] line-clamp-1">
+                          {badge.name}
+                        </h4>
+                        <p className="text-sm text-[var(--main-text)]/80 flex items-center gap-1 mt-1">
+                          <Award className="h-3 w-3 flex-shrink-0" />
+                          <span className="line-clamp-1">
+                            Issued by {badge.issuedBy}
+                          </span>
+                        </p>
+                      </div>
+
+                      {badge.description && (
+                        <p className="text-sm text-[var(--main-text)]/80 line-clamp-2 mb-3">
+                          {badge.description}
+                        </p>
+                      )}
+
+                      {badge.skills && (
+                        <div className="mt-auto">
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {badge.skills
+                              .split(",")
+                              .slice(0, 3)
+                              .map((skill, index) => (
+                                <BadgeUI
+                                  key={index}
+                                  variant="outline"
+                                  className="bg-[var(--accent-bg)]/10 text-xs"
+                                >
+                                  {skill.trim()}
+                                </BadgeUI>
+                              ))}
+                            {badge.skills.split(",").length > 3 && (
+                              <BadgeUI
+                                variant="outline"
+                                className="bg-[var(--accent-bg)]/10 text-xs"
+                              >
+                                +{badge.skills.split(",").length - 3} more
+                              </BadgeUI>
                             )}
                           </div>
                         </div>
+                      )}
 
-                        {/* Badge Info Section */}
-                        <div className="p-8 space-y-6">
-                          <div>
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="text-xl font-semibold text-[var(--main-text)]">
-                                {badge.name}
-                              </h4>
-                            </div>
-                            <p className="text-sm text-[var(--main-text)]/80 flex items-center gap-2">
-                              <Award className="h-4 w-4" />
-                              Issued by {badge.issuedBy}
-                            </p>
-                          </div>
+                      <div className="mt-3 pt-2 border-t border-[var(--accent-bg)]/20 flex justify-between items-center">
+                        <Link
+                          to="/badges/$badgeId"
+                          params={{ badgeId: badge.id }}
+                          className="inline-flex items-center text-xs text-primary hover:underline"
+                        >
+                          <Button variant="outline" size="sm" className="gap-1">
+                            <Eye className="h-3 w-3" />
+                            View Badge
+                          </Button>
+                        </Link>
 
-                          {badge.description && (
-                            <p className="text-sm text-[var(--main-text)]/80">
-                              {badge.description}
-                            </p>
-                          )}
-
-                          {badge.skills && (
-                            <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-[var(--main-text)]">
-                                Skills
-                              </h5>
-                              <div className="flex flex-wrap gap-2">
-                                {badge.skills.split(",").map((skill, index) => (
-                                  <BadgeUI
-                                    key={index}
-                                    variant="outline"
-                                    className="bg-[var(--accent-bg)]/10"
-                                  >
-                                    {skill.trim()}
-                                  </BadgeUI>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {badge.earningCriteria && (
-                            <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-[var(--main-text)]">
-                                Earning Criteria
-                              </h5>
-                              <p className="text-sm text-[var(--main-text)]/80">
-                                {badge.earningCriteria}
-                              </p>
-                            </div>
-                          )}
-
-                          {badge.courseLink && (
-                            <div className="pt-4">
-                              <a
-                                href={badge.courseLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center text-sm text-primary hover:underline"
-                              >
-                                Learn more
-                                <ExternalLink className="ml-1 h-3 w-3" />
-                              </a>
-                            </div>
-                          )}
-                        </div>
+                        {badge.courseLink && (
+                          <a
+                            href={badge.courseLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-xs text-primary hover:underline"
+                          >
+                            Learn more
+                            <ExternalLink className="ml-1 h-3 w-3" />
+                          </a>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-8">

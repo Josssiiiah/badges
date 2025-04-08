@@ -16,19 +16,29 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         return { error: "Unauthorized" };
       }
 
-      // If administrator, filter badges by organization
-      if (session.user.role === "administrator" && session.user.organizationId) {
-        const result = await db
-          .select()
-          .from(createdBadges)
-          .where(eq(createdBadges.organizationId, session.user.organizationId));
-        
-        return { badges: result };
-      }
+      // Get assigned badges for the current user with badge details
+      const userBadges = await db
+        .select({
+          id: badges.id, // This is the assigned badge ID
+          badgeId: badges.badgeId,
+          earnedAt: badges.earnedAt,
+          // Include all badge details from createdBadges
+          name: createdBadges.name,
+          description: createdBadges.description,
+          imageUrl: createdBadges.imageUrl,
+          imageData: createdBadges.imageData,
+          issuedBy: createdBadges.issuedBy,
+          courseLink: createdBadges.courseLink,
+          skills: createdBadges.skills,
+          earningCriteria: createdBadges.earningCriteria,
+          createdAt: createdBadges.createdAt,
+          updatedAt: createdBadges.updatedAt,
+        })
+        .from(badges)
+        .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
+        .where(eq(badges.userId, session.user.id));
       
-      // Otherwise, return all badges
-      const result = await db.select().from(createdBadges);
-      return { badges: result };
+      return { badges: userBadges };
     } catch (error) {
       console.error("Error fetching badges:", error);
       return { error: String(error) };

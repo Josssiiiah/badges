@@ -41,21 +41,21 @@ const seedData = {
       id: "JvxunO9RttIzQOAY49LHSUaSfe6Q59Wt", // Account ID
       accountId: "5Yr4ZaPcRknqqSZNbMvfiGhPnJqWslqc", // External provider account ID
       userId: "5Yr4ZaPcRknqqSZNbMvfiGhPnJqWslqc", // Reference to user ID
-      providerId: "credentials",
+      providerId: "credential",
       password: "5b82297ac70abf64e597f84516dfc9ab:f2d192bcd21f0add55c28b3af1606602d8f72a98934e8fa856e97d88a380b09109a166b748c26dc17631c5991998cf530cd509369c2ac061be3562e238dc7618", // In a real app, use proper password hashing
     },
     {
       id: "heVlQgdN5KYMu0MysOe1FjJc7jj0elEi", // Account ID
       accountId: "wnPGLZMBEjLNSXzqVJ5usnB6i7yg7e11", // External provider account ID
       userId: "wnPGLZMBEjLNSXzqVJ5usnB6i7yg7e11", // Reference to Josiah's user ID
-      providerId: "credentials",
+      providerId: "credential",
       password: "28fffdfd862b07fbb42a06b0c92d8829:3a8f0fb4fcb96dac89379c79539faa68f679c4d4677305a56bfc6fdf22e8eb6f1f9e81cda57e6e1f63636f0be06df3ca4d7b93b9c48c8528177a4f4c703a3564", // In a real app, use proper password hashing
     },
     {
       id: "MheUao0SCUYqY9juVmU5LI1odOnpW5jJ", // Account ID
       accountId: "iDFSkfwHCOPQoO3CcVyfpDvtqCoAC4nS", // External provider account ID
       userId: "iDFSkfwHCOPQoO3CcVyfpDvtqCoAC4nS", // Reference to Vishodana's user ID
-      providerId: "credentials", 
+      providerId: "credential", 
       password: "a999f4485b638d08abb09d5704d26ef2:9f5b25f943f0a12b4ef7b94883a85a5a482406f76f3ef452cddcb65f646af1cafd6ae62c5aafacf9443a5541bcde7a8c36a2927880fa96bbd05014cb3e2b5e30", // In a real app, use proper password hashing
     },
   ],

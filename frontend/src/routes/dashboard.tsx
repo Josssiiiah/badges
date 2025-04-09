@@ -4,7 +4,14 @@ import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-import { Award, Eye, Clock, Share2 } from "lucide-react";
+import {
+  Award,
+  Eye,
+  Clock,
+  Share2,
+  Linkedin,
+  ExternalLink,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -32,6 +39,30 @@ type Badge = {
   sharesCount: number;
   createdAt: Date | null;
   updatedAt: Date | null;
+};
+
+// Helper function to generate LinkedIn certification URL
+const generateLinkedInURL = (badge: Badge) => {
+  // Extract issue date
+  const earnedDate = badge.earnedAt ? new Date(badge.earnedAt) : new Date();
+  const issueYear = earnedDate.getFullYear();
+  const issueMonth = earnedDate.getMonth() + 1; // LinkedIn uses 1-12 for months
+
+  // Generate the certification URL (public badge URL)
+  const certUrl = `${window.location.origin}/badges/${badge.id}`;
+
+  const base = "https://www.linkedin.com/profile/add";
+  const params = new URLSearchParams({
+    startTask: "CERTIFICATION_NAME",
+    name: badge.name,
+    organizationName: badge.issuedBy,
+    issueYear: issueYear.toString(),
+    issueMonth: issueMonth.toString(),
+    certUrl: certUrl,
+    certId: badge.id,
+  });
+
+  return `${base}?${params.toString()}`;
 };
 
 export const Route = createFileRoute("/dashboard")({
@@ -78,7 +109,7 @@ function Dashboard() {
             ? new Date(mostRecentBadge.earnedAt).toLocaleDateString()
             : "N/A",
           badgeShares: data.badges.reduce(
-            (total, badge) => total + (badge.sharesCount || 0),
+            (total: number, badge: Badge) => total + (badge.sharesCount || 0),
             0
           ),
         });
@@ -289,7 +320,7 @@ function Dashboard() {
                     <div className="w-24 h-24 relative">
                       {badge.imageUrl || badge.imageData ? (
                         <img
-                          src={badge.imageUrl || badge.imageData}
+                          src={(badge.imageUrl || badge.imageData) ?? ""}
                           alt={badge.name}
                           className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
                         />
@@ -344,23 +375,54 @@ function Dashboard() {
                       </div>
                     )}
 
-                    <div className="mt-4 pt-3 border-t border-[var(--accent-bg)]/10 flex justify-between items-center">
-                      <Link
-                        to="/badges/$badgeId"
-                        params={{ badgeId: badge.id }}
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1 text-xs opacity-90 group-hover:opacity-100 transition-opacity duration-200"
-                        >
-                          <Eye className="h-3 w-3" />
-                          View Badge
-                        </Button>
-                      </Link>
-                      <p className="text-xs text-[var(--main-text)]/60">
-                        {formatDate(badge.earnedAt)}
-                      </p>
+                    <div className="mt-4 pt-3 border-t border-[var(--accent-bg)]/10">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <Link
+                            to="/badges/$badgeId"
+                            params={{ badgeId: badge.id }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-xs opacity-90 group-hover:opacity-100 transition-opacity duration-200"
+                            >
+                              <Eye className="h-3 w-3" />
+                              View Badge
+                            </Button>
+                          </Link>
+
+                          <a
+                            href={generateLinkedInURL(badge)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-[#0077B5] hover:underline"
+                          >
+                            <Linkedin className="h-3 w-3" />
+                            Add to LinkedIn
+                          </a>
+                        </div>
+
+                        {badge.courseLink && (
+                          <div className="flex justify-start">
+                            <a
+                              href={badge.courseLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-xs text-primary hover:underline"
+                            >
+                              <ExternalLink className="mr-1 h-3 w-3" />
+                              View Course
+                            </a>
+                          </div>
+                        )}
+
+                        <div className="flex justify-end mt-1">
+                          <p className="text-xs text-[var(--main-text)]/60">
+                            {formatDate(badge.earnedAt)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

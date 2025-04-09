@@ -33,6 +33,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# database
+/backend/sqlite.db
+**/*.sqlite
+**/*.db
 
 **/*.trace
 **/*.zip

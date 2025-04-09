@@ -411,73 +411,72 @@ function ProfileComponent() {
                       }}
                       className="group"
                     >
-                      <HoverCard>
-                        <HoverCardTrigger asChild>
-                          <div className="h-full">
-                            <Card className="overflow-hidden h-full flex flex-col bg-[var(--main-bg)] border-[var(--accent-bg)]/10 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                              <div className="p-5 bg-gradient-to-br from-[var(--accent-bg)]/5 to-[var(--accent-bg)]/15 flex items-center justify-center">
-                                <div className="w-28 h-28 relative">
-                                  {badge.imageData ? (
-                                    <img
-                                      src={badge.imageData}
-                                      alt={badge.name}
-                                      className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/60 rounded-full">
-                                      <Award className="h-12 w-12" />
-                                    </div>
+                      <div className="h-full">
+                        <Card className="overflow-hidden h-full flex flex-col bg-[var(--main-bg)] border-[var(--accent-bg)]/10 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                          <div className="p-5 bg-gradient-to-br from-[var(--accent-bg)]/5 to-[var(--accent-bg)]/15 flex items-center justify-center">
+                            <div className="w-28 h-28 relative">
+                              {badge.imageData ? (
+                                <img
+                                  src={badge.imageData}
+                                  alt={badge.name}
+                                  className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/60 rounded-full">
+                                  <Award className="h-12 w-12" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <CardContent className="p-5 flex-1 flex flex-col">
+                            <div className="mb-3">
+                              <h4 className="font-semibold text-[var(--main-text)] mb-1 group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                                {badge.name}
+                              </h4>
+                              <p className="text-xs text-[var(--main-text)]/70 flex items-center gap-1">
+                                <Award className="h-3 w-3 flex-shrink-0" />
+                                <span className="line-clamp-1">
+                                  {badge.issuedBy}
+                                </span>
+                              </p>
+                            </div>
+
+                            {badge.description && (
+                              <p className="text-xs text-[var(--main-text)]/80 line-clamp-2 mb-4">
+                                {badge.description}
+                              </p>
+                            )}
+
+                            {badge.skills && (
+                              <div className="mt-auto">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {badge.skills
+                                    .split(",")
+                                    .slice(0, 3)
+                                    .map((skill, index) => (
+                                      <BadgeUI
+                                        key={index}
+                                        variant="outline"
+                                        className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
+                                      >
+                                        {skill.trim()}
+                                      </BadgeUI>
+                                    ))}
+                                  {badge.skills.split(",").length > 3 && (
+                                    <BadgeUI
+                                      variant="outline"
+                                      className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
+                                    >
+                                      +{badge.skills.split(",").length - 3} more
+                                    </BadgeUI>
                                   )}
                                 </div>
                               </div>
-                              <CardContent className="p-5 flex-1 flex flex-col">
-                                <div className="mb-3">
-                                  <h4 className="font-semibold text-[var(--main-text)] mb-1 group-hover:text-primary transition-colors duration-200 line-clamp-1">
-                                    {badge.name}
-                                  </h4>
-                                  <p className="text-xs text-[var(--main-text)]/70 flex items-center gap-1">
-                                    <Award className="h-3 w-3 flex-shrink-0" />
-                                    <span className="line-clamp-1">
-                                      {badge.issuedBy}
-                                    </span>
-                                  </p>
-                                </div>
+                            )}
 
-                                {badge.description && (
-                                  <p className="text-xs text-[var(--main-text)]/80 line-clamp-2 mb-4">
-                                    {badge.description}
-                                  </p>
-                                )}
-
-                                {badge.skills && (
-                                  <div className="mt-auto">
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {badge.skills
-                                        .split(",")
-                                        .slice(0, 3)
-                                        .map((skill, index) => (
-                                          <BadgeUI
-                                            key={index}
-                                            variant="outline"
-                                            className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
-                                          >
-                                            {skill.trim()}
-                                          </BadgeUI>
-                                        ))}
-                                      {badge.skills.split(",").length > 3 && (
-                                        <BadgeUI
-                                          variant="outline"
-                                          className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
-                                        >
-                                          +{badge.skills.split(",").length - 3}{" "}
-                                          more
-                                        </BadgeUI>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                <div className="mt-4 pt-3 border-t border-[var(--accent-bg)]/10 flex justify-between items-center">
+                            <div className="mt-4 pt-3 border-t border-[var(--accent-bg)]/10">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
                                   <Link
                                     to="/badges/$badgeId"
                                     params={{ badgeId: badge.id }}
@@ -491,8 +490,10 @@ function ProfileComponent() {
                                       View Badge
                                     </Button>
                                   </Link>
+                                </div>
 
-                                  {badge.courseLink && (
+                                {badge.courseLink && (
+                                  <div className="flex justify-start">
                                     <a
                                       href={badge.courseLink}
                                       target="_blank"
@@ -500,75 +501,15 @@ function ProfileComponent() {
                                       className="inline-flex items-center text-xs text-primary hover:underline"
                                     >
                                       <ExternalLink className="mr-1 h-3 w-3" />
-                                      Course
+                                      View Course Materials
                                     </a>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-80 p-0 shadow-lg border-0">
-                          <div className="p-4 border-b border-[var(--accent-bg)]/10">
-                            <h4 className="font-medium text-[var(--main-text)]">
-                              {badge.name}
-                            </h4>
-                            <p className="text-xs text-[var(--main-text)]/70 flex items-center gap-1 mt-1">
-                              <Award className="h-3 w-3" />
-                              Issued by {badge.issuedBy}
-                            </p>
-                          </div>
-                          <div className="p-4 space-y-3">
-                            {badge.description && (
-                              <div className="space-y-1">
-                                <p className="text-xs text-[var(--main-text)]/70">
-                                  {badge.description}
-                                </p>
+                                  </div>
+                                )}
                               </div>
-                            )}
-
-                            {badge.earningCriteria && (
-                              <div className="space-y-1">
-                                <p className="text-xs font-medium text-[var(--main-text)]">
-                                  Earning Criteria
-                                </p>
-                                <p className="text-xs text-[var(--main-text)]/70">
-                                  {badge.earningCriteria}
-                                </p>
-                              </div>
-                            )}
-
-                            {badge.courseLink && (
-                              <div className="space-y-1">
-                                <p className="text-xs font-medium text-[var(--main-text)]">
-                                  Course
-                                </p>
-                                <a
-                                  href={badge.courseLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-primary flex items-center gap-1 hover:underline"
-                                >
-                                  <Globe className="h-3 w-3" />
-                                  View Course
-                                </a>
-                              </div>
-                            )}
-
-                            {badge.earnedAt && (
-                              <div className="space-y-1">
-                                <p className="text-xs font-medium text-[var(--main-text)]">
-                                  Earned
-                                </p>
-                                <p className="text-xs text-[var(--main-text)]/70 flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {formatDate(badge.earnedAt)}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </HoverCardContent>
-                      </HoverCard>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </motion.div>
                   ))}
                 </div>

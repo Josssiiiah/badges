@@ -21,6 +21,30 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/api-client";
 import { Separator } from "@/components/ui/separator";
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
 type Badge = {
   // ID from the badges table (assignment ID)
   id: string;
@@ -158,8 +182,29 @@ function Dashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col">
+    <motion.div
+      className="container mx-auto px-4 py-8 relative"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.3 }}
+          transition={{ duration: 1 }}
+          className="absolute top-20 right-1/4 w-64 h-64 rounded-full bg-[var(--violet-light)]/10 blur-3xl"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.2 }}
+          transition={{ duration: 1, delay: 0.2 }}
+          className="absolute bottom-40 left-1/3 w-72 h-72 rounded-full bg-[var(--accent-bg)]/30 blur-3xl"
+        />
+      </div>
+
+      <motion.div variants={itemVariants} className="mb-8 flex flex-col">
         <div className="flex items-center">
           <h1 className="text-3xl font-bold text-[var(--main-text)]">
             Welcome back, {session?.user?.name || "User"}!
@@ -176,23 +221,26 @@ function Dashboard() {
         <h2 className="text-lg text-[var(--main-text)]/70 mt-2">
           Here's an overview of your achievements
         </h2>
-      </div>
+      </motion.div>
 
       {/* Stats cards with consistent background */}
-      <div className="p-6 bg-[var(--accent-bg)]/5 rounded-lg mb-10">
+      <motion.div
+        variants={itemVariants}
+        className="p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-[var(--light-gray)]/20 mb-10"
+      >
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+            variants={itemVariants}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <Card className="shadow-md hover:shadow-lg transition-all duration-300 bg-[var(--main-bg)] border-[var(--accent-bg)]/10 overflow-hidden">
+            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-[var(--accent-bg)]/10 overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-medium text-[var(--main-text)]">
                   Total Badges
                 </CardTitle>
-                <Award className="h-6 w-6 text-[var(--primary)]" />
+                <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
+                  <Award className="h-5 w-5 text-[var(--main-text)]" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-[var(--main-text)]">
@@ -206,17 +254,17 @@ function Dashboard() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            variants={itemVariants}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <Card className="shadow-md hover:shadow-lg transition-all duration-300 bg-[var(--main-bg)] border-[var(--accent-bg)]/10 overflow-hidden">
+            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-[var(--accent-bg)]/10 overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-medium text-[var(--main-text)]">
                   Recent Badge
                 </CardTitle>
-                <Clock className="h-6 w-6 text-[var(--primary)]" />
+                <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
+                  <Clock className="h-5 w-5 text-[var(--main-text)]" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-xl font-medium truncate text-[var(--main-text)]">
@@ -230,17 +278,17 @@ function Dashboard() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+            variants={itemVariants}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <Card className="shadow-md hover:shadow-lg transition-all duration-300 bg-[var(--main-bg)] border-[var(--accent-bg)]/10 overflow-hidden">
+            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-[var(--accent-bg)]/10 overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-medium text-[var(--main-text)]">
                   Profile Views
                 </CardTitle>
-                <Eye className="h-6 w-6 text-[var(--primary)]" />
+                <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
+                  <Eye className="h-5 w-5 text-[var(--main-text)]" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-[var(--main-text)]">
@@ -254,17 +302,17 @@ function Dashboard() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
+            variants={itemVariants}
             whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <Card className="shadow-md hover:shadow-lg transition-all duration-300 bg-[var(--main-bg)] border-[var(--accent-bg)]/10 overflow-hidden">
+            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-[var(--accent-bg)]/10 overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-medium text-[var(--main-text)]">
                   Badge Shares
                 </CardTitle>
-                <Share2 className="h-6 w-6 text-[var(--primary)]" />
+                <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
+                  <Share2 className="h-5 w-5 text-[var(--main-text)]" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-[var(--main-text)]">
@@ -277,17 +325,20 @@ function Dashboard() {
             </Card>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* My Badges Section */}
-      <div className="mt-8">
+      <motion.div variants={itemVariants} className="mt-8">
         <h2 className="text-2xl font-semibold text-[var(--main-text)]">
           My Badges
         </h2>
         <Separator className="my-4" />
 
         {!badges || badges.length === 0 ? (
-          <div className="text-center py-16 bg-[var(--main-bg)] rounded-xl shadow-sm border border-[var(--accent-bg)]/10">
+          <motion.div
+            variants={itemVariants}
+            className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+          >
             <Award className="h-16 w-16 mx-auto mb-4 text-[var(--accent-bg)]/30" />
             <h3 className="text-xl font-medium text-[var(--main-text)] mb-2">
               No badges yet
@@ -296,28 +347,22 @@ function Dashboard() {
               Search for badges to earn by using the search bar at the top of
               the page.
             </p>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {badges.map((badge, index) => (
               <motion.div
                 key={badge.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.4,
-                  delay: index * 0.1,
-                  ease: "easeOut",
-                }}
+                variants={itemVariants}
                 whileHover={{
                   y: -10,
                   transition: { duration: 0.2 },
                 }}
                 className="group"
               >
-                <Card className="overflow-hidden h-full flex flex-col bg-[var(--main-bg)] border-[var(--accent-bg)]/10 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                  <div className="p-5 bg-gradient-to-br from-[var(--accent-bg)]/5 to-[var(--accent-bg)]/15 flex items-center justify-center">
-                    <div className="w-24 h-24 relative">
+                <Card className="overflow-hidden h-full flex flex-col border-[var(--light-gray)]/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 bg-white/80 backdrop-blur-sm">
+                  <div className="p-10 bg-[var(--accent-bg)]/5 flex items-center justify-center">
+                    <div className="w-48 h-48 relative">
                       {badge.imageUrl || badge.imageData ? (
                         <img
                           src={(badge.imageUrl || badge.imageData) ?? ""}
@@ -326,31 +371,31 @@ function Dashboard() {
                         />
                       ) : (
                         <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/60 rounded-full">
-                          <Award className="h-10 w-10" />
+                          <Award className="h-20 w-20" />
                         </div>
                       )}
                     </div>
                   </div>
-                  <CardContent className="p-5 flex-1 flex flex-col">
-                    <div className="mb-3">
-                      <h3 className="font-semibold text-[var(--main-text)] mb-1 group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                  <CardContent className="p-8 flex-1 flex flex-col">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[var(--main-text)] mb-3  transition-colors duration-200 line-clamp-1">
                         {badge.name}
                       </h3>
-                      <p className="text-xs text-[var(--main-text)]/70 flex items-center gap-1">
-                        <Award className="h-3 w-3 flex-shrink-0" />
+                      <p className="text-base text-[var(--main-text)]/70 flex items-center gap-2">
+                        <Award className="h-5 w-5 flex-shrink-0" />
                         <span className="line-clamp-1">{badge.issuedBy}</span>
                       </p>
                     </div>
 
                     {badge.description && (
-                      <p className="text-xs text-[var(--main-text)]/80 line-clamp-2 mb-4">
+                      <p className="text-base text-[var(--main-text)]/80 line-clamp-2 mb-8">
                         {badge.description}
                       </p>
                     )}
 
                     {badge.skills && (
-                      <div className="mt-auto">
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="mt-auto mb-6">
+                        <div className="flex flex-wrap gap-2.5">
                           {badge.skills
                             .split(",")
                             .slice(0, 3)
@@ -358,7 +403,7 @@ function Dashboard() {
                               <BadgeUI
                                 key={index}
                                 variant="outline"
-                                className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
+                                className="text-base px-4 py-1.5 bg-[var(--accent-bg)]/10 border-[var(--accent-bg)]/30 text-[var(--main-text)] hover:bg-[var(--accent-bg)]/20 transition-colors"
                               >
                                 {skill.trim()}
                               </BadgeUI>
@@ -366,7 +411,7 @@ function Dashboard() {
                           {badge.skills.split(",").length > 3 && (
                             <BadgeUI
                               variant="outline"
-                              className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
+                              className="text-base px-4 py-1.5 bg-[var(--accent-bg)]/10 border-[var(--accent-bg)]/30 text-[var(--main-text)] hover:bg-[var(--accent-bg)]/20 transition-colors"
                             >
                               +{badge.skills.split(",").length - 3} more
                             </BadgeUI>
@@ -375,8 +420,8 @@ function Dashboard() {
                       </div>
                     )}
 
-                    <div className="mt-4 pt-3 border-t border-[var(--accent-bg)]/10">
-                      <div className="flex flex-col gap-2">
+                    <div className="mt-6 pt-5 border-t border-[var(--accent-bg)]/10">
+                      <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
                           <Link
                             to="/badges/$badgeId"
@@ -384,10 +429,10 @@ function Dashboard() {
                           >
                             <Button
                               variant="outline"
-                              size="sm"
-                              className="gap-1 text-xs opacity-90 group-hover:opacity-100 transition-opacity duration-200"
+                              size="default"
+                              className="gap-1 text-base px-5 py-2.5 border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10 opacity-90 group-hover:opacity-100 transition-all duration-200"
                             >
-                              <Eye className="h-3 w-3" />
+                              <Eye className="h-5 w-5 mr-1.5" />
                               View Badge
                             </Button>
                           </Link>
@@ -396,29 +441,37 @@ function Dashboard() {
                             href={generateLinkedInURL(badge)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-[#0077B5] hover:underline"
                           >
-                            <Linkedin className="h-3 w-3" />
-                            Add to LinkedIn
+                            <Button
+                              variant="outline"
+                              size="default"
+                              className="gap-1 text-base px-5 py-2.5 border-[#0077B5] text-[#0077B5] hover:bg-[#0077B5]/10 opacity-90 group-hover:opacity-100 transition-all duration-200"
+                            >
+                              <Linkedin className="h-5 w-5 mr-1.5" />
+                              Add to LinkedIn
+                            </Button>
                           </a>
                         </div>
 
-                        {badge.courseLink && (
-                          <div className="flex justify-start">
+                        <div className="flex justify-between items-center">
+                          {badge.courseLink && (
                             <a
                               href={badge.courseLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center text-xs text-primary hover:underline"
                             >
-                              <ExternalLink className="mr-1 h-3 w-3" />
-                              View Course
+                              <Button
+                                variant="outline"
+                                size="default"
+                                className="gap-1 text-base px-5 py-2.5 border-[var(--dark-gray)] text-[var(--dark-gray)] hover:bg-[var(--dark-gray)]/10 opacity-90 group-hover:opacity-100 transition-all duration-200"
+                              >
+                                <ExternalLink className="h-5 w-5 mr-1.5" />
+                                View Course
+                              </Button>
                             </a>
-                          </div>
-                        )}
+                          )}
 
-                        <div className="flex justify-end mt-1">
-                          <p className="text-xs text-[var(--main-text)]/60">
+                          <p className="text-base text-[var(--main-text)]/60">
                             {formatDate(badge.earnedAt)}
                           </p>
                         </div>
@@ -430,7 +483,7 @@ function Dashboard() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -256,22 +256,6 @@ function BadgeViewComponent() {
       variants={containerVariants}
       className="container mx-auto px-4 py-8 relative min-h-screen"
     >
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={{ duration: 1 }}
-          className="absolute top-20 right-1/4 w-64 h-64 rounded-full bg-[var(--violet-light)]/10 blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.2 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="absolute bottom-40 left-1/3 w-72 h-72 rounded-full bg-[var(--accent-bg)]/30 blur-3xl"
-        />
-      </div>
-
       <motion.div
         variants={itemVariants}
         className="max-w-6xl mx-auto space-y-8"
@@ -451,18 +435,6 @@ function BadgeViewComponent() {
               initial="initial"
               className="relative"
             >
-              <motion.div
-                className="absolute inset-0 bg-[var(--accent-bg)]/60 rounded-full blur-xl -z-10 scale-90"
-                animate={{
-                  scale: [0.9, 1.1, 0.9],
-                  opacity: [0.5, 0.7, 0.5],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
               <div className="relative w-[250px] h-[250px] rounded-full overflow-hidden shadow-lg border-4 border-white p-1">
                 {badge.imageData ? (
                   <img
@@ -524,7 +496,7 @@ function BadgeViewComponent() {
               {/* Badge Description */}
               {badge.description && (
                 <motion.div
-                  className="space-y-2 bg-white/80 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                  className="space-y-2"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -542,7 +514,7 @@ function BadgeViewComponent() {
             {/* Skills */}
             {badge.skills && (
               <motion.div
-                className="space-y-4 bg-white/80 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                className="space-y-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -577,7 +549,7 @@ function BadgeViewComponent() {
             {/* Earning Criteria */}
             {badge.earningCriteria && (
               <motion.div
-                className="space-y-4 bg-white/80 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                className="space-y-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}

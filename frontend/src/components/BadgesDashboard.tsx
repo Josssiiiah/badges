@@ -545,7 +545,9 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               <CardContent className="p-0 flex-1 aspect-square flex items-center justify-center bg-muted/10 group-hover:bg-muted/20 transition-colors">
                 <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
                   <Plus className="h-12 w-12 mb-2 text-black/40" />
-                  <p className="text-sm font-medium text-black/40">Create New Badge</p>
+                  <p className="text-sm font-medium text-black/40">
+                    Create New Badge
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -583,8 +585,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                       className="text-xs mt-1 line-clamp-1 text-[var(--main-text)]/80"
                       title={badge.description}
                     >
-                      {badge.description.split(' ').slice(0, 20).join(' ')}
-                      {badge.description.split(' ').length > 20 ? '...' : ''}
+                      {badge.description.split(" ").slice(0, 20).join(" ")}
+                      {badge.description.split(" ").length > 20 ? "..." : ""}
                     </CardDescription>
                   )}
                   {/* {badge.skills && (

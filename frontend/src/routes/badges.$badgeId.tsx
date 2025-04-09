@@ -14,6 +14,8 @@ import {
   Award,
   ExternalLink,
   CheckCircle2,
+  User,
+  Calendar,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -49,6 +51,42 @@ type BadgeData = {
     image: string | null;
   };
   earnedAt: Date;
+};
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
+const floatAnimation = {
+  initial: { y: 0 },
+  animate: {
+    y: [-5, 5, -5],
+    transition: {
+      duration: 4,
+      ease: "easeInOut",
+      repeat: Infinity,
+    },
+  },
 };
 
 function BadgeViewComponent() {
@@ -133,7 +171,19 @@ function BadgeViewComponent() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <Skeleton className="h-[600px] w-full" />
+        <div className="max-w-6xl mx-auto">
+          <Skeleton className="h-[200px] w-full rounded-xl mb-6" />
+          <div className="grid md:grid-cols-[350px_1fr] gap-8">
+            <Skeleton className="h-[350px] w-full rounded-xl" />
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-3/4 rounded-lg" />
+              <Skeleton className="h-6 w-1/2 rounded-lg" />
+              <Skeleton className="h-24 w-full rounded-lg" />
+              <Skeleton className="h-8 w-1/3 rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-lg" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -141,184 +191,337 @@ function BadgeViewComponent() {
   if (error || !badgeData) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <p className="text-[var(--dark-gray)]/80">Badge not found</p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="max-w-6xl mx-auto text-center p-8 bg-white dark:bg-[var(--dark-gray)]/10 rounded-2xl shadow-lg"
+        >
+          <h2 className="text-2xl font-bold text-[var(--dark-gray)]">
+            Badge not found
+          </h2>
+          <p className="text-[var(--dark-gray)]/80 mt-2">
+            The badge you're looking for doesn't seem to exist
+          </p>
+          <Button className="mt-4" asChild>
+            <Link to="/">Return Home</Link>
+          </Button>
+        </motion.div>
       </div>
     );
   }
 
   const { badge, user, earnedAt } = badgeData;
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(new Date(earnedAt));
 
   return (
-    <div className="container mx-auto px-4 py-4">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Earned By Section */}
-        <div className="bg-[var(--accent-bg)]/10 rounded-lg p-6 flex flex-col sm:mx-14 sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-          <p className="font-medium text-sm text-[var(--dark-gray)]">
-            This badge was issued to{" "}
-            <Link
-              to="/users/$username"
-              params={{ username: user.name }}
-              className="text-[var(--main-text)] hover:underline"
-            >
-              {user.name}
-            </Link>{" "}
-            on April 1, 2025
-          </p>
-          <div className="flex items-center gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsVerified(true)}
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Verify
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px">
-                <DialogHeader>
-                  <DialogTitle className="flex text-2xl items-center gap-2 text-black">
-                    Badge Verification
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="py-6 space-y-4">
-                  <div className="space-y-4">
-                    {verificationSteps.map((step, index) => (
-                      <motion.div
-                        key={step.title}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{
-                          opacity: index <= verificationStep ? 1 : 0.5,
-                          x: 0,
-                        }}
-                        transition={{
-                          duration: 0.3,
-                          delay: index * 0.4,
-                        }}
-                        className="flex items-start gap-4"
-                      >
-                        <div
-                          className={`flex-shrink-0 ${index <= verificationStep ? "text-green-500" : "text-white/30"}`}
-                        >
-                          {step.icon}
-                        </div>
-                        <div>
-                          <h3
-                            className={`text-lg ${index === verificationSteps.length - 1 ? "font-semibold" : "font-normal"} ${index <= verificationStep ? "text-black" : "text-black/50"}`}
-                          >
-                            {step.title}
-                          </h3>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {verificationStep === verificationSteps.length - 1 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.1 }}
-                      className="mt-4 text-center"
-                    ></motion.div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Button variant="default" size="sm" onClick={copyToClipboard}>
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-          </div>
-        </div>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="container mx-auto px-4 py-8 relative min-h-screen"
+    >
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.3 }}
+          transition={{ duration: 1 }}
+          className="absolute top-20 right-1/4 w-64 h-64 rounded-full bg-[var(--violet-light)]/10 blur-3xl"
+        />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.2 }}
+          transition={{ duration: 1, delay: 0.2 }}
+          className="absolute bottom-40 left-1/3 w-72 h-72 rounded-full bg-[var(--accent-bg)]/30 blur-3xl"
+        />
+      </div>
 
-        {/* Main Badge Content */}
-        <div className="grid md:grid-cols-[350px_1fr] gap-4 items-start md:pt-4">
-          {/* Badge Image (Left Column) */}
-          <div className="w-full flex flex-col items-center gap-4">
-            {badge.imageData ? (
-              <img
-                src={badge.imageData}
-                alt={badge.name}
-                className="w-full max-w-[250px] h-auto object-contain"
-              />
-            ) : (
-              <div className="w-full h-full rounded-full bg-[var(--accent-bg)] flex items-center justify-center text-[var(--dark-gray)]/80">
-                No Image
+      <motion.div
+        variants={itemVariants}
+        className="max-w-6xl mx-auto space-y-8"
+      >
+        {/* Top Info Bar */}
+        <motion.div
+          variants={itemVariants}
+          whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
+          className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-md border border-[var(--light-gray)]/20 transition-all"
+        >
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
+                <Calendar className="h-5 w-5 text-[var(--main-text)]" />
               </div>
-            )}
-            <div>
-              {badge.courseLink && (
-                <Button
-                  size="lg"
-                  className="w-full text-md py-6 hidden md:flex"
-                  onClick={() =>
-                    badge.courseLink && window.open(badge.courseLink, "_blank")
-                  }
-                >
-                  Earn this Badge
-                  <ExternalLink className="ml-2 h-5 w-5" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Badge Info (Right Column) */}
-          <div className="space-y-4 sm:pr-14">
-            <h2 className="text-xl sm:text-2xl font-bold text-[var(--dark-gray)]">
-              {badge.name}
-            </h2>
-            <p className="text-[var(--dark-gray)]/80 mt-2 flex items-center gap-2 text-md">
-              <Award className="h-5 w-5" />
-              Issued by{" "}
-              <span className="text-[var(--main-text)]">{badge.issuedBy}</span>
-            </p>
-            {/* Badge Description */}
-            {badge.description && (
-              <div className="space-y-2">
-                <p className="text-[var(--dark-gray)]/80 text-md">
-                  {badge.description}
+              <div>
+                <p className="text-[var(--dark-gray)] text-sm">Issued on</p>
+                <p className="font-medium text-[var(--main-text)]">
+                  {formattedDate}
                 </p>
               </div>
-            )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
+                <User className="h-5 w-5 text-[var(--main-text)]" />
+              </div>
+              <div>
+                <p className="text-[var(--dark-gray)] text-sm">Issued to</p>
+                <Link
+                  to="/users/$username"
+                  params={{ username: user.name }}
+                  className="font-medium text-[var(--main-text)] hover:underline"
+                >
+                  {user.name}
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsVerified(true)}
+                    className="rounded-full px-4 border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Verify
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px] rounded-xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex text-2xl items-center gap-2 text-black">
+                      Badge Verification
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="py-6 space-y-4">
+                    <div className="space-y-4">
+                      {verificationSteps.map((step, index) => (
+                        <motion.div
+                          key={step.title}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{
+                            opacity: index <= verificationStep ? 1 : 0.5,
+                            x: 0,
+                          }}
+                          transition={{
+                            duration: 0.3,
+                            delay: index * 0.4,
+                          }}
+                          className="flex items-start gap-4"
+                        >
+                          <div
+                            className={`flex-shrink-0 ${index <= verificationStep ? "text-green-500" : "text-white/30"}`}
+                          >
+                            {step.icon}
+                          </div>
+                          <div>
+                            <h3
+                              className={`text-lg ${index === verificationSteps.length - 1 ? "font-semibold" : "font-normal"} ${index <= verificationStep ? "text-black" : "text-black/50"}`}
+                            >
+                              {step.title}
+                            </h3>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    {verificationStep === verificationSteps.length - 1 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className="mt-4 text-center"
+                      >
+                        <div className="p-2 rounded-full bg-green-100 inline-flex">
+                          <CheckCircle2 className="h-10 w-10 text-green-500" />
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={copyToClipboard}
+                className="rounded-full px-4 bg-[var(--main-text)] hover:bg-[var(--main-text)]/90"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Main Badge Content */}
+        <div className="grid md:grid-cols-[350px_1fr] gap-10 items-start md:pt-4">
+          {/* Badge Image (Left Column) */}
+          <motion.div
+            variants={itemVariants}
+            className="w-full flex flex-col items-center gap-6"
+          >
+            <motion.div
+              variants={floatAnimation}
+              animate="animate"
+              initial="initial"
+              className="relative"
+            >
+              <motion.div
+                className="absolute inset-0 bg-[var(--accent-bg)]/60 rounded-full blur-xl -z-10 scale-90"
+                animate={{
+                  scale: [0.9, 1.1, 0.9],
+                  opacity: [0.5, 0.7, 0.5],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              <div className="relative w-[250px] h-[250px] rounded-full overflow-hidden shadow-lg border-4 border-white p-1">
+                {badge.imageData ? (
+                  <img
+                    src={badge.imageData}
+                    alt={badge.name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-[var(--accent-bg)] flex items-center justify-center text-[var(--dark-gray)]/80">
+                    <Award className="h-20 w-20 text-white/70" />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            <div className="w-full">
+              <motion.div
+                className="relative"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                {badge.courseLink && (
+                  <Button
+                    size="lg"
+                    className="w-full text-md py-6 hidden md:flex shadow-md rounded-xl bg-gradient-to-r from-[var(--main-text)] to-[var(--violet-light)] transition-all hover:shadow-lg"
+                    onClick={() =>
+                      badge.courseLink &&
+                      window.open(badge.courseLink, "_blank")
+                    }
+                  >
+                    Earn this Badge
+                    <ExternalLink className="ml-2 h-5 w-5" />
+                  </Button>
+                )}
+              </motion.div>
+            </div>
+          </motion.div>
+
+          {/* Badge Info (Right Column) */}
+          <motion.div variants={itemVariants} className="space-y-6 sm:pr-14">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-3xl font-bold text-[var(--dark-gray)] mb-2">
+                {badge.name}
+              </h2>
+              <p className="text-[var(--dark-gray)]/80 flex items-center gap-2 text-md mb-6">
+                <Award className="h-5 w-5 text-[var(--main-text)]" />
+                Issued by{" "}
+                <span className="text-[var(--main-text)] font-medium">
+                  {badge.issuedBy}
+                </span>
+              </p>
+
+              {/* Badge Description */}
+              {badge.description && (
+                <motion.div
+                  className="space-y-2 bg-white/80 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <h3 className="text-lg font-semibold text-[var(--dark-gray)]">
+                    Description
+                  </h3>
+                  <p className="text-[var(--dark-gray)]/80 leading-relaxed">
+                    {badge.description}
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+
             {/* Skills */}
             {badge.skills && (
-              <div className="space-y-2 pt-10">
-                <h3 className="text-md font-semibold text-[var(--dark-gray)]">
+              <motion.div
+                className="space-y-4 bg-white/80 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <h3 className="text-lg font-semibold text-[var(--dark-gray)]">
                   Skills
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {badge.skills.split(",").map((skill, index) => (
-                    <BadgeUI
+                    <motion.div
                       key={index}
-                      variant="outline"
-                      className="bg-[var(--accent-bg)]/10 text-sm font-light"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 + index * 0.05 }}
+                      whileHover={{
+                        scale: 1.05,
+                        transition: { duration: 0.2 },
+                      }}
                     >
-                      {skill.trim()}
-                    </BadgeUI>
+                      <BadgeUI
+                        variant="outline"
+                        className="bg-[var(--accent-bg)]/20 border-[var(--accent-bg)]/30 text-[var(--main-text)] py-1.5 px-3 text-sm font-medium rounded-full"
+                      >
+                        {skill.trim()}
+                      </BadgeUI>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
+
             {/* Earning Criteria */}
             {badge.earningCriteria && (
-              <div className="space-y-2 pt-4">
-                <h3 className="text-md font-semibold text-[var(--dark-gray)]">
+              <motion.div
+                className="space-y-4 bg-white/80 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <h3 className="text-lg font-semibold text-[var(--dark-gray)]">
                   Earning Criteria
                 </h3>
-                <p className="text-[var(--dark-gray)]/80 text-md">
+                <p className="text-[var(--dark-gray)]/80 leading-relaxed">
                   {badge.earningCriteria}
                 </p>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </div>
 
-        {/* Earn Badge Button */}
+        {/* Earn Badge Button (Mobile) */}
         {badge.courseLink && (
-          <div className="md:hidden">
+          <motion.div
+            className="md:hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
             <Button
               size="lg"
-              className="w-full text-md py-6"
+              className="w-full text-md py-6 rounded-xl shadow-md bg-gradient-to-r from-[var(--main-text)] to-[var(--violet-light)] transition-all hover:shadow-lg"
               onClick={() =>
                 badge.courseLink && window.open(badge.courseLink, "_blank")
               }
@@ -326,11 +529,11 @@ function BadgeViewComponent() {
               Earn this Badge
               <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
       <Toaster />
-    </div>
+    </motion.div>
   );
 }
 

@@ -96,6 +96,26 @@ function BadgeViewComponent() {
   const [isVerified, setIsVerified] = React.useState(false);
   const [verificationStep, setVerificationStep] = React.useState(0);
 
+  // Safer date parsing to handle the database format "2025-04-08 19:51:02"
+  const formatEarnedAtDate = (
+    dateString: string | Date | number | null | undefined
+  ) => {
+    if (!dateString) return new Date(); // Fallback to current date if null/undefined
+
+    // If it's already a Date object, use it directly
+    if (dateString instanceof Date) return dateString;
+
+    // Handle string format by ensuring proper ISO format
+    if (typeof dateString === "string") {
+      // Replace space with T to ensure proper ISO format if needed
+      const isoFormattedDate = dateString.replace(/\s/, "T");
+      return new Date(isoFormattedDate);
+    }
+
+    // If it's a number (timestamp), or anything else, just pass to Date constructor
+    return new Date(dateString);
+  };
+
   React.useEffect(() => {
     if (isVerified) {
       const interval = setInterval(() => {
@@ -106,7 +126,7 @@ function BadgeViewComponent() {
           clearInterval(interval);
           return prev;
         });
-      }, 1000);
+      }, 500); // Faster interval for smoother animation
       return () => clearInterval(interval);
     }
   }, [isVerified]);
@@ -145,28 +165,39 @@ function BadgeViewComponent() {
     },
   });
 
-  const verificationSteps = [
-    {
-      title: "Issued on April 1, 2025",
-      icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
-    },
-    {
-      title: `Issued by ${badgeData?.badge.issuedBy}`,
-      icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
-    },
-    {
-      title: "Issued using BadgeSpot",
-      icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
-    },
-    {
-      title: `Issued to ${badgeData?.user.name}`,
-      icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
-    },
-    {
-      title: "VERIFIED",
-      icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
-    },
-  ];
+  const verificationSteps = React.useMemo(() => {
+    if (!badgeData) return [];
+
+    const { badge, user, earnedAt } = badgeData;
+    const formattedDate = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(formatEarnedAtDate(earnedAt));
+
+    return [
+      {
+        title: `Issued on ${formattedDate}`,
+        icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
+      },
+      {
+        title: `Issued by ${badge.issuedBy}`,
+        icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
+      },
+      {
+        title: "Issued using BadgeSpot",
+        icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
+      },
+      {
+        title: `Issued to ${user.name}`,
+        icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
+      },
+      {
+        title: "VERIFIED",
+        icon: <CheckCircle2 className="h-6 w-6 text-green-500" />,
+      },
+    ];
+  }, [badgeData]);
 
   if (isLoading) {
     return (
@@ -211,11 +242,12 @@ function BadgeViewComponent() {
   }
 
   const { badge, user, earnedAt } = badgeData;
+
   const formattedDate = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(new Date(earnedAt));
+  }).format(formatEarnedAtDate(earnedAt));
 
   return (
     <motion.div
@@ -292,36 +324,55 @@ function BadgeViewComponent() {
                     Verify
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] rounded-xl">
-                  <DialogHeader>
-                    <DialogTitle className="flex text-2xl items-center gap-2 text-black">
-                      Badge Verification
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="py-6 space-y-4">
-                    <div className="space-y-4">
+                <DialogContent className="sm:max-w-[425px] rounded-xl border-0 shadow-lg bg-white/95 backdrop-blur-md">
+                  <div className="py-6 space-y-6">
+                    <div className="space-y-4 relative">
                       {verificationSteps.map((step, index) => (
                         <motion.div
                           key={step.title}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{
-                            opacity: index <= verificationStep ? 1 : 0.5,
+                            opacity: index <= verificationStep ? 1 : 0.4,
                             x: 0,
                           }}
                           transition={{
-                            duration: 0.3,
-                            delay: index * 0.4,
+                            duration: 0.2,
+                            delay: index * 0.15,
                           }}
-                          className="flex items-start gap-4"
+                          className="flex items-start gap-4 relative z-10"
                         >
-                          <div
-                            className={`flex-shrink-0 ${index <= verificationStep ? "text-green-500" : "text-white/30"}`}
+                          <motion.div
+                            initial={{ scale: 0.8 }}
+                            animate={{
+                              scale: index <= verificationStep ? 1 : 0.9,
+                              backgroundColor:
+                                index <= verificationStep
+                                  ? "rgba(var(--accent-bg-rgb), 0.1)"
+                                  : "transparent",
+                            }}
+                            className="flex-shrink-0 p-1 rounded-full"
                           >
-                            {step.icon}
-                          </div>
-                          <div>
+                            <div
+                              className={`${
+                                index <= verificationStep
+                                  ? "text-green-500"
+                                  : "text-gray-300"
+                              }`}
+                            >
+                              {step.icon}
+                            </div>
+                          </motion.div>
+                          <div className="pt-1">
                             <h3
-                              className={`text-lg ${index === verificationSteps.length - 1 ? "font-semibold" : "font-normal"} ${index <= verificationStep ? "text-black" : "text-black/50"}`}
+                              className={`text-base ${
+                                index === verificationSteps.length - 1
+                                  ? "font-semibold"
+                                  : "font-medium"
+                              } ${
+                                index <= verificationStep
+                                  ? "text-gray-800"
+                                  : "text-gray-400"
+                              }`}
                             >
                               {step.title}
                             </h3>
@@ -329,26 +380,56 @@ function BadgeViewComponent() {
                         </motion.div>
                       ))}
                     </div>
+
                     {verificationStep === verificationSteps.length - 1 && (
                       <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                        className="mt-4 text-center"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{
+                          delay: 0.2,
+                          type: "spring",
+                          stiffness: 200,
+                        }}
+                        className="mt-6 text-center"
                       >
-                        <div className="p-2 rounded-full bg-green-100 inline-flex">
-                          <CheckCircle2 className="h-10 w-10 text-green-500" />
-                        </div>
+                        <motion.div
+                          initial={{
+                            boxShadow: "0 0 0 0 rgba(var(--accent-bg-rgb), 0)",
+                          }}
+                          animate={{
+                            boxShadow: [
+                              "0 0 0 0 rgba(var(--accent-bg-rgb), 0)",
+                              "0 0 0 10px rgba(var(--accent-bg-rgb), 0.2)",
+                              "0 0 0 20px rgba(var(--accent-bg-rgb), 0)",
+                            ],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            repeatDelay: 1,
+                          }}
+                          className="p-3 rounded-full bg-gradient-to-br from-green-100 to-green-50 inline-flex"
+                        >
+                          <CheckCircle2 className="h-12 w-12 text-green-500" />
+                        </motion.div>
+                        <motion.p
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.4 }}
+                          className="mt-4 font-medium text-gray-700"
+                        >
+                          This badge has been verified as authentic
+                        </motion.p>
                       </motion.div>
                     )}
                   </div>
                 </DialogContent>
               </Dialog>
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
                 onClick={copyToClipboard}
-                className="rounded-full px-4 bg-[var(--main-text)] hover:bg-[var(--main-text)]/90"
+                className="rounded-full px-4 border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
               >
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
@@ -407,7 +488,8 @@ function BadgeViewComponent() {
                 {badge.courseLink && (
                   <Button
                     size="lg"
-                    className="w-full text-md py-6 hidden md:flex shadow-md rounded-xl bg-gradient-to-r from-[var(--main-text)] to-[var(--violet-light)] transition-all hover:shadow-lg"
+                    variant="outline"
+                    className="w-full text-md py-6 hidden md:flex shadow-sm rounded-xl border-[var(--accent-bg)] text-[var(--main-text)] bg-white hover:bg-[var(--accent-bg)]/10 transition-all"
                     onClick={() =>
                       badge.courseLink &&
                       window.open(badge.courseLink, "_blank")
@@ -521,7 +603,8 @@ function BadgeViewComponent() {
           >
             <Button
               size="lg"
-              className="w-full text-md py-6 rounded-xl shadow-md bg-gradient-to-r from-[var(--main-text)] to-[var(--violet-light)] transition-all hover:shadow-lg"
+              variant="outline"
+              className="w-full text-md py-6 rounded-xl shadow-sm border-[var(--accent-bg)] text-[var(--main-text)] bg-white hover:bg-[var(--accent-bg)]/10 transition-all"
               onClick={() =>
                 badge.courseLink && window.open(badge.courseLink, "_blank")
               }

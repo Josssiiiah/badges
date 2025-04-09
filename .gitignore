@@ -34,9 +34,7 @@ yarn-error.log*
 .vercel
 
 # database
-/backend/sqlite.db
-**/*.sqlite
-**/*.db
+
 
 **/*.trace
 **/*.zip

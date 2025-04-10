@@ -109,80 +109,91 @@ function HomeComponent() {
     <>
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="py-16 md:py-24 lg:py-32">
-          <div className="container mx-auto px-4 md:px-6 text-center">
-            <motion.h1
+        <section className="py-16 md:py-24 lg:py-32 ">
+          <div className="container mx-auto px-4 md:px-6 text-center max-w-7xl">
+            <motion.div
               initial="hidden"
               animate="visible"
               variants={fadeIn}
-              className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-7xl mb-4 text-slate-900"
+              className="space-y-6 md:space-y-8 lg:space-y-10 mb-10 md:mb-12"
             >
-              The Simple Way to Issue Digital Credentials.
-            </motion.h1>
-            <motion.p
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              className="mx-auto max-w-[800px] text-base md:text-xl lg:text-2xl mb-6 text-slate-700"
-            >
-              Manage, distribute, and showcase digital badges.
-            </motion.p>
+              <motion.h1
+                variants={fadeIn}
+                className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl text-slate-900 leading-tight"
+              >
+                The Simple Way to Issue <br /> Digital Credentials.
+              </motion.h1>
+              <motion.p
+                variants={fadeIn}
+                className="mx-auto max-w-[700px] text-lg md:text-xl lg:text-2xl text-slate-700"
+              >
+                Manage, distribute, and showcase digital badges.
+              </motion.p>
+            </motion.div>
+
             <motion.div
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
-              className="flex flex-wrap justify-center items-center gap-x-3 md:gap-x-6 gap-y-2 text-sm md:text-md text-slate-600 mb-8"
+              className="flex flex-wrap justify-center items-center gap-3 md:gap-4 text-sm md:text-base text-slate-600 mb-0 md:mb-16"
             >
               <motion.span
                 variants={fadeIn}
-                className="hidden md:flex items-center gap-1 md:gap-2"
+                className="hidden md:flex items-center gap-2 md:gap-3 border border-slate-200 rounded-full px-4 py-2 bg-white/80 shadow-sm hover:shadow-md transition-shadow"
               >
-                <BadgeCheck className="h-3 w-3 md:h-4 md:w-4 text-indigo-600" />{" "}
+                <BadgeCheck className="h-4 w-4 md:h-5 md:w-5 text-indigo-600" />{" "}
                 Open Badge–compliant
               </motion.span>
               <motion.span
                 variants={fadeIn}
-                className="hidden md:flex items-center gap-1 md:gap-2"
+                className="hidden md:flex items-center gap-2 md:gap-3 border border-slate-200 rounded-full px-4 py-2 bg-white/80 shadow-sm hover:shadow-md transition-shadow"
               >
-                <Cog className="h-3 w-3 md:h-4 md:w-4 text-slate-700" />{" "}
+                <Cog className="h-4 w-4 md:h-5 md:w-5 text-slate-700" />{" "}
                 Intuitive admin dashboard
               </motion.span>
+              {/* <motion.span
+                variants={fadeIn}
+                className="hidden md:flex items-center gap-2 md:gap-3 border border-slate-200 rounded-full px-4 py-2 bg-white/80 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Share2 className="h-4 w-4 md:h-5 md:w-5 text-indigo-500" />{" "}
+                1-click LinkedIn sharing
+              </motion.span> */}
               <motion.span
                 variants={fadeIn}
-                className="hidden md:flex items-center gap-1 md:gap-2"
+                className="hidden md:flex items-center gap-2 md:gap-3 border border-slate-200 rounded-full px-4 py-2 bg-white/80 shadow-sm hover:shadow-md transition-shadow"
               >
-                <Share2 className="h-3 w-3 md:h-4 md:w-4 text-indigo-500" />{" "}
-                One-click LinkedIn sharing
-              </motion.span>
-              <motion.span
-                variants={fadeIn}
-                className="hidden md:flex items-center gap-1 md:gap-2"
-              >
-                <Upload className="h-3 w-3 md:h-4 md:w-4 text-slate-600" />{" "}
-                Upload your existing badges
+                <Upload className="h-4 w-4 md:h-5 md:w-5 text-slate-600" />{" "}
+                Upload existing badges
               </motion.span>
             </motion.div>
+
             <motion.div
               initial="hidden"
               animate="visible"
               variants={fadeIn}
-              className="flex justify-center gap-4"
+              className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-6 mb-10"
             >
               <Button
                 size="lg"
                 asChild
-                className="bg-slate-900 text-white hover:bg-slate-700"
+                className="bg-slate-900 text-white hover:bg-slate-700 shadow-lg px-8 py-6 text-base rounded-xl transition-all hover:scale-105"
               >
-                <a href={demoLink} target="_blank" rel="noopener noreferrer">
-                  Book a Demo <ChevronRight className="ml-2 h-4 w-4" />
+                <a
+                  href={demoLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center"
+                >
+                  Book a Demo <ChevronRight className="ml-2 h-5 w-5" />
                 </a>
               </Button>
             </motion.div>
+
             <motion.p
               initial="hidden"
               animate="visible"
               variants={fadeIn}
-              className="text-xs md:text-sm text-slate-500 mt-4"
+              className="text-sm md:text-base text-slate-500 font-medium"
             >
               🎓 Built for Programs, Institutions, and Certifiers
             </motion.p>

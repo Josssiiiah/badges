@@ -3,7 +3,6 @@ import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,16 +25,15 @@ function RootComponent() {
   const isAdministrator = session?.user?.role === "administrator";
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--main-bg)]">
-      <header>
-        <div className="container pt-4 mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-gradient-to-r from-indigo-300 to-indigo-50 text-slate-800">
+      <header className="sticky top-0 z-50 backdrop-blur-sm bg-white/30 border-b border-white/50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <Link
               to="/"
-              className="text-xl font-semibold text-[var(--main-text)] transition"
+              className="text-xl font-semibold text-slate-900 transition hover:text-slate-700"
               activeProps={{
-                className:
-                  "text-xl font-semibold text-[var(--main-text)] hover:text-[var(--main-text)]/80 transition",
+                className: "text-xl font-semibold text-slate-900 transition",
               }}
               activeOptions={{ exact: true }}
             >
@@ -47,20 +45,20 @@ function RootComponent() {
                 <>
                   <Link
                     to="/dashboard"
-                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
+                    className="text-slate-700 hover:text-slate-900 px-3 py-2 rounded-md text-sm font-medium transition"
                     activeProps={{
                       className:
-                        "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
+                        "text-slate-900 bg-black/5 px-3 py-2 rounded-md text-sm font-medium",
                     }}
                   >
                     Dashboard
                   </Link>
                   <Link
                     to="/profile"
-                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
+                    className="text-slate-700 hover:text-slate-900 px-3 py-2 rounded-md text-sm font-medium transition"
                     activeProps={{
                       className:
-                        "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
+                        "text-slate-900 bg-black/5 px-3 py-2 rounded-md text-sm font-medium",
                     }}
                   >
                     Profile
@@ -70,10 +68,10 @@ function RootComponent() {
               {isAuthenticated && isAdministrator && (
                 <Link
                   to="/admin"
-                  className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]/100 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-slate-700 hover:text-slate-900 px-3 py-2 rounded-md text-sm font-medium transition"
                   activeProps={{
                     className:
-                      "text-[var(--main-text)] bg-[var(--main-text)]/10 px-3 py-2 rounded-md text-sm font-medium",
+                      "text-slate-900 bg-black/5 px-3 py-2 rounded-md text-sm font-medium",
                   }}
                 >
                   Admin Dashboard
@@ -85,11 +83,11 @@ function RootComponent() {
           <div className="flex items-center">
             {isAuthenticated ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className="focus:outline-none">
+                <DropdownMenuTrigger className="focus:outline-none rounded-full ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <div className="flex items-center space-x-3">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-9 w-9 border-2 border-slate-500/50">
                       <AvatarImage src={session?.user?.image || undefined} />
-                      <AvatarFallback className="bg-[var(--light-gray)] text-[var(--main-text)]">
+                      <AvatarFallback className="bg-slate-300 text-slate-700 text-xs">
                         {getInitials(session?.user?.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -97,44 +95,45 @@ function RootComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 bg-white border-space-300"
+                  className="w-56 bg-white text-slate-800 border-slate-200 shadow-lg mt-2"
                 >
-                  <DropdownMenuLabel className="text-[var(--main-text)]">
-                    My Account
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {session?.user?.name}
+                      </p>
+                      <p className="text-xs leading-none text-slate-500">
+                        {session?.user?.email}
+                      </p>
+                    </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="" />
+                  <DropdownMenuSeparator className="bg-slate-200" />
                   <DropdownMenuItem
                     asChild
-                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
+                    className="cursor-pointer hover:bg-slate-100"
                   >
-                    <Link to="/dashboard" className="cursor-pointer">
-                      Dashboard
-                    </Link>
+                    <Link to="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     asChild
-                    className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
+                    className="cursor-pointer hover:bg-slate-100"
                   >
-                    <Link to="/profile" className="cursor-pointer">
-                      Profile
-                    </Link>
+                    <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>
 
                   {isAdministrator && (
                     <DropdownMenuItem
                       asChild
-                      className="text-[var(--main-text)]/80 hover:text-[var(--main-text)]"
+                      className="cursor-pointer hover:bg-slate-100"
                     >
-                      <Link to="/admin" className="cursor-pointer">
-                        Admin Dashboard
-                      </Link>
+                      <Link to="/admin">Admin Dashboard</Link>
                     </DropdownMenuItem>
                   )}
 
-                  <DropdownMenuSeparator className="" />
+                  <DropdownMenuSeparator className="bg-slate-200" />
                   <DropdownMenuItem
                     onClick={() => authClient.signOut()}
-                    className="text-red-400 hover:text-red-300 cursor-pointer"
+                    className="text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700 cursor-pointer"
                   >
                     Log out
                   </DropdownMenuItem>
@@ -142,8 +141,8 @@ function RootComponent() {
               </DropdownMenu>
             ) : (
               <Button
-                variant="default"
-                className=" text-[var(--main-text)]"
+                variant="outline"
+                className="bg-white/50 border-slate-700 text-slate-800 hover:bg-white/80 hover:border-slate-900 hover:text-slate-900 rounded-full px-5 py-2 text-sm font-medium transition"
                 asChild
               >
                 <Link
@@ -164,9 +163,9 @@ function RootComponent() {
         <Outlet />
       </main>
 
-      <footer className="py-6">
+      <footer className="py-6 bg-transparent">
         <div className="container mx-auto px-4">
-          <p className="text-center text-sm text-[var(--main-text)]">
+          <p className="text-center text-sm text-slate-600/90">
             © {new Date().getFullYear()} BadgeSpot
           </p>
         </div>

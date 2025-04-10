@@ -8,6 +8,7 @@
     "db:push": "bun run --cwd backend drizzle-kit push",
     "db:generate": "bun run --cwd backend drizzle-kit generate",
     "db:migrate": "bun run --cwd backend drizzle-kit migrate",
+    "db:studio": "bun run --cwd backend drizzle-kit studio",
     "fmt": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "fmt:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "push": "drizzle-kit push --config=backend/drizzle.config.ts",
@@ -22,6 +23,9 @@
     "backend"
   ],
   "dependencies": {
+    "@libsql/client": "^0.15.2",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.41.0",
     "framer-motion": "^12.6.3",
     "nanoid": "^5.1.5"
   },

@@ -109,13 +109,13 @@ function HomeComponent() {
     <>
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="py-24 md:py-32">
+        <section className="py-16 md:py-24 lg:py-32">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <motion.h1
               initial="hidden"
               animate="visible"
               variants={fadeIn}
-              className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl mb-4 text-slate-900"
+              className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-7xl mb-4 text-slate-900"
             >
               The Simple Way to Issue Digital Credentials.
             </motion.h1>
@@ -123,43 +123,43 @@ function HomeComponent() {
               initial="hidden"
               animate="visible"
               variants={fadeIn}
-              className="mx-auto max-w-[800px] text-slate-700 md:text-2xl mb-6"
+              className="mx-auto max-w-[800px] text-base md:text-xl lg:text-2xl mb-6 text-slate-700"
             >
-             Manage, distribute, and showcase digital badges.
+              Manage, distribute, and showcase digital badges.
             </motion.p>
             <motion.div
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
-              className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-md text-slate-600 mb-8"
+              className="flex flex-wrap justify-center items-center gap-x-3 md:gap-x-6 gap-y-2 text-sm md:text-md text-slate-600 mb-8"
             >
               <motion.span
                 variants={fadeIn}
-                className="flex items-center gap-2"
+                className="hidden md:flex items-center gap-1 md:gap-2"
               >
-                <BadgeCheck className="h-4 w-4 text-indigo-600" /> Open
-                Badge–compliant
+                <BadgeCheck className="h-3 w-3 md:h-4 md:w-4 text-indigo-600" />{" "}
+                Open Badge–compliant
               </motion.span>
               <motion.span
                 variants={fadeIn}
-                className="flex items-center gap-2"
+                className="hidden md:flex items-center gap-1 md:gap-2"
               >
-                <Cog className="h-4 w-4 text-slate-700" /> Intuitive admin
-                dashboard
+                <Cog className="h-3 w-3 md:h-4 md:w-4 text-slate-700" />{" "}
+                Intuitive admin dashboard
               </motion.span>
               <motion.span
                 variants={fadeIn}
-                className="flex items-center gap-2"
+                className="hidden md:flex items-center gap-1 md:gap-2"
               >
-                <Share2 className="h-4 w-4 text-indigo-500" /> One-click
-                LinkedIn sharing
+                <Share2 className="h-3 w-3 md:h-4 md:w-4 text-indigo-500" />{" "}
+                One-click LinkedIn sharing
               </motion.span>
               <motion.span
                 variants={fadeIn}
-                className="flex items-center gap-2"
+                className="hidden md:flex items-center gap-1 md:gap-2"
               >
-                <Upload className="h-4 w-4 text-slate-600" /> Upload your
-                existing badges
+                <Upload className="h-3 w-3 md:h-4 md:w-4 text-slate-600" />{" "}
+                Upload your existing badges
               </motion.span>
             </motion.div>
             <motion.div
@@ -182,7 +182,7 @@ function HomeComponent() {
               initial="hidden"
               animate="visible"
               variants={fadeIn}
-              className="text-sm text-slate-500 mt-4"
+              className="text-xs md:text-sm text-slate-500 mt-4"
             >
               🎓 Built for Programs, Institutions, and Certifiers
             </motion.p>
@@ -190,14 +190,14 @@ function HomeComponent() {
         </section>
 
         {/* Subheadline */}
-        <section className="py-16 md:py-20 bg-white/70 backdrop-blur-md">
+        <section className="py-12 md:py-16 lg:py-20 bg-white/70 backdrop-blur-md">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <motion.h2
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={fadeIn}
-              className="text-2xl font-bold tracking-tight md:text-3xl text-slate-900"
+              className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl text-slate-900"
             >
               Avoid the cost and complexity of bloated credential platforms.
             </motion.h2>
@@ -206,7 +206,7 @@ function HomeComponent() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
-              className="mt-3 text-lg text-slate-700"
+              className="mt-3 text-base md:text-lg text-slate-700"
             >
               Start issuing badges in minutes. No training required.
             </motion.p>
@@ -214,14 +214,14 @@ function HomeComponent() {
         </section>
 
         {/* Who It's For */}
-        <section className="py-16 md:py-24">
+        <section className="py-12 md:py-16 lg:py-24">
           <div className="container mx-auto px-4 md:px-6">
             <motion.h2
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={fadeIn}
-              className="text-3xl font-bold tracking-tight text-center mb-12 md:text-4xl text-slate-900"
+              className="text-2xl font-bold tracking-tight text-center mb-8 md:mb-12 sm:text-3xl md:text-4xl text-slate-900"
             >
               Whether you're...
             </motion.h2>
@@ -230,56 +230,56 @@ function HomeComponent() {
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={containerVariants}
-              className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto"
+              className="grid grid-cols-1 gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto"
             >
               <motion.div variants={cardVariant}>
                 <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/70 backdrop-blur-md border border-white/30">
-                  <CardHeader>
-                    <GraduationCap className="h-10 w-10 mx-auto text-indigo-700 mb-3" />
-                    <CardTitle className="text-lg text-slate-900">
+                  <CardHeader className="pb-2 md:pb-4">
+                    <GraduationCap className="h-8 w-8 md:h-10 md:w-10 mx-auto text-indigo-700 mb-2 md:mb-3" />
+                    <CardTitle className="text-base md:text-lg text-slate-900">
                       A university or continuing ed program
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="text-sm text-slate-700">
+                  <CardContent className="text-xs md:text-sm text-slate-700 pt-0">
                     looking to formalize credentials
                   </CardContent>
                 </Card>
               </motion.div>
               <motion.div variants={cardVariant}>
                 <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/70 backdrop-blur-md border border-white/30">
-                  <CardHeader>
-                    <Computer className="h-10 w-10 mx-auto text-indigo-600 mb-3" />
-                    <CardTitle className="text-lg text-slate-900">
+                  <CardHeader className="pb-2 md:pb-4">
+                    <Computer className="h-8 w-8 md:h-10 md:w-10 mx-auto text-indigo-600 mb-2 md:mb-3" />
+                    <CardTitle className="text-base md:text-lg text-slate-900">
                       An online course provider or bootcamp
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="text-sm text-slate-700">
+                  <CardContent className="text-xs md:text-sm text-slate-700 pt-0">
                     needing verified, shareable proof of completion
                   </CardContent>
                 </Card>
               </motion.div>
               <motion.div variants={cardVariant}>
                 <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/70 backdrop-blur-md border border-white/30">
-                  <CardHeader>
-                    <Award className="h-10 w-10 mx-auto text-indigo-800 mb-3" />
-                    <CardTitle className="text-lg text-slate-900">
+                  <CardHeader className="pb-2 md:pb-4">
+                    <Award className="h-8 w-8 md:h-10 md:w-10 mx-auto text-indigo-800 mb-2 md:mb-3" />
+                    <CardTitle className="text-base md:text-lg text-slate-900">
                       A certifying body or membership organization
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="text-sm text-slate-700">
+                  <CardContent className="text-xs md:text-sm text-slate-700 pt-0">
                     ready to modernize your credentialing
                   </CardContent>
                 </Card>
               </motion.div>
               <motion.div variants={cardVariant}>
                 <Card className="text-center shadow-lg hover:shadow-xl transition-shadow bg-white/70 backdrop-blur-md border border-white/30">
-                  <CardHeader>
-                    <Briefcase className="h-10 w-10 mx-auto text-slate-700 mb-3" />
-                    <CardTitle className="text-lg text-slate-900">
+                  <CardHeader className="pb-2 md:pb-4">
+                    <Briefcase className="h-8 w-8 md:h-10 md:w-10 mx-auto text-slate-700 mb-2 md:mb-3" />
+                    <CardTitle className="text-base md:text-lg text-slate-900">
                       A skills-based training provider
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="text-sm text-slate-700">
+                  <CardContent className="text-xs md:text-sm text-slate-700 pt-0">
                     focused on portable recognition
                   </CardContent>
                 </Card>
@@ -290,7 +290,7 @@ function HomeComponent() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
-              className="text-center text-lg text-slate-800 mt-12 max-w-3xl mx-auto"
+              className="text-center text-base md:text-lg text-slate-800 mt-8 md:mt-12 max-w-3xl mx-auto"
             >
               …you can issue credentials confidently, clearly, and at scale.
             </motion.p>
@@ -298,14 +298,14 @@ function HomeComponent() {
         </section>
 
         {/* Features Section */}
-        <section className="py-16 md:py-24 bg-white/70 backdrop-blur-md">
+        <section className="py-12 md:py-16 lg:py-24 bg-white/70 backdrop-blur-md">
           <div className="container mx-auto px-4 md:px-6">
             <motion.h2
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={fadeIn}
-              className="text-3xl font-bold tracking-tight text-center mb-12 md:text-4xl text-slate-900"
+              className="text-2xl font-bold tracking-tight text-center mb-8 md:mb-12 sm:text-3xl md:text-4xl text-slate-900"
             >
               Industry-standard features without the complexity
             </motion.h2>
@@ -314,58 +314,58 @@ function HomeComponent() {
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={containerVariants}
-              className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto"
             >
               <motion.div
                 variants={cardVariant}
-                className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 border border-slate-100"
+                className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-4 md:p-6 border border-slate-100"
               >
-                <h3 className="text-xl font-bold text-center mb-6 text-slate-900">
+                <h3 className="text-lg md:text-xl font-bold text-center mb-4 md:mb-6 text-slate-900">
                   BadgeSpot
                 </h3>
-                <ul className="space-y-4">
+                <ul className="space-y-3 md:space-y-4">
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Open Badge–compliant (2.0 & 3.0)
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Intuitive administrator dashboard
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       One-click LinkedIn sharing
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Separate views for admins and recipients
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Clean, modern UI design
                     </span>
                   </motion.li>
@@ -373,54 +373,54 @@ function HomeComponent() {
               </motion.div>
               <motion.div
                 variants={cardVariant}
-                className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 border border-slate-100"
+                className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-4 md:p-6 border border-slate-100"
               >
-                <h3 className="text-xl font-bold text-center mb-6 text-slate-900">
+                <h3 className="text-lg md:text-xl font-bold text-center mb-4 md:mb-6 text-slate-900">
                   Credly
                 </h3>
-                <ul className="space-y-4">
+                <ul className="space-y-3 md:space-y-4">
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Open Badge–compliant (2.0 & 3.0)
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Administrator dashboard
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       LinkedIn profile integration
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Separate admin and earner interfaces
                     </span>
                   </motion.li>
                   <motion.li
                     variants={fadeIn}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-2 md:gap-3"
                   >
-                    <CheckCircle className="h-5 w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-slate-800">
+                    <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm md:text-base text-slate-800">
                       Complex enterprise platform
                     </span>
                   </motion.li>
@@ -432,7 +432,7 @@ function HomeComponent() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
-              className="text-center mt-8 text-slate-700 max-w-2xl mx-auto"
+              className="text-center mt-6 md:mt-8 text-sm md:text-base text-slate-700 max-w-2xl mx-auto"
             >
               All the essential features of enterprise credentialing platforms—
               <span className="font-medium">
@@ -443,8 +443,8 @@ function HomeComponent() {
           </div>
         </section>
 
-        {/* Why Choose Us Section */}
-        <section className="py-16 md:py-24">
+        {/* Why Choose Us Section - already hidden on mobile */}
+        <section className="hidden md:block py-16 md:py-24">
           <div className="container mx-auto px-4 md:px-6">
             <motion.h2
               initial="hidden"
@@ -535,14 +535,14 @@ function HomeComponent() {
         </section> */}
 
         {/* Call to Action Section */}
-        <section className="py-20 md:py-28 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+        <section className="py-14 md:py-20 lg:py-28 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <motion.h2
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
-              className="text-3xl font-bold tracking-tight md:text-4xl mb-6"
+              className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl mb-4 md:mb-6"
             >
               See how simple credentialing can be
             </motion.h2>
@@ -551,7 +551,7 @@ function HomeComponent() {
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
-              className="mx-auto max-w-[600px] text-slate-300 md:text-lg mb-8"
+              className="mx-auto max-w-[600px] text-sm md:text-base lg:text-lg text-slate-300 mb-6 md:mb-8"
             >
               Book a 15-minute demo to explore how we can help you deliver
               digital credentials that are professional, portable, and easy to
@@ -569,7 +569,7 @@ function HomeComponent() {
                   Schedule Demo <ChevronRight className="ml-2 h-4 w-4" />
                 </a>
               </Button>
-              <span className="text-sm text-slate-400">
+              <span className="text-xs md:text-sm text-slate-400">
                 Or contact us:{" "}
                 <a
                   href={`mailto:${contactEmail}`}

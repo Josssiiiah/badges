@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
+import { Link, Outlet, createRootRoute, useMatchRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,9 +23,16 @@ function RootComponent() {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session;
   const isAdministrator = session?.user?.role === "administrator";
+  const matchRoute = useMatchRoute();
+  const isIndexRoute = matchRoute({ to: "/" });
+
+  // Dynamic background based on route
+  const backgroundClass = isIndexRoute 
+    ? "bg-gradient-to-r from-indigo-300 to-indigo-50" 
+    : "bg-[var(--main-bg)]";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-r from-indigo-300 to-indigo-50 text-slate-800">
+    <div className={`min-h-screen flex flex-col ${backgroundClass} text-slate-800`}>
       <header className="sticky top-0 z-50 backdrop-blur-sm bg-white/30 border-b border-white/50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-6">

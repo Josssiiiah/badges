@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Badge as BadgeUI } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -94,14 +94,30 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function Dashboard() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
+  const [showLoading, setShowLoading] = useState(true);
   const [stats, setStats] = useState({
     totalBadges: 0,
     profileViews: 156, // This would come from a different API
-    recentBadge: "",
-    issueDate: "",
+    recentBadge: "None",
+    issueDate: "N/A",
     badgeShares: 0,
   });
+
+  // If session is still loading, show loading indicator
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-oxford flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pure"></div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, redirect to login page
+  if (!session || !session.user) {
+    return <Navigate to="/login" />;
+  }
 
   // Fetch badges using React Query
   const {
@@ -109,9 +125,13 @@ function Dashboard() {
     isLoading: isBadgesLoading,
     error,
   } = useQuery({
-    queryKey: ["badges"],
+    queryKey: ["user-badges", session.user.id],
     queryFn: async () => {
-      const response = await fetchWithAuth("badges/all");
+      if (!session.user.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetchWithAuth(`badges/user/${session.user.id}`);
       const data = await response.json();
 
       if (data.error) {
@@ -137,11 +157,24 @@ function Dashboard() {
             0
           ),
         });
+      } else {
+        // Reset stats if no badges are found
+        setStats({
+          totalBadges: 0,
+          profileViews: 156,
+          recentBadge: "None",
+          issueDate: "N/A",
+          badgeShares: 0,
+        });
       }
 
       return data.badges as Badge[];
     },
-    enabled: !!session?.user,
+    enabled: !!session?.user?.id,
+    // Add a short timeout to make the query fail faster if it's taking too long
+    retry: 1,
+    retryDelay: 500,
+    staleTime: 60000, // Cache results for 1 minute
   });
 
   // Format date helper function
@@ -154,7 +187,8 @@ function Dashboard() {
     });
   };
 
-  if (isBadgesLoading) {
+  // Show content quickly if loading takes too long
+  if (isBadgesLoading && showLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-col">
@@ -173,7 +207,7 @@ function Dashboard() {
         <Skeleton className="h-8 w-[150px] mb-4" />
         <Skeleton className="h-1 w-full mb-6" />
         <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(2)].map((_, i) => (
             <Skeleton key={i} className="h-[220px] w-full rounded-xl" />
           ))}
         </div>
@@ -181,6 +215,7 @@ function Dashboard() {
     );
   }
 
+  // Actual content
   return (
     <motion.div
       className="container mx-auto px-4 py-8 relative"

@@ -125,9 +125,18 @@ function UserProfileComponent() {
     isLoading: isBadgesLoading,
     error,
   } = useQuery({
-    queryKey: ["badges"],
+    queryKey: ["user-badges", username],
     queryFn: async () => {
-      const response = await fetchWithAuth("badges/all");
+      if (!userData || !userData.id) {
+        throw new Error("User not found");
+      }
+
+      // Don't fetch badges if the profile is private
+      if (userData.isPublic === false) {
+        return [];
+      }
+
+      const response = await fetchWithAuth(`badges/user/${userData.id}`);
       const data = await response.json();
 
       if (data.error) {
@@ -136,6 +145,9 @@ function UserProfileComponent() {
 
       return data.badges as Badge[];
     },
+    enabled: !!userData?.id && userData?.isPublic !== false,
+    retry: 1,
+    retryDelay: 500,
   });
 
   const isLoading = isUserLoading || isBadgesLoading;
@@ -280,7 +292,7 @@ function UserProfileComponent() {
                 className="text-center py-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-[var(--light-gray)]/20"
               >
                 <p className="text-[var(--main-text)]/80 text-lg">
-                  Error loading badges
+                  This user has no badges yet.
                 </p>
               </motion.div>
             ) : badges && badges.length > 0 ? (

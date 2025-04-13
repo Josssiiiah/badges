@@ -4,11 +4,11 @@
   :root {
     --radius: 0.5rem;
     --main-bg: #efefef;
-    --accent-bg: #b0c6ffbf;
-    --main-text: #3d52a0;
+    --accent-bg: #e7eeffbf;
+    --main-text: #7c829a;
     --violet-light: #8e51ff;
-    --gray: #8697c4;
-    --light-gray: #ccd4e7;
+    --gray: #a5a5a5;
+    --light-gray: #949596;
     --dark-gray: #2e2e2e;
   }
 }

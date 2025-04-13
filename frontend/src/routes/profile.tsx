@@ -102,20 +102,24 @@ function ProfileComponent() {
     isLoading: isBadgesLoading,
     error,
   } = useQuery({
-    queryKey: ["badges"],
+    queryKey: ["user-badges", session?.user?.id],
     queryFn: async () => {
-      const response = await fetchWithAuth("badges/all");
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetchWithAuth(`badges/user/${session.user.id}`);
       const data = await response.json();
 
       if (data.error) {
         throw new Error(data.error);
       }
 
-      console.log("Badges: ", data.badges);
+      console.log("User Badges: ", data.badges);
 
       return data.badges as Badge[];
     },
-    enabled: !!session?.user,
+    enabled: !!session?.user?.id,
   });
 
   // Update biography state when user data is loaded

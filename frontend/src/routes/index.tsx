@@ -24,7 +24,10 @@ import {
   Zap,
   Palette,
   Megaphone,
+  Building,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DemoDashboard } from "@/components/DemoDashboard";
 
 // Animation variants for consistent effects
 const fadeIn = {
@@ -91,6 +94,9 @@ export const Route = createFileRoute("/")({
 function HomeComponent() {
   const { emptyLoader } = useLoaderData({ from: "/" });
   const { data: session, isPending } = authClient.useSession();
+  const [selectedStudent, setSelectedStudent] = React.useState<number | null>(
+    null
+  );
 
   if (isPending) {
     return (
@@ -197,6 +203,28 @@ function HomeComponent() {
             >
               🎓 Built for Programs, Institutions, and Certifiers
             </motion.p>
+          </div>
+        </section>
+
+        {/* Demo Dashboard Section */}
+        <section className="py-16 md:py-24 lg:py-32 bg-[var(--main-bg)]">
+          <div className="container mx-auto px-4 md:px-6">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={fadeIn}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-slate-900 mb-4">
+                It doesn't have to be complicated.
+              </h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                See how easy it is to manage your digital credentials with our
+                intuitive dashboard
+              </p>
+            </motion.div>
+            <DemoDashboard />
           </div>
         </section>
 
@@ -455,7 +483,7 @@ function HomeComponent() {
         </section>
 
         {/* Why Choose Us Section - already hidden on mobile */}
-        <section className="hidden md:block py-16 md:py-24">
+        {/* <section className="hidden md:block py-16 md:py-24">
           <div className="container mx-auto px-4 md:px-6">
             <motion.h2
               initial="hidden"
@@ -530,7 +558,7 @@ function HomeComponent() {
               </motion.div>
             </motion.div>
           </div>
-        </section>
+        </section> */}
 
         {/* Testimonial Section */}
         {/* <section className="py-16 md:py-24 bg-white/70 backdrop-blur-md">
@@ -546,7 +574,7 @@ function HomeComponent() {
         </section> */}
 
         {/* Call to Action Section */}
-        <section className="py-14 md:py-20 lg:py-28 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+        <section className="py-14 md:py-20 lg:py-28 bg-[var(--main-bg)] text-slate-800">
           <div className="container mx-auto px-4 md:px-6 text-center">
             <motion.h2
               initial="hidden"

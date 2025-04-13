@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/api-client";
 import { Award, GraduationCap, Building } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoute,
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/admin")({
 
 function AdminRoute() {
   const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
 
   if (isPending) {
     return (
@@ -29,11 +31,8 @@ function AdminRoute() {
 
   // Check if the user is an administrator
   if (!session || session.user?.role !== "administrator") {
-    return (
-      <AdminAccessDenied
-        error={new Error("You must be an administrator to access this page")}
-      />
-    );
+    // Redirect to login page instead of showing access denied
+    return <Navigate to="/login" />;
   }
 
   return <AdminPage />;

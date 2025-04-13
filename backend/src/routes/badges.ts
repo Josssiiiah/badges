@@ -66,6 +66,53 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       return { error: String(error) };
     }
   })
+  // Add a new endpoint to get badges by user ID
+  .get("/user/:userId", async (context) => {
+    try {
+      const { params } = context;
+      const { userId } = params;
+      const session = await userMiddleware(context);
+      
+      if (!session.user) {
+        return { error: "Unauthorized" };
+      }
+
+      // Only allow fetching your own badges or if you're an admin
+      if (session.user.id !== userId && session.user.role !== "administrator") {
+        return { error: "You can only view your own badges" };
+      }
+
+      // Get assigned badges for the specified user with badge details
+      const userBadges = await db
+        .select({
+          id: badges.id, // This is the assigned badge ID
+          badgeId: badges.badgeId,
+          earnedAt: badges.earnedAt,
+          // Include all badge details from createdBadges
+          name: createdBadges.name,
+          description: createdBadges.description,
+          imageUrl: createdBadges.imageUrl,
+          imageData: createdBadges.imageData,
+          issuedBy: createdBadges.issuedBy,
+          courseLink: createdBadges.courseLink,
+          skills: createdBadges.skills,
+          earningCriteria: createdBadges.earningCriteria,
+          sharesCount: badges.sharesCount,
+          createdAt: createdBadges.createdAt,
+          updatedAt: createdBadges.updatedAt,
+        })
+        .from(badges)
+        .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
+        .where(eq(badges.userId, userId));
+
+      console.log(`Found ${userBadges.length} badges for user ${userId}`);
+      
+      return { badges: userBadges };
+    } catch (error) {
+      console.error("Error fetching user badges:", error);
+      return { error: String(error) };
+    }
+  })
   // Get a specific badge with its user - now using the badge assignment ID
   .get("/:badgeId", async ({ params }) => {
     try {

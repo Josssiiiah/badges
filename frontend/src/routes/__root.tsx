@@ -32,9 +32,7 @@ function RootComponent() {
   const isIndexRoute = matchRoute({ to: "/" });
 
   // Dynamic background based on route
-  const backgroundClass = isIndexRoute
-    ? "bg-gradient-to-r from-indigo-300 to-indigo-50"
-    : "bg-[var(--main-bg)]";
+  const backgroundClass = "bg-[var(--main-bg)]";
 
   return (
     <div

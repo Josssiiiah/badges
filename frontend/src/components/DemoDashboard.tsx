@@ -45,21 +45,21 @@ const mockBadges = [
     name: "Python Master",
     issuedBy: "Code Academy",
     description: "Advanced Python programming skills",
-    imageData: "/src/public/python.png",
+    imageData: "/python.png",
   },
   {
     id: "2",
     name: "Web Development",
     issuedBy: "Dev Bootcamp",
     description: "Full-stack web development certification",
-    imageData: "/src/public/web.png",
+    imageData: "/web.png",
   },
   {
     id: "3",
     name: "Data Science",
     issuedBy: "Data Institute",
     description: "Proficiency in data analysis and visualization",
-    imageData: "/src/public/data.png",
+    imageData: "/data.png",
   },
 ];
 
@@ -326,7 +326,10 @@ export function DemoDashboard() {
                                 className="max-w-[90%] max-h-[90%] object-contain"
                               />
                             </div>
-                            <Button variant="default" className="w-full border border-text-muted">
+                            <Button
+                              variant="default"
+                              className="w-full border border-text-muted"
+                            >
                               <Upload className="mr-2 h-4 w-4" />
                               Upload New Image
                             </Button>
@@ -602,7 +605,7 @@ export function DemoDashboard() {
                             <div className="text-2xl font-bold text-primary">
                               {
                                 mockOrganizationUsers.filter(
-                                  (u) => u.role === "administrator",
+                                  (u) => u.role === "administrator"
                                 ).length
                               }
                             </div>
@@ -707,7 +710,7 @@ export function DemoDashboard() {
                                       year: "numeric",
                                       month: "short",
                                       day: "numeric",
-                                    },
+                                    }
                                   )}
                                 </TableCell>
                               </TableRow>

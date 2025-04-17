@@ -98,7 +98,7 @@ function BadgeViewComponent() {
 
   // Safer date parsing to handle the database format "2025-04-08 19:51:02"
   const formatEarnedAtDate = (
-    dateString: string | Date | number | null | undefined,
+    dateString: string | Date | number | null | undefined
   ) => {
     if (!dateString) return new Date(); // Fallback to current date if null/undefined
 
@@ -225,12 +225,10 @@ function BadgeViewComponent() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="max-w-6xl mx-auto text-center p-8 bg-white dark:bg-[var(--dark-gray)]/10 rounded-2xl shadow-lg"
+          className="max-w-6xl mx-auto text-center p-8 bg-surface rounded-2xl shadow-lg"
         >
-          <h2 className="text-2xl font-bold text-[var(--dark-gray)]">
-            Badge not found
-          </h2>
-          <p className="text-[var(--dark-gray)]/80 mt-2">
+          <h2 className="text-2xl font-bold text-text">Badge not found</h2>
+          <p className="text-text-muted mt-2">
             The badge you're looking for doesn't seem to exist
           </p>
           <Button className="mt-4" asChild>
@@ -264,31 +262,29 @@ function BadgeViewComponent() {
         <motion.div
           variants={itemVariants}
           whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-md border border-[var(--light-gray)]/20 transition-all"
+          className="bg-surface/80 backdrop-blur-lg rounded-2xl p-6 shadow-md border border-gray-light/20 transition-all"
         >
           <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
-                <Calendar className="h-5 w-5 text-[var(--main-text)]" />
+              <div className="p-2 rounded-full bg-primary/20">
+                <Calendar className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-[var(--dark-gray)] text-sm">Issued on</p>
-                <p className="font-medium text-[var(--main-text)]">
-                  {formattedDate}
-                </p>
+                <p className="text-text-muted text-sm">Issued on</p>
+                <p className="font-medium text-text">{formattedDate}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-[var(--accent-bg)]/20">
-                <User className="h-5 w-5 text-[var(--main-text)]" />
+              <div className="p-2 rounded-full bg-primary/20">
+                <User className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-[var(--dark-gray)] text-sm">Issued to</p>
+                <p className="text-text-muted text-sm">Issued to</p>
                 <Link
                   to="/users/$username"
                   params={{ username: user.name }}
-                  className="font-medium text-[var(--main-text)] hover:underline"
+                  className="font-medium text-text hover:underline"
                 >
                   {user.name}
                 </Link>
@@ -302,13 +298,13 @@ function BadgeViewComponent() {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsVerified(true)}
-                    className="rounded-full px-4 border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
+                    className="rounded-full px-4 border-primary text-primary hover:bg-primary/10"
                   >
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Verify
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] rounded-xl border-0 shadow-lg bg-white/95 backdrop-blur-md">
+                <DialogContent className="sm:max-w-[425px] rounded-xl border-0 shadow-lg bg-surface/95 backdrop-blur-md">
                   <div className="py-6 space-y-6">
                     <div className="space-y-4 relative">
                       {verificationSteps.map((step, index) => (
@@ -331,7 +327,7 @@ function BadgeViewComponent() {
                               scale: index <= verificationStep ? 1 : 0.9,
                               backgroundColor:
                                 index <= verificationStep
-                                  ? "rgba(var(--accent-bg-rgb), 0.1)"
+                                  ? "rgba(var(--primary-rgb), 0.1)"
                                   : "transparent",
                             }}
                             className="flex-shrink-0 p-1 rounded-full"
@@ -378,13 +374,13 @@ function BadgeViewComponent() {
                       >
                         <motion.div
                           initial={{
-                            boxShadow: "0 0 0 0 rgba(var(--accent-bg-rgb), 0)",
+                            boxShadow: "0 0 0 0 rgba(var(--primary-rgb), 0)",
                           }}
                           animate={{
                             boxShadow: [
-                              "0 0 0 0 rgba(var(--accent-bg-rgb), 0)",
-                              "0 0 0 10px rgba(var(--accent-bg-rgb), 0.2)",
-                              "0 0 0 20px rgba(var(--accent-bg-rgb), 0)",
+                              "0 0 0 0 rgba(var(--primary-rgb), 0)",
+                              "0 0 0 10px rgba(var(--primary-rgb), 0.2)",
+                              "0 0 0 20px rgba(var(--primary-rgb), 0)",
                             ],
                           }}
                           transition={{
@@ -413,7 +409,7 @@ function BadgeViewComponent() {
                 variant="outline"
                 size="sm"
                 onClick={copyToClipboard}
-                className="rounded-full px-4 border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
+                className="rounded-full px-4 border-primary text-primary hover:bg-primary/10"
               >
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
@@ -435,7 +431,7 @@ function BadgeViewComponent() {
               initial="initial"
               className="relative"
             >
-              <div className="relative w-[250px] h-[250px] rounded-full overflow-hidden shadow-lg border-4 border-white p-1">
+              <div className="relative w-[250px] h-[250px] rounded-full overflow-hidden shadow-lg border-4 border-surface p-1">
                 {badge.imageData ? (
                   <img
                     src={badge.imageData}
@@ -443,8 +439,8 @@ function BadgeViewComponent() {
                     className="w-full h-full object-cover rounded-full"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-full bg-[var(--accent-bg)] flex items-center justify-center text-[var(--dark-gray)]/80">
-                    <Award className="h-20 w-20 text-white/70" />
+                  <div className="w-full h-full rounded-full bg-primary flex items-center justify-center text-text-muted">
+                    <Award className="h-20 w-20 text-surface/70" />
                   </div>
                 )}
               </div>
@@ -461,7 +457,7 @@ function BadgeViewComponent() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full text-md py-6 hidden md:flex shadow-sm rounded-xl border-[var(--accent-bg)] text-[var(--main-text)] bg-white hover:bg-[var(--accent-bg)]/10 transition-all"
+                    className="w-full text-md py-6 hidden md:flex shadow-sm rounded-xl border-primary text-primary bg-surface hover:bg-primary/10 transition-all"
                     onClick={() =>
                       badge.courseLink &&
                       window.open(badge.courseLink, "_blank")
@@ -482,13 +478,13 @@ function BadgeViewComponent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-3xl font-bold text-[var(--dark-gray)] mb-2">
+              <h2 className="text-3xl font-bold text-text mb-2">
                 {badge.name}
               </h2>
-              <p className="text-[var(--dark-gray)]/80 flex items-center gap-2 text-md mb-6">
-                <Award className="h-5 w-5 text-[var(--main-text)]" />
+              <p className="text-text-muted flex items-center gap-2 text-md mb-6">
+                <Award className="h-5 w-5 text-primary" />
                 Issued by{" "}
-                <span className="text-[var(--main-text)] font-medium">
+                <span className="text-primary font-medium">
                   {badge.issuedBy}
                 </span>
               </p>
@@ -501,10 +497,10 @@ function BadgeViewComponent() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h3 className="text-lg font-semibold text-[var(--dark-gray)]">
+                  <h3 className="text-lg font-semibold text-text">
                     Description
                   </h3>
-                  <p className="text-[var(--dark-gray)]/80 leading-relaxed">
+                  <p className="text-text-muted leading-relaxed">
                     {badge.description}
                   </p>
                 </motion.div>
@@ -519,9 +515,7 @@ function BadgeViewComponent() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <h3 className="text-lg font-semibold text-[var(--dark-gray)]">
-                  Skills
-                </h3>
+                <h3 className="text-lg font-semibold text-text">Skills</h3>
                 <div className="flex flex-wrap gap-2">
                   {badge.skills.split(",").map((skill, index) => (
                     <motion.div
@@ -536,7 +530,7 @@ function BadgeViewComponent() {
                     >
                       <BadgeUI
                         variant="outline"
-                        className="bg-[var(--accent-bg)]/20 border-[var(--accent-bg)]/30 text-[var(--main-text)] py-1.5 px-3 text-sm font-medium rounded-full"
+                        className="bg-primary/20 border-primary/30 text-primary py-1.5 px-3 text-sm font-medium rounded-full"
                       >
                         {skill.trim()}
                       </BadgeUI>
@@ -554,10 +548,10 @@ function BadgeViewComponent() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                <h3 className="text-lg font-semibold text-[var(--dark-gray)]">
+                <h3 className="text-lg font-semibold text-text">
                   Earning Criteria
                 </h3>
-                <p className="text-[var(--dark-gray)]/80 leading-relaxed">
+                <p className="text-text-muted leading-relaxed">
                   {badge.earningCriteria}
                 </p>
               </motion.div>
@@ -576,7 +570,7 @@ function BadgeViewComponent() {
             <Button
               size="lg"
               variant="outline"
-              className="w-full text-md py-6 rounded-xl shadow-sm border-[var(--accent-bg)] text-[var(--main-text)] bg-white hover:bg-[var(--accent-bg)]/10 transition-all"
+              className="w-full text-md py-6 rounded-xl shadow-sm border-primary text-primary bg-surface hover:bg-primary/10 transition-all"
               onClick={() =>
                 badge.courseLink && window.open(badge.courseLink, "_blank")
               }

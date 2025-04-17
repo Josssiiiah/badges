@@ -41,11 +41,14 @@ export const auth = betterAuth({
     },
   }),
   cookie: {
-    secure: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+    path: "/",
   },
   emailAndPassword: {
     enabled: true, // If you want to use email and password auth
-    autoSignIn: false, // Disable automatic sign in after signup
+    autoSignIn: true, // Disable automatic sign in after signup
   },
   user: {
     additionalFields: {

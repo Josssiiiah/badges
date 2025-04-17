@@ -9,6 +9,7 @@ export const authClient = createAuthClient({
   fetchOptions: {
     credentials: "include",
   },
+  debug: true,
   plugins: [
     inferAdditionalFields({
       user: {

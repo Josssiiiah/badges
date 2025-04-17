@@ -326,7 +326,7 @@ export function DemoDashboard() {
                                 className="max-w-[90%] max-h-[90%] object-contain"
                               />
                             </div>
-                            <Button variant="outline" className="w-full">
+                            <Button variant="default" className="w-full border border-text-muted">
                               <Upload className="mr-2 h-4 w-4" />
                               Upload New Image
                             </Button>

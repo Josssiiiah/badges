@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "world": "bun run --cwd backend dev & bun run --cwd frontend dev & bun run --cwd backend drizzle-kit studio --config drizzle.config.ts",
-    "build": "bun run --cwd frontend build && rm -rf backend/dist/* && cp -r frontend/dist/* backend/dist/ && cp frontend/public/*.png backend/dist/",
+    "build": "bun run --cwd frontend build && rm -rf backend/dist/* && cp -r frontend/dist/* backend/dist/ && cp frontend/public/*.png backend/dist/assets",
     "deploy": "bun run build && bun run --cwd backend dev",
     "db:push": "bun run --cwd backend drizzle-kit push",
     "db:generate": "bun run --cwd backend drizzle-kit generate",

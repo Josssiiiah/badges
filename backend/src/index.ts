@@ -26,6 +26,18 @@ const app = new Elysia()
     const file = Bun.file(filePath);
     return file;
   })
+  
+  // Serve image files from the root path
+  .get("/*.png", ({ params }) => {
+    const filePath = join(import.meta.dir, "../dist", params["*"]);
+    console.log(`Serving image: ${filePath}`);
+    const file = Bun.file(filePath);
+    return file;
+  }, {
+    params: t.Object({
+      "*": t.String()
+    })
+  })
 
   // Serve SPA for all other routes
   .all("/*", ({ path, request }) => {

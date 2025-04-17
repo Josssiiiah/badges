@@ -6,6 +6,8 @@ import { badgeRoutes } from "./routes/badges";
 import { organizationRoutes } from "./routes/organizations";
 import { userRoutes } from "./routes/users";
 import { join } from "path";
+import { staticPlugin } from '@elysiajs/static'
+
 
 // Create a new Elysia app
 const app = new Elysia()
@@ -46,8 +48,15 @@ const app = new Elysia()
       return Bun.file(join(import.meta.dir, "../dist/index.html"));
     }
   })
-  .listen(process.env.PORT || 3000);
+  .use(
+    staticPlugin({
+      assets: join(import.meta.dir, "../dist"), // serve everything in /dist
+      prefix: "",                               // at the web root
+      indexHTML: true
+    })
+  );
 
+app.listen(process.env.PORT || 3000);
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
 );

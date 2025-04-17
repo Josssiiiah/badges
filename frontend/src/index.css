@@ -1,14 +1,46 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --radius: 0.5rem;
-    --main-bg: #efefef;
-    --accent-bg: #e7eeffbf;
-    --main-text: #7c829a;
-    --violet-light: #8e51ff;
-    --gray: #a5a5a5;
-    --light-gray: #949596;
-    --dark-gray: #2e2e2e;
+@layer theme {
+  @theme {
+    /* Light (default) */
+    --color-radius: 0.5rem;
+    --color-surface: #ffffff;
+    --color-surface-secondary: #efefef; /* main-bg */
+    --color-surface-accent: #e7eeffbf; /* accent-bg */
+    --color-primary: #659bed; /* violet-light */
+    --color-text: #000000;
+    --color-text-muted: #7c829a; /* main-text */
+    --color-gray: #a5a5a5;
+    --color-gray-light: #949596;
+    --color-gray-dark: #2e2e2e;
+    --color-shadow: 0 0 0 / 0.05;
+  }
+
+  [data-theme="dark"] {
+    --color-surface: #171717;
+    --color-surface-secondary: #1e1e1e;
+    --color-surface-accent: #1f2937;
+    --color-primary: #659bed;
+    --color-text: #ffffff;
+    --color-text-muted: #9ca3af;
+    --color-gray: #6b7280;
+    --color-gray-light: #9ca3af;
+    --color-gray-dark: #b1b1b1;
+    --color-shadow: 0 0 0 / 0.2;
+  }
+}
+
+@theme inline {
+  --animate-shiny-text: shiny-text 8s infinite;
+  @keyframes shiny-text {
+    0%,
+    90%,
+    100% {
+      background-position: calc(-100% - var(--shiny-width)) 0;
+    }
+    30%,
+    60% {
+      background-position: calc(100% + var(--shiny-width)) 0;
+    }
   }
 }

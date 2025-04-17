@@ -98,7 +98,7 @@ function BadgeViewComponent() {
 
   // Safer date parsing to handle the database format "2025-04-08 19:51:02"
   const formatEarnedAtDate = (
-    dateString: string | Date | number | null | undefined
+    dateString: string | Date | number | null | undefined,
   ) => {
     if (!dateString) return new Date(); // Fallback to current date if null/undefined
 

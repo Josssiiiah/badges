@@ -4,22 +4,26 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border border-neutral-200 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 dark:border-neutral-800 dark:focus:ring-neutral-300",
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2",
   {
     variants: {
       variant: {
-        default: "border-transparent shadow-xl",
+        default:
+          "border-transparent bg-[var(--color-primary)] text-white shadow-sm",
         secondary:
-          "border-transparent bg-neutral-100 text-[var(--main-text)] dark:bg-neutral-800 dark:text-neutral-50",
+          "border-transparent bg-[var(--color-surface-secondary)] text-[var(--color-text-muted)]",
+        accent:
+          "border-transparent bg-[var(--color-surface-accent)] text-[var(--color-primary)]",
         destructive:
-          "border-transparent bg-red-500 text-neutral-50 shadow dark:bg-red-900 dark:text-neutral-50",
-        outline: "text-[var(--main-text)]",
+          "border-transparent bg-red-500 text-white shadow-sm dark:bg-red-900",
+        outline:
+          "border-[var(--color-gray-light)/30] text-[var(--color-text-muted)]",
       },
     },
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export interface BadgeProps

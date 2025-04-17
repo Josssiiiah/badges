@@ -279,7 +279,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
   const renderBadgeForm = (
     isEdit = false,
-    onSubmit: (e: React.FormEvent) => void
+    onSubmit: (e: React.FormEvent) => void,
   ) => {
     const isPending = isEdit ? editBadge.isPending : uploadBadge.isPending;
     const isDeleting = deleteBadge.isPending;

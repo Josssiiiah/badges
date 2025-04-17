@@ -142,7 +142,7 @@ function Dashboard() {
       if (data.badges && data.badges.length > 0) {
         const mostRecentBadge = [...data.badges].sort(
           (a, b) =>
-            new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime()
+            new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime(),
         )[0];
 
         setStats({
@@ -154,7 +154,7 @@ function Dashboard() {
             : "N/A",
           badgeShares: data.badges.reduce(
             (total: number, badge: Badge) => total + (badge.sharesCount || 0),
-            0
+            0,
           ),
         });
       } else {

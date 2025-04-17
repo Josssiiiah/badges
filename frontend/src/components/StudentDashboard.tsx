@@ -96,7 +96,7 @@ export function StudentDashboard({
           // Find the badge TEMPLATE from badges prop if it's missing
           // This only adds badge details (name, image) but preserves the assignment ID
           const matchingBadge = badges.find(
-            (badge) => badge.id === student.badge?.id
+            (badge) => badge.id === student.badge?.id,
           );
           if (matchingBadge) {
             return {
@@ -158,7 +158,7 @@ export function StudentDashboard({
       setIsLookingUpUser(true);
       // Make API call to look up user by email in the users table
       const response = await fetchWithAuth(
-        `users/by-email?email=${encodeURIComponent(email)}`
+        `users/by-email?email=${encodeURIComponent(email)}`,
       );
 
       if (response.ok) {
@@ -306,7 +306,7 @@ export function StudentDashboard({
             // If assigning, we'll update it after getting assignment ID
             badgeId: !editingStudent.hasBadge ? null : editingStudent.badgeId,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -349,7 +349,7 @@ export function StudentDashboard({
                 hasBadge: true,
                 badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
               }),
-            }
+            },
           );
 
           if (!updateBadgeIdResponse.ok) {
@@ -363,7 +363,7 @@ export function StudentDashboard({
         // Find the badge template data to display badge info (image, name)
         // but preserve the badge assignment ID for URLs
         const selectedBadgeTemplate = badges.find(
-          (badge) => badge.id === editingStudent.badgeId // Use template ID to find badge details
+          (badge) => badge.id === editingStudent.badgeId, // Use template ID to find badge details
         );
 
         if (selectedBadgeTemplate) {
@@ -378,8 +378,8 @@ export function StudentDashboard({
       // Update local state with the complete student information including badge
       setLocalStudents(
         localStudents.map((s) =>
-          s.studentId === editingStudent.studentId ? updatedStudent : s
-        )
+          s.studentId === editingStudent.studentId ? updatedStudent : s,
+        ),
       );
 
       // Close dialog
@@ -478,8 +478,8 @@ export function StudentDashboard({
           fetchWithAuth("students/create", {
             method: "POST",
             body: JSON.stringify(student),
-          }).then((res) => res.json())
-        )
+          }).then((res) => res.json()),
+        ),
       );
 
       // Add successful students to the list
@@ -491,7 +491,7 @@ export function StudentDashboard({
       if (bulkAssignBadge && bulkBadgeId) {
         // Find the badge template
         const selectedBadgeTemplate = badges.find(
-          (badge) => badge.id === bulkBadgeId
+          (badge) => badge.id === bulkBadgeId,
         );
 
         // Assign badge to each student
@@ -503,8 +503,8 @@ export function StudentDashboard({
                 badgeId: bulkBadgeId,
                 email: student.email,
               }),
-            }).then((res) => res.json())
-          )
+            }).then((res) => res.json()),
+          ),
         );
 
         // Update students with badge assignment IDs and badge details
@@ -535,7 +535,7 @@ export function StudentDashboard({
               });
             }
             return Promise.resolve();
-          })
+          }),
         );
       }
 
@@ -843,7 +843,7 @@ export function StudentDashboard({
                                             ...editingStudent,
                                             name: e.target.value,
                                           }
-                                        : null
+                                        : null,
                                     )
                                   }
                                   className="col-span-3"
@@ -867,7 +867,7 @@ export function StudentDashboard({
                                             ...editingStudent,
                                             email: e.target.value,
                                           }
-                                        : null
+                                        : null,
                                     )
                                   }
                                   onBlur={handleEditEmailBlur}
@@ -892,7 +892,7 @@ export function StudentDashboard({
                                                 ? editingStudent.badgeId
                                                 : undefined,
                                             }
-                                          : null
+                                          : null,
                                       )
                                     }
                                   />
@@ -921,7 +921,7 @@ export function StudentDashboard({
                                               ...editingStudent,
                                               badgeId: value,
                                             }
-                                          : null
+                                          : null,
                                       )
                                     }
                                   >

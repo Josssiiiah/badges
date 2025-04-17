@@ -1,25 +1,117 @@
-import * as React from "react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Award,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  BadgeCheck,
   Building,
-  CheckCircle,
+  Check,
+  ChevronRight,
+  Copy,
   GraduationCap,
-  ChevronLeft,
+  Pencil,
+  Plus,
+  Search,
+  Shield,
+  Trash,
+  Upload,
+  User,
+  Users,
 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 
-// Animation variants for consistent effects
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6 },
+// Mock data
+const mockBadges = [
+  {
+    id: "1",
+    name: "Python Master",
+    issuedBy: "Code Academy",
+    description: "Advanced Python programming skills",
+    imageData: "/src/public/python.png",
   },
+  {
+    id: "2",
+    name: "Web Development",
+    issuedBy: "Dev Bootcamp",
+    description: "Full-stack web development certification",
+    imageData: "/src/public/web.png",
+  },
+  {
+    id: "3",
+    name: "Data Science",
+    issuedBy: "Data Institute",
+    description: "Proficiency in data analysis and visualization",
+    imageData: "/src/public/data.png",
+  },
+];
+
+const mockStudents = [
+  {
+    studentId: "s1",
+    name: "Alex Johnson",
+    email: "alex@example.com",
+    hasBadge: true,
+    badgeId: "1",
+    badge: mockBadges[0],
+  },
+  {
+    studentId: "s2",
+    name: "Jamie Smith",
+    email: "jamie@example.com",
+    hasBadge: true,
+    badgeId: "2",
+    badge: mockBadges[1],
+  },
+  {
+    studentId: "s3",
+    name: "Taylor Brown",
+    email: "taylor@example.com",
+    hasBadge: false,
+  },
+];
+
+const mockOrganizationUsers = [
+  {
+    id: "u1",
+    name: "Admin User",
+    email: "admin@example.org",
+    role: "administrator",
+    createdAt: "2023-05-15T10:30:00Z",
+  },
+  {
+    id: "u2",
+    name: "Staff Member",
+    email: "staff@example.org",
+    role: "staff",
+    createdAt: "2023-06-20T14:45:00Z",
+  },
+];
+
+const organization = {
+  id: "org1",
+  name: "Demo Academy",
+  short_code: "DEMO123",
 };
 
+// Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -32,434 +124,605 @@ const containerVariants = {
   },
 };
 
-// Sample data
-const students = [
-  {
-    id: 1,
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    initials: "AJ",
-    badges: [
-      {
-        id: 1,
-        name: "Digital Marketing Fundamentals",
-        date: "Mar 15, 2024",
-        description: "Completed digital marketing course with distinction",
-      },
-      {
-        id: 2,
-        name: "Content Strategy",
-        date: "Feb 10, 2024",
-        description: "Mastered content strategy and planning",
-      },
-      {
-        id: 3,
-        name: "Social Media Management",
-        date: "Jan 5, 2024",
-        description: "Expert level social media management skills",
-      },
-    ],
-    achievements: [
-      "Completed 8 professional courses",
-      "Earned 3 specialized badges",
-      "Active member since 2023",
-      "Top 5% in program performance",
-    ],
-  },
-  {
-    id: 2,
-    name: "Taylor Smith",
-    email: "taylor.smith@example.com",
-    initials: "TS",
-    badges: [
-      {
-        id: 1,
-        name: "Project Management",
-        date: "Mar 20, 2024",
-        description: "Certified in project management methodologies",
-      },
-      {
-        id: 2,
-        name: "Agile Development",
-        date: "Feb 15, 2024",
-        description: "Advanced Agile practices and tools",
-      },
-    ],
-    achievements: [
-      "Completed 6 professional courses",
-      "Earned 2 professional certifications",
-      "Active member since 2023",
-      "Led 3 successful projects",
-    ],
-  },
-  {
-    id: 3,
-    name: "Jordan Williams",
-    email: "jordan.williams@example.com",
-    initials: "JW",
-    badges: [
-      {
-        id: 1,
-        name: "Web Development",
-        date: "Mar 25, 2024",
-        description: "Full-stack web development expertise",
-      },
-      {
-        id: 2,
-        name: "UI/UX Design",
-        date: "Feb 20, 2024",
-        description: "User-centered design principles",
-      },
-      {
-        id: 3,
-        name: "Frontend Development",
-        date: "Jan 15, 2024",
-        description: "Advanced frontend development skills",
-      },
-    ],
-    achievements: [
-      "Completed 7 development courses",
-      "Earned 3 specialized badges",
-      "Active member since 2023",
-      "Built 5 production applications",
-    ],
-  },
-];
-
-const badges = [
-  {
-    id: 1,
-    name: "Digital Marketing Fundamentals",
-    description: "Master digital marketing concepts and applications",
-    category: "Marketing",
-  },
-  {
-    id: 2,
-    name: "Project Management",
-    description: "Design and implement project management solutions",
-    category: "Business",
-  },
-  {
-    id: 3,
-    name: "Web Development",
-    description: "Build complete web applications",
-    category: "Technology",
-  },
-];
-
-const organization = {
-  name: "Badgespot Continuing Studies",
-  description:
-    "Leading provider of professional education and digital credentials",
-  stats: {
-    totalBadges: 15,
-    activeStudents: 42,
-    coursesOffered: 8,
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24,
+    },
   },
 };
 
 export function DemoDashboard() {
-  const [selectedStudent, setSelectedStudent] = React.useState<number | null>(
-    null
-  );
-  const [showStudentDetail, setShowStudentDetail] = React.useState(false);
+  const [activeTab, setActiveTab] = useState("badges");
+  const [showBadgeDetails, setShowBadgeDetails] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<
+    (typeof mockBadges)[0] | null
+  >(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [copiedShortCode, setCopiedShortCode] = useState(false);
 
-  const handleStudentClick = (studentId: number) => {
-    setSelectedStudent(studentId);
-    // On mobile, switch to detail view
-    if (window.innerWidth < 1024) {
-      setShowStudentDetail(true);
-    }
+  const handleBadgeClick = (badge: (typeof mockBadges)[0]) => {
+    setSelectedBadge(badge);
+    setShowBadgeDetails(true);
   };
 
-  const handleBackToList = () => {
-    setShowStudentDetail(false);
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setShowBadgeDetails(false);
+  };
+
+  const handleCopyShortCode = () => {
+    setCopiedShortCode(true);
+    setTimeout(() => setCopiedShortCode(false), 2000);
+  };
+
+  const handleCloseDetails = () => {
+    setShowBadgeDetails(false);
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
-      variants={containerVariants}
-      className="w-full max-w-6xl mx-auto px-4 sm:px-6"
-    >
-      <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/30">
-        <div className="p-4 sm:p-6 border-b border-white/30">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <Award className="h-4 w-4 text-indigo-600" />
-              </div>
-              <h3 className="text-base sm:text-lg font-semibold text-slate-900 truncate max-w-[200px] sm:max-w-none">
-                {organization.name}
-              </h3>
-            </div>
-            <div className="flex items-center">
-              <span className="px-2 sm:px-3 py-1 text-xs sm:text-sm rounded-full bg-green-100 text-green-700">
-                Demo Mode
-              </span>
-            </div>
-          </div>
+    <div className="relative w-full max-w-6xl mx-auto rounded-2xl overflow-hidden shadow-xl border border-black/5 dark:border-white/10 bg-surface dark:shadow-2xl dark:shadow-black/30">
+      {/* Demo header with message that this is a demo */}
+      <div className="bg-surface/40 dark:bg-surface-secondary/40 py-3 px-6 flex justify-between items-center border-b border-black/5 dark:border-white/10">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-primary">Admin Dashboard</span>
         </div>
+        <Badge className="bg-primary/10 text-green-400 border-green-400">
+          Demo Mode
+        </Badge>
+      </div>
 
-        <div className="p-4 sm:p-6">
-          <Tabs defaultValue="badges" className="w-full">
-            <TabsList className="w-full mx-auto mb-4 sm:mb-6 bg-slate-100/50 p-1 rounded-lg overflow-x-auto no-scrollbar">
-              <TabsTrigger
-                value="badges"
-                className="flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-600 hover:text-slate-900 text-xs sm:text-sm"
-              >
-                <Award className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Badges</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="students"
-                className="flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-600 hover:text-slate-900 text-xs sm:text-sm"
-              >
-                <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Students</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="organization"
-                className="flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-slate-900 data-[state=inactive]:text-slate-600 hover:text-slate-900 text-xs sm:text-sm"
-              >
-                <Building className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Organization</span>
-              </TabsTrigger>
-            </TabsList>
+      <div className="p-6">
+        <Tabs
+          defaultValue="badges"
+          value={activeTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-3 mb-6 bg-surface-secondary/50 dark:bg-surface-secondary p-1 rounded-lg">
+            <TabsTrigger
+              value="badges"
+              className="data-[state=active]:bg-surface data-[state=active]:text-text data-[state=active]:shadow-sm dark:data-[state=active]:shadow-md dark:data-[state=active]:shadow-black/20 text-text-muted"
+            >
+              <BadgeCheck className="mr-2 h-4 w-4" />
+              Badges
+            </TabsTrigger>
+            <TabsTrigger
+              value="students"
+              className="data-[state=active]:bg-surface data-[state=active]:text-text data-[state=active]:shadow-sm dark:data-[state=active]:shadow-md dark:data-[state=active]:shadow-black/20 text-text-muted"
+            >
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Students
+            </TabsTrigger>
+            <TabsTrigger
+              value="organization"
+              className="data-[state=active]:bg-surface data-[state=active]:text-text data-[state=active]:shadow-sm dark:data-[state=active]:shadow-md dark:data-[state=active]:shadow-black/20 text-text-muted"
+            >
+              <Building className="mr-2 h-4 w-4" />
+              Organization
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="badges" className="mt-4 sm:mt-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {badges.map((badge) => (
-                  <Card
-                    key={badge.id}
-                    className="group hover:shadow-lg transition-shadow bg-white/70 backdrop-blur-md border border-white/30"
-                  >
-                    <CardHeader className="pb-2 p-4 sm:p-6">
-                      <div className="h-24 sm:h-32 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-lg mb-3 sm:mb-4 flex items-center justify-center">
-                        <Award className="h-10 w-10 sm:h-12 sm:w-12 text-indigo-600" />
+          <AnimatePresence mode="wait">
+            {/* Badge Dashboard Content */}
+            <TabsContent value="badges" className="relative">
+              {!showBadgeDetails ? (
+                <motion.div
+                  key="badge-list"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={containerVariants}
+                >
+                  <Card className="bg-surface shadow-sm dark:shadow-md dark:shadow-black/20 border border-black/5 dark:border-white/10">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>Available Badges</CardTitle>
+                          <CardDescription>
+                            Browse and manage your badge templates
+                          </CardDescription>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-white"
+                          onClick={() => {}}
+                        >
+                          <Plus className="mr-1 h-4 w-4" />
+                          Create Badge
+                        </Button>
                       </div>
-                      <CardTitle className="text-base sm:text-lg text-slate-900">
-                        {badge.name}
-                      </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-                      <p className="text-xs sm:text-sm text-slate-700">
-                        {badge.description}
-                      </p>
-                      <div className="mt-2">
-                        <span className="text-xs px-2 py-1 bg-slate-100 rounded-full text-slate-600">
-                          {badge.category}
-                        </span>
+                    <CardContent>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        {mockBadges.map((badge) => (
+                          <motion.div
+                            key={badge.id}
+                            variants={itemVariants}
+                            whileHover={{ scale: 1.02 }}
+                          >
+                            <Card
+                              className="overflow-hidden border border-black/5 cursor-pointer hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/30 transition-all h-full bg-surface dark:bg-surface-secondary"
+                              onClick={() => handleBadgeClick(badge)}
+                            >
+                              <div className="aspect-square flex items-center justify-center bg-surface-secondary/30 dark:bg-black/20 relative">
+                                <img
+                                  src={badge.imageData}
+                                  alt={`Badge for ${badge.name}`}
+                                  className="max-w-[80%] max-h-[80%] object-contain"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 dark:bg-black/50 opacity-0 hover:opacity-100 transition-opacity">
+                                  <Pencil className="h-6 w-6 text-white" />
+                                </div>
+                              </div>
+                              <CardHeader className="p-3">
+                                <CardTitle className="text-base font-medium truncate">
+                                  {badge.name}
+                                </CardTitle>
+                                <CardDescription className="text-xs line-clamp-1">
+                                  {badge.description}
+                                </CardDescription>
+                              </CardHeader>
+                            </Card>
+                          </motion.div>
+                        ))}
                       </div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="students" className="mt-4 sm:mt-6">
-              <div
-                className={`grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 ${showStudentDetail && "lg:hidden"}`}
-              >
-                <div
-                  className={`lg:col-span-1 space-y-3 sm:space-y-4 ${showStudentDetail ? "hidden" : "block"} lg:block`}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="badge-details"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
                 >
-                  {students.map((student) => (
-                    <div
-                      key={student.id}
-                      className="flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
-                      onClick={() => handleStudentClick(student.id)}
-                    >
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs sm:text-sm font-medium text-slate-600">
-                          {student.initials}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="font-medium text-slate-900 text-sm sm:text-base truncate">
-                          {student.name}
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          {student.badges.length} badges earned
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div
-                  className={`lg:col-span-2 ${showStudentDetail ? "block" : "hidden"} lg:block`}
-                >
-                  {selectedStudent ? (
-                    <Card className="h-full bg-white/70 backdrop-blur-md border border-white/30">
-                      <CardHeader className="pb-3 sm:pb-4 p-4 sm:p-6">
-                        {showStudentDetail && (
-                          <button
-                            onClick={handleBackToList}
-                            className="mb-4 flex items-center text-sm text-slate-600 hover:text-slate-900 lg:hidden"
+                  <Card className="bg-surface shadow-sm dark:shadow-md dark:shadow-black/20 border border-black/5 dark:border-white/10">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCloseDetails}
+                            className="h-8 w-8 p-0 rounded-full hover:bg-surface-secondary/70 dark:hover:bg-surface-accent/30"
                           >
-                            <ChevronLeft className="h-4 w-4 mr-1" />
-                            Back to students
-                          </button>
-                        )}
-                        <div className="flex items-start sm:items-center flex-col sm:flex-row sm:space-x-4">
-                          <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-slate-200 flex items-center justify-center mb-3 sm:mb-0">
-                            <span className="text-lg sm:text-xl font-medium text-slate-600">
-                              {
-                                students.find((s) => s.id === selectedStudent)
-                                  ?.initials
-                              }
-                            </span>
-                          </div>
-                          <div>
-                            <CardTitle className="text-xl sm:text-2xl text-slate-900">
-                              {
-                                students.find((s) => s.id === selectedStudent)
-                                  ?.name
-                              }
-                            </CardTitle>
-                            <p className="text-sm text-slate-600 break-all sm:break-normal">
-                              {
-                                students.find((s) => s.id === selectedStudent)
-                                  ?.email
-                              }
-                            </p>
-                            <p className="text-xs sm:text-sm text-indigo-600 mt-1 truncate">
-                              badgespot.com/users/
-                              {students
-                                .find((s) => s.id === selectedStudent)
-                                ?.name.toLowerCase()
-                                .replace(/\s+/g, "-")}
-                            </p>
-                          </div>
+                            <ChevronRight className="h-4 w-4 rotate-180" />
+                          </Button>
+                          <CardTitle>Badge Details</CardTitle>
                         </div>
-                      </CardHeader>
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="space-y-5 sm:space-y-6">
-                          <div>
-                            <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 text-slate-900">
-                              Earned Badges
-                            </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                              {students
-                                .find((s) => s.id === selectedStudent)
-                                ?.badges.map((badge) => (
-                                  <div
-                                    key={badge.id}
-                                    className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 bg-slate-50 rounded-lg"
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 dark:border-red-800/30"
+                          >
+                            <Trash className="mr-1 h-4 w-4" />
+                            Delete
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90 text-white"
+                          >
+                            <Pencil className="mr-1 h-4 w-4" />
+                            Edit Badge
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {selectedBadge && (
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div className="flex flex-col items-center">
+                            <div className="aspect-square w-full max-w-[240px] flex items-center justify-center bg-surface-secondary/30 dark:bg-black/20 rounded-lg p-4 mb-4 border border-black/5 dark:border-white/10">
+                              <img
+                                src={selectedBadge.imageData}
+                                alt={`Badge for ${selectedBadge.name}`}
+                                className="max-w-[90%] max-h-[90%] object-contain"
+                              />
+                            </div>
+                            <Button variant="outline" className="w-full">
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload New Image
+                            </Button>
+                          </div>
+                          <div className="space-y-4">
+                            <div>
+                              <h3 className="text-sm font-medium text-text-muted mb-1">
+                                Badge Name
+                              </h3>
+                              <p className="text-text">{selectedBadge.name}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-text-muted mb-1">
+                                Issuing Organization
+                              </h3>
+                              <p className="text-text">
+                                {selectedBadge.issuedBy}
+                              </p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-text-muted mb-1">
+                                Description
+                              </h3>
+                              <p className="text-text">
+                                {selectedBadge.description}
+                              </p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-text-muted mb-1">
+                                Skills
+                              </h3>
+                              <div className="flex flex-wrap gap-1">
+                                {[
+                                  "Programming",
+                                  "Problem Solving",
+                                  "Algorithms",
+                                ].map((skill) => (
+                                  <Badge
+                                    key={skill}
+                                    className="bg-surface-secondary text-text-muted border-none dark:bg-surface-accent/40"
                                   >
-                                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center flex-shrink-0">
-                                      <Award className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
-                                    </div>
-                                    <div className="min-w-0">
-                                      <h4 className="font-medium text-slate-900 text-sm sm:text-base truncate">
-                                        {badge.name}
-                                      </h4>
-                                      <p className="text-xs sm:text-sm text-slate-600">
-                                        Issued on {badge.date}
-                                      </p>
-                                    </div>
-                                  </div>
+                                    {skill}
+                                  </Badge>
                                 ))}
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 text-slate-900">
-                              Achievements
-                            </h3>
-                            <div className="space-y-2">
-                              {students
-                                .find((s) => s.id === selectedStudent)
-                                ?.achievements.map((achievement, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-start sm:items-center space-x-2 text-xs sm:text-sm text-slate-600"
-                                  >
-                                    <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mt-0.5 sm:mt-0 flex-shrink-0" />
-                                    <span>{achievement}</span>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Card className="h-full flex items-center justify-center bg-white/70 backdrop-blur-md border border-white/30">
-                      <CardContent className="py-8 sm:py-12 text-center">
-                        <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                          <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
-                        </div>
-                        <h3 className="text-base sm:text-lg font-medium text-slate-900 mb-1 sm:mb-2">
-                          Select a Student
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          Choose a student from the list to view their details
-                          and achievements
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
             </TabsContent>
 
-            <TabsContent value="organization" className="mt-4 sm:mt-6">
-              <div className="w-full mx-auto">
-                <Card className="bg-white/70 backdrop-blur-md border border-white/30">
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="text-base sm:text-lg text-slate-900">
-                      Organization Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
-                    <div className="flex items-center space-x-3 sm:space-x-4">
-                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                        <Building className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />
+            {/* Student Dashboard Content */}
+            <TabsContent value="students">
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={containerVariants}
+              >
+                <Card className="bg-surface shadow-sm dark:shadow-md dark:shadow-black/20 border border-black/5 dark:border-white/10">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Student Management</CardTitle>
+                        <CardDescription>
+                          View and manage student credentials
+                        </CardDescription>
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="font-medium text-slate-900 text-sm sm:text-base truncate">
-                          {organization.name}
-                        </h4>
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          {organization.description}
-                        </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-primary/20 text-primary hover:bg-primary/5 dark:border-primary/40 dark:hover:bg-primary/20"
+                        >
+                          <Upload className="mr-1 h-4 w-4" />
+                          Import CSV
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-white"
+                        >
+                          <Plus className="mr-1 h-4 w-4" />
+                          Add Student
+                        </Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                      <div className="p-3 sm:p-4 bg-slate-50 rounded-lg">
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          Total Badges
-                        </p>
-                        <p className="text-xl sm:text-2xl font-semibold text-slate-900">
-                          {organization.stats.totalBadges}
-                        </p>
-                      </div>
-                      <div className="p-3 sm:p-4 bg-slate-50 rounded-lg">
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          Active Students
-                        </p>
-                        <p className="text-xl sm:text-2xl font-semibold text-slate-900">
-                          {organization.stats.activeStudents}
-                        </p>
-                      </div>
-                      <div className="p-3 sm:p-4 bg-slate-50 rounded-lg">
-                        <p className="text-xs sm:text-sm text-slate-600">
-                          Courses Offered
-                        </p>
-                        <p className="text-xl sm:text-2xl font-semibold text-slate-900">
-                          {organization.stats.coursesOffered}
-                        </p>
-                      </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-muted" />
+                      <Input
+                        placeholder="Search students..."
+                        className="pl-9 bg-surface-secondary/30 dark:bg-surface-secondary/50 border-none"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <div className="rounded-lg border border-black/5 dark:border-white/10 overflow-hidden">
+                      <Table>
+                        <TableHeader className="bg-surface-secondary/30 dark:bg-surface-secondary/70">
+                          <TableRow>
+                            <TableHead>Student</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Badge Status</TableHead>
+                            <TableHead className="text-right">
+                              Actions
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {mockStudents.map((student) => (
+                            <TableRow
+                              key={student.studentId}
+                              className="dark:border-white/5"
+                            >
+                              <TableCell className="font-medium">
+                                <div className="flex items-center">
+                                  <Avatar className="h-8 w-8 mr-2">
+                                    <AvatarFallback className="bg-primary/10 text-primary dark:bg-primary/20">
+                                      {student.name
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  {student.name}
+                                </div>
+                              </TableCell>
+                              <TableCell>{student.email}</TableCell>
+                              <TableCell>
+                                {student.hasBadge ? (
+                                  <Badge className="bg-green-100 text-green-800 dark:bg-green-950/50 dark:text-green-300 border-none">
+                                    <Check className="mr-1 h-3 w-3" />
+                                    Issued
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-surface-secondary text-text-muted border-none dark:bg-surface-secondary/70">
+                                    Not Issued
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  {student.hasBadge ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 text-primary hover:text-primary/90 hover:bg-primary/5 dark:hover:bg-primary/20"
+                                    >
+                                      View Badge
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 text-primary hover:text-primary/90 hover:bg-primary/5 dark:hover:bg-primary/20"
+                                    >
+                                      Assign Badge
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-text-muted hover:text-text hover:bg-surface-secondary/50 dark:hover:bg-surface-secondary"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             </TabsContent>
-          </Tabs>
-        </div>
+
+            {/* Organization Dashboard Content */}
+            <TabsContent value="organization">
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={containerVariants}
+              >
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <motion.div variants={itemVariants}>
+                    <Card className="bg-surface shadow-sm dark:shadow-md dark:shadow-black/20 border border-black/5 dark:border-white/10 h-full">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-surface-accent/20 dark:bg-surface-accent/40">
+                            <Building className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">
+                              Organization Profile
+                            </CardTitle>
+                            <CardDescription>
+                              Basic organization details
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center p-3 rounded-lg bg-surface-secondary/30 dark:bg-surface-secondary/60 border border-black/5 dark:border-white/5">
+                            <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4 text-text-muted" />
+                              <span className="text-sm font-medium text-text-muted">
+                                Organization
+                              </span>
+                            </div>
+                            <span className="text-base font-medium text-text">
+                              {organization.name}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center p-3 rounded-lg bg-surface-secondary/30 dark:bg-surface-secondary/60 border border-black/5 dark:border-white/5">
+                            <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4 text-text-muted" />
+                              <span className="text-sm font-medium text-text-muted">
+                                Organization Code
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base font-medium text-text">
+                                {organization.short_code}
+                              </span>
+                              <button
+                                onClick={handleCopyShortCode}
+                                className="p-1 rounded-md hover:bg-surface-accent/20 dark:hover:bg-surface-accent/40 transition-colors"
+                                aria-label="Copy organization code"
+                              >
+                                {copiedShortCode ? (
+                                  <Check className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <Copy className="h-4 w-4 text-text-muted" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <Card className="bg-surface shadow-sm dark:shadow-md dark:shadow-black/20 border border-black/5 dark:border-white/10 h-full">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-surface-accent/20 dark:bg-surface-accent/40">
+                            <Users className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">
+                              Member Statistics
+                            </CardTitle>
+                            <CardDescription>
+                              Overview of organization members
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div className="p-3 rounded-lg bg-surface-secondary/30 dark:bg-surface-secondary/60 border border-black/5 dark:border-white/5 flex flex-col items-center justify-center">
+                            <div className="text-2xl font-bold text-primary">
+                              {
+                                mockOrganizationUsers.filter(
+                                  (u) => u.role === "administrator",
+                                ).length
+                              }
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-text-muted">
+                              <Shield className="h-3.5 w-3.5" />
+                              <span>Administrators</span>
+                            </div>
+                          </div>
+
+                          <div className="p-3 rounded-lg bg-surface-secondary/30 dark:bg-surface-secondary/60 border border-black/5 dark:border-white/5 flex flex-col items-center justify-center">
+                            <div className="text-2xl font-bold text-primary">
+                              {mockStudents.length}
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-text-muted">
+                              <GraduationCap className="h-3.5 w-3.5" />
+                              <span>Students</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button className="w-full bg-primary hover:bg-primary/90 text-white">
+                          <User className="h-4 w-4 mr-2" />
+                          Invite New Administrator
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </div>
+
+                <motion.div variants={itemVariants}>
+                  <Card className="bg-surface shadow-sm dark:shadow-md dark:shadow-black/20 border border-black/5 dark:border-white/10">
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-surface-accent/20 dark:bg-surface-accent/40">
+                          <Users className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle>Organization Members</CardTitle>
+                          <CardDescription>
+                            Manage your organization's users
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="rounded-lg border border-black/5 dark:border-white/10 overflow-hidden">
+                        <Table>
+                          <TableHeader className="bg-surface-secondary/30 dark:bg-surface-secondary/70">
+                            <TableRow>
+                              <TableHead className="w-12"></TableHead>
+                              <TableHead>User</TableHead>
+                              <TableHead>Role</TableHead>
+                              <TableHead>Join Date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {mockOrganizationUsers.map((user) => (
+                              <TableRow
+                                key={user.id}
+                                className="dark:border-white/5"
+                              >
+                                <TableCell className="font-medium">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarFallback className="bg-primary/10 text-primary dark:bg-primary/20">
+                                      {user.name
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium text-text">
+                                      {user.name}
+                                    </span>
+                                    <span className="text-sm text-text-muted">
+                                      {user.email}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    className={
+                                      user.role === "administrator"
+                                        ? "bg-primary/10 text-primary border-none dark:bg-primary/20"
+                                        : "bg-surface-secondary/70 text-text-muted border-none dark:bg-surface-secondary"
+                                    }
+                                  >
+                                    {user.role === "administrator" ? (
+                                      <Shield className="inline h-3 w-3 mr-1" />
+                                    ) : (
+                                      <User className="inline h-3 w-3 mr-1" />
+                                    )}
+                                    {user.role}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(user.createdAt).toLocaleDateString(
+                                    undefined,
+                                    {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    },
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
+            </TabsContent>
+          </AnimatePresence>
+        </Tabs>
       </div>
-    </motion.div>
+    </div>
   );
 }

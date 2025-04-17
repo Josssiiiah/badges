@@ -72,12 +72,12 @@ export default function Login() {
         if (role === "administrator") {
           if (orgOption === "create" && !organization) {
             throw new Error(
-              "Organization name is required when creating a new organization"
+              "Organization name is required when creating a new organization",
             );
           }
           if (orgOption === "join" && !shortCode) {
             throw new Error(
-              "Organization short code is required when joining an existing organization"
+              "Organization short code is required when joining an existing organization",
             );
           }
         }
@@ -204,7 +204,7 @@ export default function Login() {
                           "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "student"
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
+                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300",
                         )}
                       >
                         <div className="flex flex-col items-center gap-1 md:gap-2">
@@ -222,7 +222,7 @@ export default function Login() {
                           "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "administrator"
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300"
+                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300",
                         )}
                       >
                         <div className="flex flex-col items-center gap-1 md:gap-2">

@@ -23,8 +23,8 @@ function AdminRoute() {
 
   if (isPending) {
     return (
-      <div className="min-h-screen bg-oxford flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pure"></div>
+      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-text"></div>
       </div>
     );
   }
@@ -42,12 +42,12 @@ function AdminAccessDenied({ error }: { error: Error }) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-oxford text-pure flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-surface-secondary text-text flex flex-col items-center justify-center">
       <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
       <p className="mb-8 text-center max-w-md">{error.message}</p>
       <button
         onClick={() => navigate({ to: "/" })}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        className="px-4 py-2 bg-primary text-surface rounded hover:bg-primary/80 transition"
       >
         Return to Home
       </button>
@@ -124,8 +124,8 @@ function AdminPage() {
     isOrganizationLoading
   ) {
     return (
-      <div className="min-h-screen bg-oxford flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pure"></div>
+      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-text"></div>
       </div>
     );
   }
@@ -134,21 +134,21 @@ function AdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2 text-[var(--main-text)]">
+      <h1 className="text-3xl font-bold mb-2 text-text-muted">
         Admin Dashboard
       </h1>
-      <p className="text-gray-500 mb-8">
+      <p className="text-text-muted/50 mb-8">
         Organization: {organization?.name || "No organization"}
       </p>
 
       <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="w-full max-w-md mx-auto mb-6 bg-[var(--accent-bg)]/10 p-1 rounded-lg">
+        <TabsList className="w-full max-w-md mx-auto mb-6 bg-surface-accent/10 p-1 rounded-lg">
           <TabsTrigger
             value="templates"
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
-              "data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--main-text)]",
-              "data-[state=inactive]:text-[var(--dark-gray)]/70 hover:text-[var(--dark-gray)]"
+              "data-[state=active]:bg-surface data-[state=active]:shadow-shadow data-[state=active]:text-text-muted",
+              "data-[state=inactive]:text-gray-dark/70 hover:text-gray-dark",
             )}
           >
             <Award className="h-4 w-4" />
@@ -158,8 +158,8 @@ function AdminPage() {
             value="students"
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
-              "data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--main-text)]",
-              "data-[state=inactive]:text-[var(--dark-gray)]/70 hover:text-[var(--dark-gray)]"
+              "data-[state=active]:bg-surface data-[state=active]:shadow-shadow data-[state=active]:text-text-muted",
+              "data-[state=inactive]:text-gray-dark/70 hover:text-gray-dark",
             )}
           >
             <GraduationCap className="h-4 w-4" />
@@ -169,8 +169,8 @@ function AdminPage() {
             value="organization"
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
-              "data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[var(--main-text)]",
-              "data-[state=inactive]:text-[var(--dark-gray)]/70 hover:text-[var(--dark-gray)]"
+              "data-[state=active]:bg-surface data-[state=active]:shadow-shadow data-[state=active]:text-text-muted",
+              "data-[state=inactive]:text-gray-dark/70 hover:text-gray-dark",
             )}
           >
             <Building className="h-4 w-4" />
@@ -180,21 +180,21 @@ function AdminPage() {
 
         <TabsContent
           value="templates"
-          className="mt-6 rounded-xl p-6 bg-white/10 backdrop-filter backdrop-blur-lg border-2 border-white/30 shadow-xl ring-1 ring-white/50"
+          className="mt-6 rounded-xl p-6 bg-surface/10 backdrop-filter backdrop-blur-lg border-2 border-surface/30 shadow-shadow ring-1 ring-surface/50"
         >
           <BadgesDashboard badges={badges || []} />
         </TabsContent>
 
         <TabsContent
           value="students"
-          className="mt-6 rounded-xl p-6 bg-white/10 backdrop-filter backdrop-blur-lg border-2 border-white/30 shadow-xl ring-1 ring-white/50"
+          className="mt-6 rounded-xl p-6 bg-surface/10 backdrop-filter backdrop-blur-lg border-2 border-surface/30 shadow-shadow ring-1 ring-surface/50"
         >
           <StudentDashboard students={students || []} badges={badges || []} />
         </TabsContent>
 
         <TabsContent
           value="organization"
-          className="mt-6 rounded-xl p-6 bg-white/10 backdrop-filter backdrop-blur-lg border-2 border-white/30 shadow-xl ring-1 ring-white/50"
+          className="mt-6 rounded-xl p-6 bg-surface/10 backdrop-filter backdrop-blur-lg border-2 border-surface/30 shadow-shadow ring-1 ring-surface/50"
         >
           <OrganizationsDashboard />
         </TabsContent>

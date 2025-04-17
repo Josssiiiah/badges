@@ -107,7 +107,7 @@ function UserProfileComponent() {
     queryKey: ["user", username],
     queryFn: async () => {
       const response = await fetchWithAuth(
-        `users/by-username?username=${encodeURIComponent(username)}`
+        `users/by-username?username=${encodeURIComponent(username)}`,
       );
       const data = await response.json();
 

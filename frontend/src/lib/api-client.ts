@@ -15,7 +15,7 @@ export const api = server.api;
 // Helper function for authenticated API requests
 export const fetchWithAuth = async (
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ) => {
   const url = endpoint.startsWith("http")
     ? endpoint

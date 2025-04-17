@@ -173,7 +173,7 @@ function ProfileComponent() {
               ...oldData,
               biography,
             };
-          }
+          },
         );
       }
     } catch (error) {
@@ -224,7 +224,7 @@ function ProfileComponent() {
               ...oldData,
               isPublic: !isPublic,
             };
-          }
+          },
         );
       }
     } catch (error) {
@@ -270,7 +270,7 @@ function ProfileComponent() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center py-8">
-                <p className="text-[var(--main-text)]/80">
+                <p className="text-text-muted/80">
                   Please log in to view your profile
                 </p>
               </div>
@@ -289,19 +289,19 @@ function ProfileComponent() {
       <div className="max-w-5xl mx-auto">
         <Card>
           {/* Centered User Info Section with different background */}
-          <CardContent className="pt-6 pb-6 bg-[var(--accent-bg)]/10">
+          <CardContent className="pt-6 pb-6 bg-surface-accent/10">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <Avatar className="h-24 w-24 ring-4 ring-[var(--accent-bg)]/20 shadow-lg">
+              <Avatar className="h-24 w-24 ring-4 ring-surface-accent/20 shadow-shadow">
                 <AvatarImage src={user.image || ""} />
-                <AvatarFallback className="bg-gradient-to-br from-[var(--accent-bg)] to-[var(--accent-bg)]/70 text-white text-xl">
+                <AvatarFallback className="bg-gradient-to-br from-surface-accent to-surface-accent/70 text-text text-xl">
                   {getInitials(user.name || "")}
                 </AvatarFallback>
               </Avatar>
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-[var(--main-text)]">
+                <h2 className="text-2xl font-bold text-text-muted">
                   {user.name}
                 </h2>
-                <p className="text-[var(--main-text)]/80 mt-1">{user.email}</p>
+                <p className="text-text-muted/80 mt-1">{user.email}</p>
 
                 <div className="flex items-center justify-center gap-1 text-sm text-primary mt-1">
                   <a
@@ -310,7 +310,7 @@ function ProfileComponent() {
                   >
                     <Share2 className="h-3 w-3 mr-1" />
                     Public Profile
-                    <span className="ml-1 text-[var(--main-text)]/60">
+                    <span className="ml-1 text-text-muted/60">
                       ({window.location.origin}/users/{user.name})
                     </span>
                   </a>
@@ -327,9 +327,7 @@ function ProfileComponent() {
 
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-[var(--main-text)]">
-                Profile
-              </h1>
+              <h1 className="text-3xl font-bold text-text-muted">Profile</h1>
               <div className="flex items-center gap-2">
                 <Switch
                   id="profile-visibility"
@@ -339,7 +337,7 @@ function ProfileComponent() {
                 />
                 <Label
                   htmlFor="profile-visibility"
-                  className="text-sm text-[var(--main-text)]"
+                  className="text-sm text-text-muted"
                 >
                   Allow my profile to be publically visible
                 </Label>
@@ -347,8 +345,8 @@ function ProfileComponent() {
             </div>
 
             {/* Personal Summary Section in rounded div with background */}
-            <div className="bg-[var(--accent-bg)]/5 rounded-lg p-6 mb-6">
-              <h3 className="text-xl font-semibold text-[var(--main-text)] mb-4">
+            <div className="bg-surface-accent/5 rounded-lg p-6 mb-6">
+              <h3 className="text-xl font-semibold text-text-muted mb-4">
                 Personal Summary
               </h3>
               <div className="space-y-2">
@@ -360,14 +358,14 @@ function ProfileComponent() {
                   maxLength={600}
                 />
                 <div className="flex justify-between items-center">
-                  <p className="text-sm text-[var(--main-text)]/60">
+                  <p className="text-sm text-text-muted/60">
                     ({biography.length}/600 characters)
                   </p>
                   <Button
                     onClick={handleSaveBiography}
                     disabled={!hasChanges || isSaving}
                     size="sm"
-                    className="bg-[var(--main-text)] hover:bg-[var(--main-text)]/80 text-white"
+                    className="bg-text-muted hover:bg-text-muted/80 text-surface"
                   >
                     {isSaving ? "Saving..." : "Save"}
                   </Button>
@@ -376,8 +374,8 @@ function ProfileComponent() {
             </div>
 
             {/* Badge Wallet Section in rounded div with background */}
-            <div className="bg-[var(--accent-bg)]/5 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-[var(--main-text)] mb-4">
+            <div className="bg-surface-accent/5 rounded-lg p-6">
+              <h3 className="text-xl font-semibold text-text-muted mb-4">
                 Badge Wallet
               </h3>
 
@@ -392,10 +390,8 @@ function ProfileComponent() {
                   ))}
                 </div>
               ) : error ? (
-                <div className="text-center py-8 bg-[var(--main-bg)] rounded-xl shadow-sm border border-[var(--accent-bg)]/10">
-                  <p className="text-[var(--main-text)]/80">
-                    Error loading badges
-                  </p>
+                <div className="text-center py-8 bg-surface-secondary rounded-xl shadow-shadow border border-surface-accent/10">
+                  <p className="text-text-muted/80">Error loading badges</p>
                 </div>
               ) : badges && badges.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -416,8 +412,8 @@ function ProfileComponent() {
                       className="group"
                     >
                       <div className="h-full">
-                        <Card className="overflow-hidden h-full flex flex-col bg-[var(--main-bg)] border-[var(--accent-bg)]/10 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                          <div className="p-5 bg-gradient-to-br from-[var(--accent-bg)]/5 to-[var(--accent-bg)]/15 flex items-center justify-center">
+                        <Card className="overflow-hidden h-full flex flex-col bg-surface-secondary border-surface-accent/10 rounded-xl shadow-shadow hover:shadow-lg transition-all duration-300">
+                          <div className="p-5 bg-gradient-to-br from-surface-accent/5 to-surface-accent/15 flex items-center justify-center">
                             <div className="w-28 h-28 relative">
                               {badge.imageData ? (
                                 <img
@@ -426,7 +422,7 @@ function ProfileComponent() {
                                   className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
                                 />
                               ) : (
-                                <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/60 rounded-full">
+                                <div className="w-full h-full bg-surface-accent/10 flex items-center justify-center text-text-muted/60 rounded-full">
                                   <Award className="h-12 w-12" />
                                 </div>
                               )}
@@ -434,10 +430,10 @@ function ProfileComponent() {
                           </div>
                           <CardContent className="p-5 flex-1 flex flex-col">
                             <div className="mb-3">
-                              <h4 className="font-semibold text-[var(--main-text)] mb-1 group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                              <h4 className="font-semibold text-text-muted mb-1 group-hover:text-primary transition-colors duration-200 line-clamp-1">
                                 {badge.name}
                               </h4>
-                              <p className="text-xs text-[var(--main-text)]/70 flex items-center gap-1">
+                              <p className="text-xs text-text-muted/70 flex items-center gap-1">
                                 <Award className="h-3 w-3 flex-shrink-0" />
                                 <span className="line-clamp-1">
                                   {badge.issuedBy}
@@ -446,7 +442,7 @@ function ProfileComponent() {
                             </div>
 
                             {badge.description && (
-                              <p className="text-xs text-[var(--main-text)]/80 line-clamp-2 mb-4">
+                              <p className="text-xs text-text-muted/80 line-clamp-2 mb-4">
                                 {badge.description}
                               </p>
                             )}
@@ -461,7 +457,7 @@ function ProfileComponent() {
                                       <BadgeUI
                                         key={index}
                                         variant="outline"
-                                        className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
+                                        className="text-xs bg-surface-accent/10 hover:bg-surface-accent/20 transition-colors"
                                       >
                                         {skill.trim()}
                                       </BadgeUI>
@@ -469,7 +465,7 @@ function ProfileComponent() {
                                   {badge.skills.split(",").length > 3 && (
                                     <BadgeUI
                                       variant="outline"
-                                      className="text-xs bg-[var(--accent-bg)]/10 hover:bg-[var(--accent-bg)]/20 transition-colors"
+                                      className="text-xs bg-surface-accent/10 hover:bg-surface-accent/20 transition-colors"
                                     >
                                       +{badge.skills.split(",").length - 3} more
                                     </BadgeUI>
@@ -478,7 +474,7 @@ function ProfileComponent() {
                               </div>
                             )}
 
-                            <div className="mt-4 pt-3 border-t border-[var(--accent-bg)]/10">
+                            <div className="mt-4 pt-3 border-t border-surface-accent/10">
                               <div className="flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
                                   <Link
@@ -518,12 +514,12 @@ function ProfileComponent() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 bg-[var(--main-bg)] rounded-xl shadow-sm border border-[var(--accent-bg)]/10">
-                  <Award className="h-16 w-16 mx-auto mb-4 text-[var(--accent-bg)]/30" />
-                  <h3 className="text-xl font-medium text-[var(--main-text)] mb-2">
+                <div className="text-center py-16 bg-surface-secondary rounded-xl shadow-shadow border border-surface-accent/10">
+                  <Award className="h-16 w-16 mx-auto mb-4 text-surface-accent/30" />
+                  <h3 className="text-xl font-medium text-text-muted mb-2">
                     No badges yet
                   </h3>
-                  <p className="text-[var(--main-text)]/70 max-w-md mx-auto">
+                  <p className="text-text-muted/70 max-w-md mx-auto">
                     Search for badges to earn by using the search bar at the top
                     of the page.
                   </p>

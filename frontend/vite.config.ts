@@ -7,10 +7,14 @@ import type { PluginOption } from "vite";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [TanStackRouterVite({}), react(), tailwindcss()],
+  root: path.resolve(__dirname),            // point root at frontend/
+  publicDir: path.resolve(__dirname, "public"), // point publicDir at frontend/public
+  build: {
+    outDir: path.resolve(__dirname, "../backend/dist"), // emit into backend/dist
+    emptyOutDir: false,     // so you don’t wipe your server’s HTML/JS
+  },
+  plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: { "@": path.resolve(__dirname, "./src") },
   },
 });

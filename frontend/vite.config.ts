@@ -8,7 +8,7 @@ import type { PluginOption } from "vite";
 // https://vitejs.dev/config/
 export default defineConfig({
   root: path.resolve(__dirname),            // point root at frontend/
-  publicDir: path.resolve(__dirname, "public"), // point publicDir at frontend/public
+  publicDir: '../backend/public',   // <-- point Vite at your actual static folder
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },

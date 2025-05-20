@@ -107,7 +107,7 @@ function UserProfileComponent() {
     queryKey: ["user", username],
     queryFn: async () => {
       const response = await fetchWithAuth(
-        `users/by-username?username=${encodeURIComponent(username)}`,
+        `users/by-username?username=${encodeURIComponent(username)}`
       );
       const data = await response.json();
 
@@ -175,13 +175,13 @@ function UserProfileComponent() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.3 }}
           transition={{ duration: 1 }}
-          className="absolute top-20 right-1/4 w-64 h-64 rounded-full bg-[var(--violet-light)]/10 blur-3xl"
+          className="absolute top-20 right-1/4 w-64 h-64 rounded-full bg-purple-500/10 blur-3xl"
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.2 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="absolute bottom-40 left-1/3 w-72 h-72 rounded-full bg-[var(--accent-bg)]/30 blur-3xl"
+          className="absolute bottom-40 left-1/3 w-72 h-72 rounded-full bg-primary/30 blur-3xl"
         />
       </div>
 
@@ -190,11 +190,11 @@ function UserProfileComponent() {
         <motion.div variants={itemVariants} className="mb-12">
           <motion.div
             variants={itemVariants}
-            className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-[var(--light-gray)]/20 p-8 flex flex-col md:flex-row items-start md:items-center gap-8"
+            className="bg-surface/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-light/20 p-8 flex flex-col md:flex-row items-start md:items-center gap-8"
           >
-            <Avatar className="h-32 w-32 ring-4 ring-[var(--accent-bg)]/20 shadow-lg">
+            <Avatar className="h-32 w-32 ring-4 ring-primary/20 shadow-lg">
               <AvatarImage src="" />
-              <AvatarFallback className="bg-gradient-to-br from-[var(--accent-bg)] to-[var(--accent-bg)]/70 text-white text-3xl">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-surface text-3xl">
                 {getInitials(username)}
               </AvatarFallback>
             </Avatar>
@@ -202,11 +202,11 @@ function UserProfileComponent() {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-4xl font-bold text-[var(--main-text)] mb-2">
+                  <h1 className="text-4xl font-bold text-text mb-2">
                     {username}
                   </h1>
                   {userData?.organization && (
-                    <p className="text-lg text-[var(--main-text)]/70 flex items-center gap-2">
+                    <p className="text-lg text-text-muted flex items-center gap-2">
                       <MapPin className="h-5 w-5" />
                       {userData.organization}
                     </p>
@@ -217,7 +217,7 @@ function UserProfileComponent() {
                   onClick={copyToClipboard}
                   variant="outline"
                   size="default"
-                  className="flex items-center gap-2 border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10 px-5 py-2.5"
+                  className="flex items-center gap-2 border-primary text-primary hover:bg-primary/10 px-5 py-2.5"
                 >
                   <Share2 className="h-5 w-5 mr-1" />
                   Share Profile
@@ -229,12 +229,10 @@ function UserProfileComponent() {
           {userData?.biography && userData?.isPublic !== false && (
             <motion.div
               variants={itemVariants}
-              className="mt-6 bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-sm border border-[var(--light-gray)]/20"
+              className="mt-6 bg-surface/80 backdrop-blur-sm rounded-xl p-8 shadow-sm border border-gray-light/20"
             >
-              <h3 className="text-xl font-medium text-[var(--main-text)] mb-4">
-                About
-              </h3>
-              <p className="text-[var(--main-text)]/80 leading-relaxed text-lg">
+              <h3 className="text-xl font-medium text-text mb-4">About</h3>
+              <p className="text-text-muted leading-relaxed text-lg">
                 {userData.biography}
               </p>
             </motion.div>
@@ -255,13 +253,13 @@ function UserProfileComponent() {
         ) : userData && userData.isPublic === false ? (
           <motion.div
             variants={itemVariants}
-            className="flex flex-col items-center justify-center py-16 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+            className="flex flex-col items-center justify-center py-16 bg-surface/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-light/20"
           >
             <div className="text-center max-w-md p-6">
-              <h3 className="text-2xl font-medium text-[var(--main-text)] mb-4">
+              <h3 className="text-2xl font-medium text-text mb-4">
                 This profile is private
               </h3>
-              <p className="text-[var(--main-text)]/70 text-lg">
+              <p className="text-text-muted text-lg">
                 The user has chosen to keep their profile private. You cannot
                 view their badges or profile information.
               </p>
@@ -273,13 +271,11 @@ function UserProfileComponent() {
               variants={itemVariants}
               className="flex items-center justify-between mb-8"
             >
-              <h2 className="text-3xl font-bold text-[var(--main-text)]">
-                Earned Badges
-              </h2>
+              <h2 className="text-3xl font-bold text-text">Earned Badges</h2>
               {badges && badges.length > 0 && (
                 <BadgeUI
                   variant="outline"
-                  className="px-4 py-1.5 text-base bg-[var(--accent-bg)]/10 border-[var(--accent-bg)]/30 text-[var(--main-text)]"
+                  className="px-4 py-1.5 text-base bg-primary/10 border-primary/30 text-primary"
                 >
                   {badges.length} {badges.length === 1 ? "Badge" : "Badges"}
                 </BadgeUI>
@@ -289,9 +285,9 @@ function UserProfileComponent() {
             {error ? (
               <motion.div
                 variants={itemVariants}
-                className="text-center py-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                className="text-center py-8 bg-surface/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-light/20"
               >
-                <p className="text-[var(--main-text)]/80 text-lg">
+                <p className="text-text-muted text-lg">
                   This user has no badges yet.
                 </p>
               </motion.div>
@@ -312,8 +308,8 @@ function UserProfileComponent() {
                       params={{ badgeId: badge.id }}
                       className="block h-full"
                     >
-                      <Card className="overflow-hidden h-full flex flex-col border-[var(--light-gray)]/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 bg-white/80 backdrop-blur-sm">
-                        <div className="p-10 bg-[var(--accent-bg)]/5 flex items-center justify-center">
+                      <Card className="overflow-hidden h-full flex flex-col border-gray-light/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 bg-surface/80 backdrop-blur-sm">
+                        <div className="p-10 bg-primary/5 flex items-center justify-center">
                           <div className="w-48 h-48 relative">
                             {badge.imageData ? (
                               <img
@@ -322,7 +318,7 @@ function UserProfileComponent() {
                                 className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
                               />
                             ) : (
-                              <div className="w-full h-full bg-[var(--accent-bg)]/10 flex items-center justify-center text-[var(--main-text)]/60 rounded-full">
+                              <div className="w-full h-full bg-primary/10 flex items-center justify-center text-text-muted rounded-full">
                                 <Award className="h-20 w-20" />
                               </div>
                             )}
@@ -330,17 +326,17 @@ function UserProfileComponent() {
                         </div>
                         <CardContent className="p-8 flex-1 flex flex-col">
                           <div className="mb-6">
-                            <h4 className="text-xl font-semibold text-[var(--main-text)] mb-3">
+                            <h4 className="text-xl font-semibold text-text mb-3">
                               {badge.name}
                             </h4>
-                            <p className="text-base text-[var(--main-text)]/70 flex items-center gap-2">
+                            <p className="text-base text-text-muted flex items-center gap-2">
                               <Award className="h-5 w-5" />
                               {badge.issuedBy}
                             </p>
                           </div>
 
                           {badge.description && (
-                            <p className="text-base text-[var(--main-text)]/80 line-clamp-2 mb-8">
+                            <p className="text-base text-text-muted line-clamp-2 mb-8">
                               {badge.description}
                             </p>
                           )}
@@ -355,7 +351,7 @@ function UserProfileComponent() {
                                     <BadgeUI
                                       key={index}
                                       variant="outline"
-                                      className="text-base px-4 py-1.5 bg-[var(--accent-bg)]/10 border-[var(--accent-bg)]/30 text-[var(--main-text)] hover:bg-[var(--accent-bg)]/20 transition-colors"
+                                      className="text-base px-4 py-1.5 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
                                     >
                                       {skill.trim()}
                                     </BadgeUI>
@@ -363,7 +359,7 @@ function UserProfileComponent() {
                                 {badge.skills.split(",").length > 3 && (
                                   <BadgeUI
                                     variant="outline"
-                                    className="text-base px-4 py-1.5 bg-[var(--accent-bg)]/10 border-[var(--accent-bg)]/30 text-[var(--main-text)] hover:bg-[var(--accent-bg)]/20 transition-colors"
+                                    className="text-base px-4 py-1.5 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
                                   >
                                     +{badge.skills.split(",").length - 3} more
                                   </BadgeUI>
@@ -372,9 +368,9 @@ function UserProfileComponent() {
                             </div>
                           )}
 
-                          <div className="mt-6 pt-5 border-t border-[var(--accent-bg)]/10">
+                          <div className="mt-6 pt-5 border-t border-primary/10">
                             <Button
-                              className="w-full text-base h-12 flex items-center justify-center gap-2 border-[var(--accent-bg)] text-[var(--main-text)] hover:bg-[var(--accent-bg)]/10"
+                              className="w-full text-base h-12 flex items-center justify-center gap-2 border-primary text-primary hover:bg-primary/10"
                               variant="outline"
                               size="default"
                             >
@@ -391,13 +387,13 @@ function UserProfileComponent() {
             ) : (
               <motion.div
                 variants={itemVariants}
-                className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-[var(--light-gray)]/20"
+                className="text-center py-16 bg-surface/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-light/20"
               >
-                <Award className="h-20 w-20 mx-auto mb-6 text-[var(--accent-bg)]/30" />
-                <h3 className="text-2xl font-medium text-[var(--main-text)] mb-4">
+                <Award className="h-20 w-20 mx-auto mb-6 text-primary/30" />
+                <h3 className="text-2xl font-medium text-text mb-4">
                   No badges yet
                 </h3>
-                <p className="text-[var(--main-text)]/70 text-lg max-w-md mx-auto">
+                <p className="text-text-muted text-lg max-w-md mx-auto">
                   {isOwnProfile
                     ? "You haven't earned any badges yet. Complete courses and achievements to earn badges."
                     : "This user hasn't earned any badges yet."}

@@ -166,7 +166,7 @@ export function DemoDashboard() {
   };
 
   return (
-    <div className="relative w-full max-w-6xl mx-auto rounded-2xl overflow-hidden shadow-xl border border-black/5 dark:border-white/10 bg-surface dark:shadow-2xl dark:shadow-black/30">
+    <div className="relative w-full max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-xl border border-black/5 dark:border-white/10 bg-surface dark:shadow-2xl dark:shadow-black/30">
       {/* Demo header with message that this is a demo */}
       <div className="bg-surface/40 dark:bg-surface-secondary/40 py-3 px-6 flex justify-between items-center border-b border-black/5 dark:border-white/10">
         <div className="flex items-center gap-2">

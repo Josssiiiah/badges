@@ -17,7 +17,9 @@ const betterAuthView = async (context: Context) => {
 
   try {
     if (BETTER_AUTH_ACCEPT_METHODS.includes(context.request.method)) {
-      console.log("Processing auth request for path:", new URL(context.request.url).pathname);
+      // Forward the request as-is to Better Auth.
+      // Rewriting paths (e.g. stripping /api/auth) caused route resolution issues
+      // like NOT_FOUND for /verify-email. Better Auth expects the original path.
       const response = await auth.handler(context.request);
       console.log("Auth response status:", response.status);
       

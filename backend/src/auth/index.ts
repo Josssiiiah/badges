@@ -1,10 +1,11 @@
 import { db } from "../db/connection";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { account, session, user, verification, organizations, organizationUsers } from "../db/schema";
+import { account, session, user, verification, organizations, organizationUsers, students, badges, createdBadges, pendingClaims } from "../db/schema";
 import { APIError } from "better-auth/api";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
+import { sendVerificationEmail } from "../email";
 
 // Helper to generate a random short code for organizations
 function generateShortCode() {
@@ -47,8 +48,64 @@ export const auth = betterAuth({
     path: "/",
   },
   emailAndPassword: {
-    enabled: true, // If you want to use email and password auth
-    autoSignIn: true, // Disable automatic sign in after signup
+    enabled: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      if (!user.email) return;
+      const frontend = process.env.FRONTEND_URL;
+      try {
+        const u = new URL(url);
+        const token = u.searchParams.get("token");
+        const link = frontend && token
+          ? `${frontend}/verify-email?token=${encodeURIComponent(token)}`
+          : url;
+        await sendVerificationEmail({ to: user.email, verificationUrl: link });
+      } catch {
+        await sendVerificationEmail({ to: user.email, verificationUrl: url });
+      }
+    },
+    onEmailVerification: async (verifiedUser) => {
+      // Also process student status and pending claims on verification
+      try {
+        const extendedUser = verifiedUser as unknown as ExtendedUser;
+        if (extendedUser.email) {
+          await db
+            .update(students)
+            .set({ signedUp: true, signedUpAt: new Date(), updatedAt: new Date() })
+            .where(eq(students.email, extendedUser.email));
+
+          const claims = await db
+            .select()
+            .from(pendingClaims)
+            .where(eq(pendingClaims.email, extendedUser.email));
+
+          for (const claim of claims) {
+            if (claim.badgeId) {
+              const assignment = await db
+                .insert(badges)
+                .values({ badgeId: claim.badgeId, userId: extendedUser.id })
+                .returning();
+
+              await db
+                .update(students)
+                .set({ hasBadge: true, badgeId: assignment[0].id, updatedAt: new Date() })
+                .where(eq(students.email, extendedUser.email));
+            }
+
+            await db
+              .update(pendingClaims)
+              .set({ claimedAt: new Date() })
+              .where(eq(pendingClaims.id, claim.id));
+          }
+        }
+      } catch (_) {
+        // non-fatal
+      }
+    },
   },
   user: {
     additionalFields: {
@@ -245,6 +302,47 @@ export const auth = betterAuth({
             } catch (error) {
               // We don't want to fail if this fails, as user is already created
             }
+          }
+
+          // Mark matching student as signed up and process pending badge claims
+          try {
+            if (extendedUser.email) {
+              // Update students table
+              await db
+                .update(students)
+                .set({ signedUp: true, signedUpAt: new Date(), updatedAt: new Date() })
+                .where(eq(students.email, extendedUser.email));
+
+              // Find pending claims for this email (optionally scoped to org)
+              const claims = await db
+                .select()
+                .from(pendingClaims)
+                .where(eq(pendingClaims.email, extendedUser.email));
+
+              for (const claim of claims) {
+                // Create badge assignment if badgeId present
+                if (claim.badgeId) {
+                  const assignment = await db
+                    .insert(badges)
+                    .values({ badgeId: claim.badgeId, userId: extendedUser.id })
+                    .returning();
+
+                  // Link to student record where possible
+                  await db
+                    .update(students)
+                    .set({ hasBadge: true, badgeId: assignment[0].id, updatedAt: new Date() })
+                    .where(eq(students.email, extendedUser.email));
+                }
+
+                // Mark claim consumed
+                await db
+                  .update(pendingClaims)
+                  .set({ claimedAt: new Date() })
+                  .where(eq(pendingClaims.id, claim.id));
+              }
+            }
+          } catch (err) {
+            // Non-fatal
           }
         },
       },

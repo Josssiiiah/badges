@@ -55,10 +55,18 @@ export default function Login() {
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
+    // Pre-fill from query params and support redirect
+    const url = new URL(window.location.href);
+    const prefillEmail = url.searchParams.get("email");
+    const signupFlag = url.searchParams.get("signup");
+    if (prefillEmail) setEmail(prefillEmail);
+    if (signupFlag === "1") setIsSignUp(true);
+
     if (session) {
-      navigate({ to: "/" });
+      const next = url.searchParams.get("next");
+      navigate({ to: next || "/" });
     }
-  }, [session]);
+  }, [session, navigate]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +120,10 @@ export default function Login() {
           password,
         });
         if (error) throw error;
+        // Handle redirect if next is present
+        const url = new URL(window.location.href);
+        const next = url.searchParams.get("next");
+        if (next) navigate({ to: next });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");

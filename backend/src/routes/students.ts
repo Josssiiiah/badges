@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { setup } from "../setup";
 import { db } from "../db/connection";
-import { students, badges, createdBadges } from "../db/schema";
+import { students, badges, createdBadges, pendingClaims } from "../db/schema";
 import { eq, and } from "drizzle-orm";
 import { userMiddleware } from "../middleware/auth-middleware";
+import { nanoid } from "nanoid";
+import { sendStudentInviteEmail } from "../email";
 
 export const studentRoutes = new Elysia({ prefix: "/students" })
   .use(setup)
@@ -27,7 +29,11 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             badge: createdBadges,
             createdAt: students.createdAt,
             updatedAt: students.updatedAt,
-            organizationId: students.organizationId
+            organizationId: students.organizationId,
+            invited: students.invited,
+            invitedAt: students.invitedAt,
+            signedUp: students.signedUp,
+            signedUpAt: students.signedUpAt,
           })
           .from(students)
           .leftJoin(badges, eq(students.badgeId, badges.id))
@@ -48,6 +54,10 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           badge: createdBadges,
           createdAt: students.createdAt,
           updatedAt: students.updatedAt,
+          invited: students.invited,
+          invitedAt: students.invitedAt,
+          signedUp: students.signedUp,
+          signedUpAt: students.signedUpAt,
         })
         .from(students)
         .leftJoin(badges, eq(students.badgeId, badges.id))
@@ -89,7 +99,11 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             badge: createdBadges,
             createdAt: students.createdAt,
             updatedAt: students.updatedAt,
-            organizationId: students.organizationId
+            organizationId: students.organizationId,
+            invited: students.invited,
+            invitedAt: students.invitedAt,
+            signedUp: students.signedUp,
+            signedUpAt: students.signedUpAt,
           })
           .from(students)
           .leftJoin(badges, eq(students.badgeId, badges.id))
@@ -158,6 +172,96 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         name: t.String(),
         email: t.String(),
         hasBadge: t.Optional(t.Boolean()),
+        badgeId: t.Optional(t.String()),
+      }),
+    },
+  )
+  // Send invite email to a student, optionally with a claim token for a badge template
+  .post(
+    "/invite",
+    async (context) => {
+      try {
+        const { body } = context;
+        const { studentId, badgeId } = body as { studentId: string; badgeId?: string };
+        const session = await userMiddleware(context);
+
+        if (!session.user) {
+          return { error: "Unauthorized" };
+        }
+
+        if (session.user.role !== "administrator") {
+          return { error: "Only administrators can invite students" };
+        }
+
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
+        // Look up the student and validate org
+        const results = await db
+          .select()
+          .from(students)
+          .where(eq(students.studentId, studentId))
+          .limit(1);
+
+        if (!results.length) {
+          return { error: "Student not found" };
+        }
+        const student = results[0];
+        if (student.organizationId !== session.user.organizationId) {
+          return { error: "You can only invite students in your organization" };
+        }
+
+        let token: string | null = null;
+        let badgeName: string | undefined = undefined;
+
+        // If a badgeId (template) is provided, create a pending claim with a token
+        if (badgeId) {
+          const claimToken = nanoid(24);
+          token = claimToken;
+
+          // Fetch badge name for email
+          const badge = await db
+            .select({ id: createdBadges.id, name: createdBadges.name })
+            .from(createdBadges)
+            .where(eq(createdBadges.id, badgeId))
+            .limit(1);
+
+          if (!badge.length) {
+            return { error: "Badge not found" };
+          }
+          badgeName = badge[0].name;
+
+          await db.insert(pendingClaims).values({
+            email: student.email,
+            badgeId,
+            organizationId: session.user.organizationId,
+            token: claimToken,
+          });
+        }
+
+        const frontendUrl = process.env.FRONTEND_URL || "";
+        const inviteUrl = token
+          ? `${frontendUrl}/claim/${token}`
+          : `${frontendUrl}/login?email=${encodeURIComponent(student.email)}&signup=1`;
+
+        await sendStudentInviteEmail({ to: student.email, inviteUrl, badgeName });
+
+        // Mark student invited
+        await db
+          .update(students)
+          .set({ invited: true, invitedAt: new Date(), updatedAt: new Date() })
+          .where(eq(students.studentId, studentId));
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error inviting student:", error);
+        return { error: String(error) };
+      }
+    },
+    {
+      body: t.Object({
+        studentId: t.String(),
         badgeId: t.Optional(t.String()),
       }),
     },

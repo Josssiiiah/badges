@@ -20,6 +20,8 @@ import { Route as AdminImport } from "./routes/admin";
 import { Route as IndexImport } from "./routes/index";
 import { Route as UsersUsernameImport } from "./routes/users.$username";
 import { Route as BadgesBadgeIdImport } from "./routes/badges.$badgeId";
+import { Route as VerifyEmailImport } from "./routes/verify-email";
+import { Route as ClaimTokenImport } from "./routes/claim.$token";
 
 // Create/Update Routes
 
@@ -74,6 +76,18 @@ const UsersUsernameRoute = UsersUsernameImport.update({
 const BadgesBadgeIdRoute = BadgesBadgeIdImport.update({
   id: "/badges/$badgeId",
   path: "/badges/$badgeId",
+  getParentRoute: () => rootRoute,
+} as any);
+
+const VerifyEmailRoute = VerifyEmailImport.update({
+  id: "/verify-email",
+  path: "/verify-email",
+  getParentRoute: () => rootRoute,
+} as any);
+
+const ClaimTokenRoute = ClaimTokenImport.update({
+  id: "/claim/$token",
+  path: "/claim/$token",
   getParentRoute: () => rootRoute,
 } as any);
 
@@ -144,6 +158,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof UsersUsernameImport;
       parentRoute: typeof rootRoute;
     };
+    "/verify-email": {
+      id: "/verify-email";
+      path: "/verify-email";
+      fullPath: "/verify-email";
+      preLoaderRoute: typeof VerifyEmailImport;
+      parentRoute: typeof rootRoute;
+    };
+    "/claim/$token": {
+      id: "/claim/$token";
+      path: "/claim/$token";
+      fullPath: "/claim/$token";
+      preLoaderRoute: typeof ClaimTokenImport;
+      parentRoute: typeof rootRoute;
+    };
   }
 }
 
@@ -159,6 +187,8 @@ export interface FileRoutesByFullPath {
   "/profile": typeof ProfileRoute;
   "/badges/$badgeId": typeof BadgesBadgeIdRoute;
   "/users/$username": typeof UsersUsernameRoute;
+  "/verify-email": typeof VerifyEmailRoute;
+  "/claim/$token": typeof ClaimTokenRoute;
 }
 
 export interface FileRoutesByTo {
@@ -171,6 +201,8 @@ export interface FileRoutesByTo {
   "/profile": typeof ProfileRoute;
   "/badges/$badgeId": typeof BadgesBadgeIdRoute;
   "/users/$username": typeof UsersUsernameRoute;
+  "/verify-email": typeof VerifyEmailRoute;
+  "/claim/$token": typeof ClaimTokenRoute;
 }
 
 export interface FileRoutesById {
@@ -184,6 +216,8 @@ export interface FileRoutesById {
   "/profile": typeof ProfileRoute;
   "/badges/$badgeId": typeof BadgesBadgeIdRoute;
   "/users/$username": typeof UsersUsernameRoute;
+  "/verify-email": typeof VerifyEmailRoute;
+  "/claim/$token": typeof ClaimTokenRoute;
 }
 
 export interface FileRouteTypes {
@@ -197,7 +231,9 @@ export interface FileRouteTypes {
     | "/pricing"
     | "/profile"
     | "/badges/$badgeId"
-    | "/users/$username";
+    | "/users/$username"
+    | "/verify-email"
+    | "/claim/$token";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
@@ -208,7 +244,9 @@ export interface FileRouteTypes {
     | "/pricing"
     | "/profile"
     | "/badges/$badgeId"
-    | "/users/$username";
+    | "/users/$username"
+    | "/verify-email"
+    | "/claim/$token";
   id:
     | "__root__"
     | "/"
@@ -219,7 +257,9 @@ export interface FileRouteTypes {
     | "/pricing"
     | "/profile"
     | "/badges/$badgeId"
-    | "/users/$username";
+    | "/users/$username"
+    | "/verify-email"
+    | "/claim/$token";
   fileRoutesById: FileRoutesById;
 }
 
@@ -233,6 +273,8 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute;
   BadgesBadgeIdRoute: typeof BadgesBadgeIdRoute;
   UsersUsernameRoute: typeof UsersUsernameRoute;
+  VerifyEmailRoute: typeof VerifyEmailRoute;
+  ClaimTokenRoute: typeof ClaimTokenRoute;
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -245,6 +287,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   BadgesBadgeIdRoute: BadgesBadgeIdRoute,
   UsersUsernameRoute: UsersUsernameRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
+  ClaimTokenRoute: ClaimTokenRoute,
 };
 
 export const routeTree = rootRoute
@@ -265,7 +309,9 @@ export const routeTree = rootRoute
         "/pricing",
         "/profile",
         "/badges/$badgeId",
-        "/users/$username"
+        "/users/$username",
+        "/verify-email",
+        "/claim/$token"
       ]
     },
     "/": {
@@ -294,6 +340,12 @@ export const routeTree = rootRoute
     },
     "/users/$username": {
       "filePath": "users.$username.tsx"
+    },
+    "/verify-email": {
+      "filePath": "verify-email.tsx"
+    },
+    "/claim/$token": {
+      "filePath": "claim.$token.tsx"
     }
   }
 }

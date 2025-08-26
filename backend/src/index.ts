@@ -5,6 +5,7 @@ import { studentRoutes } from "./routes/students";
 import { badgeRoutes } from "./routes/badges";
 import { organizationRoutes } from "./routes/organizations";
 import { userRoutes } from "./routes/users";
+import { claimRoutes } from "./routes/claims";
 import { join } from "path";
 import { staticPlugin } from '@elysiajs/static'
 import { setup } from "./setup";
@@ -20,6 +21,7 @@ const app = new Elysia()
        .use(badgeRoutes)
        .use(organizationRoutes)
        .use(userRoutes)
+       .use(claimRoutes)
   )
 
   // Static assets

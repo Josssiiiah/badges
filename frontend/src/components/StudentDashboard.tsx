@@ -57,6 +57,10 @@ type Student = {
   hasBadge: boolean;
   badgeId?: string;
   badge?: Badge;
+  invited?: boolean;
+  invitedAt?: string;
+  signedUp?: boolean;
+  signedUpAt?: string;
 };
 
 export function StudentDashboard({
@@ -75,6 +79,8 @@ export function StudentDashboard({
     email: "",
     hasBadge: false,
   });
+  const [sendInvite, setSendInvite] = useState<boolean>(false);
+  const [inviteBadgeId, setInviteBadgeId] = useState<string>("");
   const { toast } = useToast();
   const [bulkEmails, setBulkEmails] = useState<string>("");
   const [isBulkImporting, setIsBulkImporting] = useState<boolean>(false);
@@ -264,6 +270,22 @@ export function StudentDashboard({
         hasBadge: false,
       });
 
+      // Optionally send invite email (explicit opt-in)
+      if (sendInvite && result.student) {
+        try {
+          await fetchWithAuth("students/invite", {
+            method: "POST",
+            body: JSON.stringify({
+              studentId: result.student.studentId,
+              badgeId: inviteBadgeId || undefined,
+            }),
+          });
+          toast({ title: "Invite sent", description: `Invitation email sent to ${result.student.email}` });
+        } catch (e) {
+          toast({ variant: "destructive", title: "Invite failed", description: "Could not send invite email" });
+        }
+      }
+
       toast({
         title: "Success",
         description: `${result.student.name} added successfully`,
@@ -294,29 +316,21 @@ export function StudentDashboard({
 
       let updatedStudent;
 
-      // If badge is being assigned, create a badge assignment first
+      // If badge is being assigned, prefer sending an invite claim (works before account exists)
       if (editingStudent.hasBadge && editingStudent.badgeId) {
-        const badgeResponse = await fetchWithAuth("badges/assign-by-email", {
-          method: "POST",
-          body: JSON.stringify({
-            badgeId: editingStudent.badgeId, // This is template badge ID for new assignment
-            email: editingStudent.email,
-          }),
-        });
-
-        if (!badgeResponse.ok) {
-          throw new Error("Failed to assign badge");
+        try {
+          await fetchWithAuth("students/invite", {
+            method: "POST",
+            body: JSON.stringify({
+              studentId: editingStudent.studentId,
+              badgeId: editingStudent.badgeId,
+            }),
+          });
+          toast({ title: "Invite sent", description: `Claim invite sent to ${editingStudent.email}` });
+        } catch (e) {
+          toast({ variant: "destructive", title: "Invite failed", description: "Could not send claim invite" });
         }
-
-        // Get the badge assignment information including its unique ID
-        const badgeAssignment = await badgeResponse.json();
-        
-        // Check if badge assignment was successful
-        if (!badgeAssignment.assignment || !badgeAssignment.assignment.id) {
-          throw new Error(badgeAssignment.error || "Failed to get badge assignment ID");
-        }
-
-        // Now update student with the badge assignment ID
+        // Proceed to update just the basic student info; badge will appear after claim
         const response = await fetchWithAuth(
           `students/update/${editingStudent.studentId}`,
           {
@@ -324,8 +338,8 @@ export function StudentDashboard({
             body: JSON.stringify({
               name: editingStudent.name,
               email: editingStudent.email,
-              hasBadge: true,
-              badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
+              hasBadge: editingStudent.hasBadge,
+              badgeId: editingStudent.badgeId,
             }),
           },
         );
@@ -334,8 +348,8 @@ export function StudentDashboard({
           throw new Error("Failed to update student");
         }
 
-        updatedStudent = await response.json();
-        updatedStudent = updatedStudent.student;
+        const resJson = await response.json();
+        updatedStudent = resJson.student;
       } else {
         // No badge assignment, just update student info
         const response = await fetchWithAuth(
@@ -488,56 +502,17 @@ export function StudentDashboard({
         .filter((result) => result.student)
         .map((result) => result.student);
 
-      // If badge assignment is enabled, assign badges to all students
+      // If badge assignment is enabled, send claim invites instead of direct assignment
       if (bulkAssignBadge && bulkBadgeId) {
-        // Find the badge template
-        const selectedBadgeTemplate = badges.find(
-          (badge) => badge.id === bulkBadgeId,
-        );
-
-        // Assign badge to each student
-        const badgeAssignments = await Promise.all(
+        await Promise.all(
           addedStudents.map((student) =>
-            fetchWithAuth("badges/assign-by-email", {
+            fetchWithAuth("students/invite", {
               method: "POST",
-              body: JSON.stringify({
-                badgeId: bulkBadgeId,
-                email: student.email,
-              }),
-            }).then((res) => res.json()),
+              body: JSON.stringify({ studentId: student.studentId, badgeId: bulkBadgeId }),
+            }),
           ),
         );
-
-        // Update students with badge assignment IDs and badge details
-        addedStudents = addedStudents.map((student, index) => {
-          const assignment = badgeAssignments[index]?.assignment;
-          if (assignment) {
-            return {
-              ...student,
-              badgeId: assignment.id,
-              badge: selectedBadgeTemplate,
-            };
-          }
-          return student;
-        });
-
-        // Update student records with badge assignment IDs
-        await Promise.all(
-          addedStudents.map((student) => {
-            if (student.badgeId) {
-              return fetchWithAuth(`students/update/${student.studentId}`, {
-                method: "PUT",
-                body: JSON.stringify({
-                  name: student.name,
-                  email: student.email,
-                  hasBadge: true,
-                  badgeId: student.badgeId,
-                }),
-              });
-            }
-            return Promise.resolve();
-          }),
-        );
+        addedStudents = addedStudents.map((s) => ({ ...s, invited: true }));
       }
 
       setLocalStudents([...localStudents, ...addedStudents]);
@@ -578,7 +553,7 @@ export function StudentDashboard({
                 <span className="text-gray-500">Bulk Import</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+              <DialogContent className="sm:max-w-[425px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
               <DialogHeader>
                 <DialogTitle>Add Multiple Students</DialogTitle>
               </DialogHeader>
@@ -706,6 +681,48 @@ export function StudentDashboard({
                     placeholder="Will use email if left blank"
                   />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right text-gray-500">Invite</Label>
+                  <div className="col-span-3 flex items-center space-x-2">
+                    <Checkbox
+                      id="send-invite"
+                      checked={sendInvite}
+                      onCheckedChange={(checked) => setSendInvite(!!checked)}
+                    />
+                    <Label
+                      htmlFor="send-invite"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-500"
+                    >
+                      Send invitation email now
+                    </Label>
+                  </div>
+                </div>
+                {sendInvite && (
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="invite-badge" className="text-right text-gray-500">
+                      Include Badge
+                    </Label>
+                    <Select value={inviteBadgeId} onValueChange={setInviteBadgeId}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Optional: select a badge to claim" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {badges?.map((badge) => (
+                          <SelectItem key={badge.id} value={badge.id}>
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={badge.imageData}
+                                alt={badge.name}
+                                className="w-6 h-6 object-contain rounded-sm"
+                              />
+                              {badge.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <DialogClose asChild>
@@ -728,6 +745,7 @@ export function StudentDashboard({
               <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
                 <TableHead className="text-[var(--main-text)]">Name</TableHead>
                 <TableHead className="text-[var(--main-text)]">Email</TableHead>
+                <TableHead className="text-[var(--main-text)]">Status</TableHead>
                 <TableHead className="text-[var(--main-text)]">Badge</TableHead>
                 <TableHead className="text-[var(--main-text)]">
                   Badge URL
@@ -764,6 +782,17 @@ export function StudentDashboard({
                     </TableCell>
                     <TableCell className="text-[var(--main-text)]">
                       {student.email}
+                    </TableCell>
+                    <TableCell className="text-[var(--main-text)]">
+                      <div className="flex items-center gap-2">
+                        {student.signedUp ? (
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Signed up</span>
+                        ) : student.invited ? (
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Invited</span>
+                        ) : (
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">Not invited</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">

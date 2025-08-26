@@ -91,12 +91,40 @@ export const students = sqliteTable("students", {
     .$type<boolean>(),
   badgeId: text("badge_id").references(() => badges.id),
   organizationId: text("organization_id").references(() => organizations.id),
+  // Invitation + signup tracking
+  invited: integer("invited", { mode: "boolean" })
+    .default(false)
+    .$type<boolean>(),
+  invitedAt: integer("invited_at", { mode: "timestamp" }).$type<Date | null>(),
+  signedUp: integer("signed_up", { mode: "boolean" })
+    .default(false)
+    .$type<boolean>(),
+  signedUpAt: integer("signed_up_at", { mode: "timestamp" }).$type<Date | null>(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
   updatedAt: integer("updated_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
+});
+
+// Pending claims let admins invite by email before a user exists.
+export const pendingClaims = sqliteTable("pending_claims", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  // Email the claim is for
+  email: text("email").notNull(),
+  // The badge template the user will receive upon signup
+  badgeId: text("badge_id").references(() => createdBadges.id),
+  // Organization context for validation
+  organizationId: text("organization_id").references(() => organizations.id),
+  // Token used in the invite link to complete claim after login
+  token: text("token").unique().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+  claimedAt: integer("claimed_at", { mode: "timestamp" }).$type<Date | null>(),
 });
 
 // BetterAuth Tables

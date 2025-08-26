@@ -18,7 +18,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { GraduationCap, Shield } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 if (!FRONTEND_URL) throw new Error("VITE_FRONTEND_URL is not set");
@@ -174,12 +173,12 @@ export default function Login() {
             )}
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleEmailAuth} className="space-y-4">
+            <form onSubmit={handleEmailAuth} className="space-y-6">
               {isSignUp && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-[var(--main-text)]">
-                      Full Name
+                      Full Name <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="name"
@@ -188,7 +187,7 @@ export default function Login() {
                       required={isSignUp}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="text-black"
+                      className="h-11 text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
 
@@ -243,32 +242,76 @@ export default function Login() {
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="space-y-4"
+                        className="space-y-6"
                       >
-                        <div className="space-y-2">
-                          <Label className="text-[var(--main-text)]">
+                        <div className="space-y-3">
+                          <Label className="text-[var(--main-text)] font-medium">
                             Organization Options
                           </Label>
-                          <RadioGroup
-                            value={orgOption}
-                            onValueChange={(value: string) =>
-                              setOrgOption(value as "create" | "join")
-                            }
-                            className="flex flex-col space-y-2"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="create" id="create-org" />
-                              <Label htmlFor="create-org">
-                                Create a new organization
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="join" id="join-org" />
-                              <Label htmlFor="join-org">
-                                Join an existing organization
-                              </Label>
-                            </div>
-                          </RadioGroup>
+                          <div className="grid grid-cols-1 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setOrgOption("create")}
+                              className={cn(
+                                "p-4 border rounded-lg transition-all duration-200 text-left",
+                                orgOption === "create"
+                                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                                  : "border-gray-200 dark:border-gray-800 hover:border-blue-300",
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "w-4 h-4 rounded-full border-2 flex-shrink-0",
+                                  orgOption === "create" 
+                                    ? "border-blue-500 bg-blue-500" 
+                                    : "border-gray-300"
+                                )}>
+                                  {orgOption === "create" && (
+                                    <div className="w-full h-full rounded-full bg-white scale-[0.4]" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-[var(--main-text)]">
+                                    Create a new organization
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Set up a new organization to manage and issue badges
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOrgOption("join")}
+                              className={cn(
+                                "p-4 border rounded-lg transition-all duration-200 text-left",
+                                orgOption === "join"
+                                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                                  : "border-gray-200 dark:border-gray-800 hover:border-blue-300",
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "w-4 h-4 rounded-full border-2 flex-shrink-0",
+                                  orgOption === "join" 
+                                    ? "border-blue-500 bg-blue-500" 
+                                    : "border-gray-300"
+                                )}>
+                                  {orgOption === "join" && (
+                                    <div className="w-full h-full rounded-full bg-white scale-[0.4]" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-[var(--main-text)]">
+                                    Join an existing organization
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Connect with an organization using their short code
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          </div>
                         </div>
 
                         {orgOption === "create" ? (
@@ -277,7 +320,7 @@ export default function Login() {
                               htmlFor="organization"
                               className="text-[var(--main-text)]"
                             >
-                              Organization Name
+                              Organization Name <span className="text-red-500">*</span>
                             </Label>
                             <Input
                               id="organization"
@@ -289,7 +332,7 @@ export default function Login() {
                               }
                               value={organization}
                               onChange={(e) => setOrganization(e.target.value)}
-                              className="text-black"
+                              className="h-11 text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                             />
                           </div>
                         ) : (
@@ -298,7 +341,7 @@ export default function Login() {
                               htmlFor="shortCode"
                               className="text-[var(--main-text)]"
                             >
-                              Organization Short Code
+                              Organization Short Code <span className="text-red-500">*</span>
                             </Label>
                             <Input
                               id="shortCode"
@@ -309,7 +352,7 @@ export default function Login() {
                               }
                               value={shortCode}
                               onChange={(e) => setShortCode(e.target.value)}
-                              className="text-black"
+                              className="h-11 text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                             />
                           </div>
                         )}
@@ -321,7 +364,7 @@ export default function Login() {
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-[var(--main-text)]">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="email"
@@ -330,14 +373,14 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="text-black"
+                  className="h-11 text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-[var(--main-text)]">
-                    Password
+                    Password <span className="text-red-500">*</span>
                   </Label>
                 </div>
                 <Input
@@ -346,11 +389,15 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="text-black"
+                  className="h-11 text-black border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200" 
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <>
                     <svg
@@ -383,15 +430,18 @@ export default function Login() {
           </CardContent>
           <Separator />
           <CardFooter className="flex justify-center p-4 md:p-6">
-            <Button
-              variant="link"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-[var(--main-text)]"
-            >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Create one"}
-            </Button>
+            <div className="text-center">
+              <span className="text-sm text-[var(--main-text)]/70">
+                {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              </span>
+              <Button
+                variant="link"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-sm text-blue-600 hover:text-blue-700 underline underline-offset-4 font-medium p-0 h-auto"
+              >
+                {isSignUp ? "Sign in" : "Create one"}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </div>

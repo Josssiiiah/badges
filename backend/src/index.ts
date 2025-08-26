@@ -7,11 +7,12 @@ import { organizationRoutes } from "./routes/organizations";
 import { userRoutes } from "./routes/users";
 import { join } from "path";
 import { staticPlugin } from '@elysiajs/static'
+import { setup } from "./setup";
 
 
 // Create a new Elysia app
 const app = new Elysia()
-  .use(cors())
+  .use(setup)
   // Define API routes first - these take precedence
   .group("/api", (app) => 
     app.use(auth)

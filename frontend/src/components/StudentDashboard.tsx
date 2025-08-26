@@ -292,32 +292,9 @@ export function StudentDashboard({
         return;
       }
 
-      // First update student info (but don't update badgeId yet if we're assigning a badge)
-      // This prevents the badge template ID from replacing the badge assignment ID
-      const response = await fetchWithAuth(
-        `students/update/${editingStudent.studentId}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            name: editingStudent.name,
-            email: editingStudent.email,
-            hasBadge: editingStudent.hasBadge,
-            // Only include badgeId if we're not assigning a new badge
-            // If assigning, we'll update it after getting assignment ID
-            badgeId: !editingStudent.hasBadge ? null : editingStudent.badgeId,
-          }),
-        },
-      );
+      let updatedStudent;
 
-      if (!response.ok) {
-        throw new Error("Failed to update student");
-      }
-
-      const result = await response.json();
-      // Get the student data from the response
-      let updatedStudent = result.student;
-
-      // If badge is being assigned, create a badge assignment
+      // If badge is being assigned, create a badge assignment first
       if (editingStudent.hasBadge && editingStudent.badgeId) {
         const badgeResponse = await fetchWithAuth("badges/assign-by-email", {
           method: "POST",
@@ -333,29 +310,53 @@ export function StudentDashboard({
 
         // Get the badge assignment information including its unique ID
         const badgeAssignment = await badgeResponse.json();
-
-        // Store the badge assignment ID which will be used for unique badge URLs
-        if (badgeAssignment && badgeAssignment.assignment) {
-          updatedStudent.badgeId = badgeAssignment.assignment.id;
-
-          // Update the student record with the badge assignment ID
-          const updateBadgeIdResponse = await fetchWithAuth(
-            `students/update/${editingStudent.studentId}`,
-            {
-              method: "PUT",
-              body: JSON.stringify({
-                name: editingStudent.name,
-                email: editingStudent.email,
-                hasBadge: true,
-                badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
-              }),
-            },
-          );
-
-          if (!updateBadgeIdResponse.ok) {
-            console.warn("Failed to update student with badge assignment ID");
-          }
+        
+        // Check if badge assignment was successful
+        if (!badgeAssignment.assignment || !badgeAssignment.assignment.id) {
+          throw new Error(badgeAssignment.error || "Failed to get badge assignment ID");
         }
+
+        // Now update student with the badge assignment ID
+        const response = await fetchWithAuth(
+          `students/update/${editingStudent.studentId}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              name: editingStudent.name,
+              email: editingStudent.email,
+              hasBadge: true,
+              badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to update student");
+        }
+
+        updatedStudent = await response.json();
+        updatedStudent = updatedStudent.student;
+      } else {
+        // No badge assignment, just update student info
+        const response = await fetchWithAuth(
+          `students/update/${editingStudent.studentId}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              name: editingStudent.name,
+              email: editingStudent.email,
+              hasBadge: editingStudent.hasBadge,
+              badgeId: editingStudent.hasBadge ? editingStudent.badgeId : null,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to update student");
+        }
+
+        const result = await response.json();
+        updatedStudent = result.student;
       }
 
       // Find the badge details if a badge is assigned

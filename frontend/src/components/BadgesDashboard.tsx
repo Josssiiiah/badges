@@ -286,11 +286,11 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
     return (
       <form onSubmit={onSubmit}>
-        <div className="space-y-4 py-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-[var(--main-text)]">
-                Badge Name
+        <div className="space-y-6 py-2">
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <Label htmlFor="name" className="text-[var(--main-text)] text-sm font-medium">
+                Badge Name *
               </Label>
               <Input
                 id="name"
@@ -299,11 +299,12 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                 placeholder="e.g., Python Master"
                 required
                 disabled={isPending}
+                className="h-11"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="issuedBy" className="text-[var(--main-text)]">
-                Issued By
+            <div className="space-y-3">
+              <Label htmlFor="issuedBy" className="text-[var(--main-text)] text-sm font-medium">
+                Issued By *
               </Label>
               <Input
                 id="issuedBy"
@@ -312,11 +313,12 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                 placeholder="e.g., Code Academy"
                 required
                 disabled={isPending}
+                className="h-11"
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-[var(--main-text)]">
+          <div className="space-y-3">
+            <Label htmlFor="description" className="text-[var(--main-text)] text-sm font-medium">
               Description
             </Label>
             <Input
@@ -325,10 +327,11 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description of the badge"
               disabled={isPending}
+              className="h-11"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="courseLink" className="text-[var(--main-text)]">
+          <div className="space-y-3">
+            <Label htmlFor="courseLink" className="text-[var(--main-text)] text-sm font-medium">
               Course Link
             </Label>
             <Input
@@ -337,10 +340,11 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               onChange={(e) => setCourseLink(e.target.value)}
               placeholder="https://example.com/course"
               disabled={isPending}
+              className="h-11"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="skills" className="text-[var(--main-text)]">
+          <div className="space-y-3">
+            <Label htmlFor="skills" className="text-[var(--main-text)] text-sm font-medium">
               Skills
             </Label>
             <Input
@@ -349,12 +353,13 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               onChange={(e) => setSkills(e.target.value)}
               placeholder="e.g., Python, Data Structures, Algorithms"
               disabled={isPending}
+              className="h-11"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label
               htmlFor="earningCriteria"
-              className="text-[var(--main-text)]"
+              className="text-[var(--main-text)] text-sm font-medium"
             >
               Earning Criteria
             </Label>
@@ -364,10 +369,11 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               onChange={(e) => setEarningCriteria(e.target.value)}
               placeholder="e.g., Complete all course modules with 80% or higher"
               disabled={isPending}
+              className="h-11"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="image" className="text-[var(--main-text)]">
+          <div className="space-y-3">
+            <Label htmlFor="image" className="text-[var(--main-text)] text-sm font-medium">
               Badge Image
             </Label>
             <Input
@@ -376,22 +382,22 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               accept="image/png, image/jpeg, image/gif"
               onChange={handleFileChange}
               required={!isEdit || !editingBadge?.imageData}
-              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
+              className="h-11 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
               disabled={isPending}
             />
             {editingBadge && !image && isEdit && (
-              <p className="text-sm text-[var(--main-text)]/80">
+              <p className="text-sm text-[var(--main-text)]/80 mt-2">
                 Using existing image. Upload a new one to replace it.
               </p>
             )}
             {image && (
-              <p className="text-sm text-[var(--main-text)]/80">
+              <p className="text-sm text-[var(--main-text)]/80 mt-2">
                 Selected: {image.name}
               </p>
             )}
           </div>
         </div>
-        <DialogFooter className={isEdit ? "justify-between" : ""}>
+        <DialogFooter className={`pt-6 border-t border-white/10 mt-6 ${isEdit ? "justify-between" : ""}`}>
           {isEdit && (
             <>
               {!isDeleteConfirmVisible ? (
@@ -400,6 +406,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                   variant="destructive"
                   onClick={handleDeleteClick}
                   disabled={isDeleting}
+                  className="h-11"
                 >
                   {isDeleting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -409,8 +416,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                   Delete Badge
                 </Button>
               ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-destructive font-medium mr-2">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-destructive font-medium">
                     Confirm delete?
                   </p>
                   <Button
@@ -418,7 +425,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                     variant="outline"
                     size="sm"
                     onClick={cancelDelete}
-                    className="h-8"
+                    className="h-9"
                   >
                     Cancel
                   </Button>
@@ -428,7 +435,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                     size="sm"
                     onClick={confirmDelete}
                     disabled={isDeleting}
-                    className="h-8"
+                    className="h-9"
                   >
                     {isDeleting ? (
                       <Loader2 className="mr-2 h-3 w-3 animate-spin" />
@@ -441,9 +448,9 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               )}
             </>
           )}
-          <div className="flex space-x-2">
+          <div className="flex space-x-3">
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" className="h-11 px-6">
                 Cancel
               </Button>
             </DialogClose>
@@ -452,6 +459,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               disabled={
                 isPending || (!isEdit && (!image || !name || !issuedBy))
               }
+              className="h-11 px-6"
             >
               {isPending ? (
                 <>
@@ -488,12 +496,12 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
       {/* Create Badge Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-[var(--main-text)]">
+        <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+          <DialogHeader className="pb-6">
+            <DialogTitle className="text-xl text-[var(--main-text)]">
               Create New Badge
             </DialogTitle>
-            <DialogDescription className="text-[var(--main-text)]/80">
+            <DialogDescription className="text-[var(--main-text)]/80 text-base">
               Create a new badge by providing the required information.
             </DialogDescription>
           </DialogHeader>
@@ -511,12 +519,12 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[600px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-[var(--main-text)]">
+        <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+          <DialogHeader className="pb-6">
+            <DialogTitle className="text-xl text-[var(--main-text)]">
               Edit Badge
             </DialogTitle>
-            <DialogDescription className="text-[var(--main-text)]/80">
+            <DialogDescription className="text-[var(--main-text)]/80 text-base">
               Update the badge information.
             </DialogDescription>
           </DialogHeader>

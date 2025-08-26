@@ -18,7 +18,8 @@
     "drizzle-kit": "^0.30.5",
     "drizzle-orm": "^0.41.0",
     "drizzle-typebox": "^0.3.0",
-    "elysia": "latest"
+    "elysia": "latest",
+    "resend": "^6.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

@@ -271,7 +271,6 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3001", // Frontend origin
     "http://localhost:3000", // Backend origin
-    "https://badges-production.up.railway.app", // what is this lol
   ],
   session: {
     // Ensure fresh sessions are created for magic links

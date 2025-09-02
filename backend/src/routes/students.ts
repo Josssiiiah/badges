@@ -1,7 +1,16 @@
 import { Elysia, t } from "elysia";
 import { setup } from "../setup";
 import { db } from "../db/connection";
-import { students, badges, createdBadges } from "../db/schema";
+import {
+  students,
+  badges,
+  createdBadges,
+  user,
+  session as sessionTable,
+  account as accountTable,
+  organizationUsers,
+} from "../db/schema";
+import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
 import { userMiddleware } from "../middleware/auth-middleware";
 
@@ -146,7 +155,27 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           })
           .returning();
 
-        return { student: newStudent[0] };
+        const student = newStudent[0];
+
+        // Auto-provision a minimal auth user for this student if one doesn't exist
+        const existingUser = await db
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.email, student.email))
+          .limit(1);
+
+        if (!existingUser.length) {
+          await db.insert(user).values({
+            id: nanoid(),
+            name: student.name,
+            email: student.email,
+            role: "student",
+            organization: undefined,
+            organizationId: student.organizationId,
+          });
+        }
+
+        return { student };
       } catch (error) {
         console.error("Error creating student:", error);
         return { error: String(error) };
@@ -163,7 +192,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
     },
   )
   .put(
-    "/update/:studentId/",
+    "/update/:studentId",
     async (context) => {
       try {
         const { params, body } = context;
@@ -190,15 +219,20 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           }
         }
         
+        // Build update data, but only include badgeId if it was explicitly provided
+        const updateData: any = {
+          name: body.name,
+          email: body.email,
+          hasBadge: body.hasBadge,
+          updatedAt: new Date(),
+        };
+        if (Object.prototype.hasOwnProperty.call(body, "badgeId")) {
+          updateData.badgeId = body.badgeId;
+        }
+
         const updatedStudent = await db
           .update(students)
-          .set({
-            name: body.name,
-            email: body.email,
-            hasBadge: body.hasBadge,
-            badgeId: body.badgeId,
-            updatedAt: new Date(),
-          })
+          .set(updateData)
           .where(eq(students.studentId, params.studentId))
           .returning();
 
@@ -251,17 +285,54 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             return { error: "You can only delete students in your organization" };
           }
         }
-        
-        const deleted = await db
-          .delete(students)
-          .where(eq(students.studentId, params.studentId))
-          .returning();
 
-        if (deleted.length === 0) {
+        // Get the student's email before deletion
+        const target = await db
+          .select({ email: students.email })
+          .from(students)
+          .where(eq(students.studentId, params.studentId))
+          .limit(1);
+
+        if (target.length === 0) {
           return { error: "Student not found" };
         }
 
-        return { message: "Student deleted" };
+        const studentEmail = target[0].email;
+
+        // Perform cascading deletes in a transaction: clear student FK -> badges -> user deps -> user -> student
+        await db.transaction(async (tx) => {
+          // Find associated user by email
+          const u = await tx
+            .select({ id: user.id, role: user.role })
+            .from(user)
+            .where(eq(user.email, studentEmail))
+            .limit(1);
+
+          // Clear student's badge reference first to satisfy FK (students.badge_id -> badges.id)
+          await tx
+            .update(students)
+            .set({ badgeId: null, hasBadge: false, updatedAt: new Date() })
+            .where(eq(students.studentId, params.studentId));
+
+          if (u.length && u[0].role === "student") {
+            const uid = u[0].id;
+            // Delete their badge assignments
+            await tx.delete(badges).where(eq(badges.userId, uid));
+            // Delete user-dependent records to satisfy FKs
+            await tx.delete(sessionTable).where(eq(sessionTable.userId, uid));
+            await tx.delete(accountTable).where(eq(accountTable.userId, uid));
+            await tx
+              .delete(organizationUsers)
+              .where(eq(organizationUsers.userId, uid));
+            // Delete the user account
+            await tx.delete(user).where(eq(user.id, uid));
+          }
+
+          // Finally, delete the student record
+          await tx.delete(students).where(eq(students.studentId, params.studentId));
+        });
+
+        return { message: "Student and associated user/badges deleted" };
       } catch (error) {
         console.error("Error deleting student:", error);
         return { error: String(error) };

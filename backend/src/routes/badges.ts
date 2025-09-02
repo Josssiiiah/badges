@@ -1,13 +1,57 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db/connection";
-import { createdBadges, badges, user } from "../db/schema";
+import { createdBadges, badges, user, students } from "../db/schema";
 import { nanoid } from "nanoid";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { setup } from "../setup";
 import { userMiddleware } from "../middleware/auth-middleware";
 
 export const badgeRoutes = new Elysia({ prefix: "/badges" })
   .use(setup)
+  // Get usage summary for a badge template
+  .get("/usage/:id", async (context) => {
+    try {
+      const { params } = context;
+      const badgeId = params.id;
+      const session = await userMiddleware(context);
+
+      if (!session.user) {
+        return { error: "Unauthorized" };
+      }
+
+      if (session.user.role !== "administrator" || !session.user.organizationId) {
+        return { error: "Only administrators can view badge usage" };
+      }
+
+      // Verify the badge belongs to the admin's org
+      const existing = await db
+        .select({ id: createdBadges.id })
+        .from(createdBadges)
+        .where(
+          and(
+            eq(createdBadges.id, badgeId),
+            eq(createdBadges.organizationId, session.user.organizationId),
+          ),
+        )
+        .limit(1);
+
+      if (!existing.length) {
+        return { error: "Badge not found or unauthorized" };
+      }
+
+      const assignmentRows = await db
+        .select({ id: badges.id })
+        .from(badges)
+        .where(eq(badges.badgeId, badgeId));
+
+      const assignmentCount = assignmentRows.length;
+
+      return { assignmentCount, studentCount: assignmentCount };
+    } catch (error) {
+      console.error("Error fetching badge usage:", error);
+      return { error: String(error) };
+    }
+  })
   // Get all badges - filtered by organization for administrators
   .get("/all", async (context) => {
     try {
@@ -209,18 +253,61 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         return { error: "Unauthorized" };
       }
 
-      // Find the user by email
+      // Find the user by email; if not found, try to create one from a matching student
+      let userId: string | null = null;
       const userResult = await db
         .select()
         .from(user)
         .where(eq(user.email, email))
         .limit(1);
 
-      if (!userResult.length) {
-        return { error: "User not found with this email" };
-      }
+      if (userResult.length) {
+        userId = userResult[0].id;
+      } else {
+        // Look for a student with this email
+        const studentMatch = await db
+          .select({
+            studentId: students.studentId,
+            name: students.name,
+            email: students.email,
+            organizationId: students.organizationId,
+          })
+          .from(students)
+          .where(eq(students.email, email))
+          .limit(1);
 
-      const userId = userResult[0].id;
+        if (!studentMatch.length) {
+          return { error: "User not found with this email" };
+        }
+
+        const student = studentMatch[0];
+
+        // If admin, ensure student is in their organization (when both are present)
+        if (
+          session.user.role === "administrator" &&
+          session.user.organizationId &&
+          student.organizationId &&
+          student.organizationId !== session.user.organizationId
+        ) {
+          return { error: "Student does not belong to your organization" };
+        }
+
+        // Create a minimal auth user so we can attach the badge
+        const newUserId = nanoid();
+        const created = await db
+          .insert(user)
+          .values({
+            id: newUserId,
+            name: student.name,
+            email: student.email,
+            role: "student",
+            organization: undefined,
+            organizationId: student.organizationId || session.user.organizationId,
+          })
+          .returning();
+
+        userId = created[0].id;
+      }
 
       // Verify the badge exists
       const badge = await db
@@ -247,7 +334,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         .insert(badges)
         .values({
           badgeId,
-          userId,
+          userId: userId!,
         })
         .returning();
 
@@ -483,18 +570,36 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
           return { error: "Badge not found or you don't have permission to delete it" };
         }
 
-        // First delete any badge assignments that reference this badge
-        await db
-          .delete(badges)
-          .where(eq(badges.badgeId, badgeId));
-        
-        // Then delete the badge itself
-        const deleted = await db
-          .delete(createdBadges)
-          .where(eq(createdBadges.id, badgeId))
-          .returning();
+        // Revoke assignments from students, delete assignments, then delete the badge template
+        const deleted = await db.transaction(async (tx) => {
+          // Collect assignment IDs for this template
+          const assignmentRows = await tx
+            .select({ id: badges.id })
+            .from(badges)
+            .where(eq(badges.badgeId, badgeId));
 
-        return { success: true, deleted: deleted[0] };
+          const assignmentIds = assignmentRows.map((r) => r.id);
+
+          // Clear student references first to satisfy FK: students.badge_id -> badges.id
+          if (assignmentIds.length > 0) {
+            await tx
+              .update(students)
+              .set({ badgeId: null, hasBadge: false, updatedAt: new Date() })
+              .where(inArray(students.badgeId, assignmentIds));
+          }
+
+          // Delete badge assignments
+          await tx.delete(badges).where(eq(badges.badgeId, badgeId));
+
+          // Delete the badge template
+          const del = await tx
+            .delete(createdBadges)
+            .where(eq(createdBadges.id, badgeId))
+            .returning();
+          return del[0];
+        });
+
+        return { success: true, deleted };
       } catch (error) {
         console.error("Error deleting badge:", error);
         return { error: String(error) };

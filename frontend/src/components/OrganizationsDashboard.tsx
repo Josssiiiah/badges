@@ -64,7 +64,7 @@ export function OrganizationsDashboard() {
     queryFn: async () => {
       try {
         console.log(
-          `Checking API health at: ${BACKEND_URL}/organizations/health`,
+          `Checking API health at: ${BACKEND_URL}/organizations/health`
         );
         const response = await fetch(`${BACKEND_URL}/organizations/health`, {
           credentials: "include",
@@ -170,7 +170,7 @@ export function OrganizationsDashboard() {
           const errorData = await response.json();
           console.error("Error response from API:", errorData);
           throw new Error(
-            errorData.error || "Failed to fetch organization users",
+            errorData.error || "Failed to fetch organization users"
           );
         }
 
@@ -352,7 +352,7 @@ export function OrganizationsDashboard() {
                 <div className="p-4 rounded-lg bg-[var(--accent-bg)]/10 flex flex-col items-center justify-center">
                   <div className="text-3xl font-bold text-[var(--main-text)]">
                     {orgUsers?.filter(
-                      (u: OrganizationUser) => u.role === "administrator",
+                      (u: OrganizationUser) => u.role === "administrator"
                     ).length || 0}
                   </div>
                   <div className="flex items-center gap-1 text-sm text-[var(--main-text)]/60 font-medium">
@@ -372,7 +372,7 @@ export function OrganizationsDashboard() {
                 </div>
               </div>
 
-              <Button className="w-full" variant="outline">
+              <Button className="w-full bg-primary hover:bg-primary/90 text-white">
                 <User className="h-4 w-4 mr-2" />
                 Invite New Administrator
               </Button>
@@ -455,7 +455,7 @@ export function OrganizationsDashboard() {
                                 year: "numeric",
                                 month: "short",
                                 day: "numeric",
-                              },
+                              }
                             )}
                           </span>
                         </div>

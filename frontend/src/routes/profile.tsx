@@ -308,11 +308,11 @@ function ProfileComponent() {
                     href={`/users/${user.name}`}
                     className="hover:underline flex items-center"
                   >
-                    <Share2 className="h-3 w-3 mr-1" />
+                    {/* <Share2 className="h-3 w-3 mr-1" />
                     Public Profile
                     <span className="ml-1 text-text-muted/60">
                       ({window.location.origin}/users/{user.name})
-                    </span>
+                    </span> */}
                   </a>
                 </div>
 

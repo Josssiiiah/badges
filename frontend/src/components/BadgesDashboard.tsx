@@ -53,6 +53,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
+  const [assignedCount, setAssignedCount] = useState<number | null>(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState<boolean>(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [issuedBy, setIssuedBy] = useState("");
@@ -261,8 +263,22 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
     setIsEditOpen(true);
   };
 
-  const handleDeleteClick = () => {
-    if (editingBadge) {
+  const handleDeleteClick = async () => {
+    if (!editingBadge) return;
+    try {
+      setIsLoadingUsage(true);
+      setAssignedCount(null);
+      const response = await fetchWithAuth(`badges/usage/${editingBadge.id}`);
+      const data = await response.json();
+      if (response.ok && !data.error) {
+        setAssignedCount(data.studentCount ?? data.assignmentCount ?? 0);
+      } else {
+        setAssignedCount(null);
+      }
+    } catch (e) {
+      setAssignedCount(null);
+    } finally {
+      setIsLoadingUsage(false);
       setIsDeleteConfirmVisible(true);
     }
   };
@@ -285,8 +301,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
     const isDeleting = deleteBadge.isPending;
 
     return (
-      <form onSubmit={onSubmit}>
-        <div className="space-y-4 py-4">
+      <form onSubmit={onSubmit} className="flex flex-col">
+        <div className="space-y-4 py-4 overflow-y-auto flex-1">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">
@@ -373,7 +389,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               accept="image/png, image/jpeg, image/gif"
               onChange={handleFileChange}
               required={!isEdit || !editingBadge?.imageData}
-              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
+              className="file:mr-4 mt-1 file:px-4 file:rounded-full file:border file:border-black file:bg-transparent file:text-sm file:font-semibold file:text-black hover:file:bg-gray-100 disabled:opacity-50"
               disabled={isPending}
             />
             {editingBadge && !image && isEdit && (
@@ -388,7 +404,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             )}
           </div>
         </div>
-        <DialogFooter className={isEdit ? "justify-between" : ""}>
+        <DialogFooter className={`mt-4 ${isEdit ? "justify-between" : ""}`}>
           {isEdit && (
             <>
               {!isDeleteConfirmVisible ? (
@@ -407,9 +423,15 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                 </Button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="text-sm text-destructive font-medium mr-2">
-                    Confirm delete?
-                  </p>
+                  <div className="mr-2">
+                    {isLoadingUsage ? (
+                      <p className="text-sm text-text-muted">Checking usage...</p>
+                    ) : (
+                      <p className="text-sm text-destructive font-medium">
+                        Confirm delete?
+                      </p>
+                    )}
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
@@ -439,13 +461,9 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             </>
           )}
           <div className="flex space-x-2">
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button
               type="submit"
+              className="bg-primary text-white hover:bg-primary/90"
               disabled={
                 isPending || (!isEdit && (!image || !name || !issuedBy))
               }
@@ -485,7 +503,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
       {/* Create Badge Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light">
+        <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Create New Badge
@@ -508,7 +526,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light">
+        <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Edit Badge

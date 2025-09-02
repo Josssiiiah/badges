@@ -5,16 +5,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 dark:focus-visible:ring-neutral-300 cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
   {
     variants: {
       variant: {
         default:
           "bg-[var(--accent-bg)] text-[var(--dark-gray)] shadow hover:bg-[var(--accent-bg)]/80",
         destructive:
-          "bg-red-500 text-neutral-50 shadow-sm hover:bg-red-500/90 dark:bg-red-900 dark:text-neutral-50 dark:hover:bg-red-900/90",
+          "bg-red-500 text-neutral-50 shadow-sm hover:bg-red-500/90",
         outline:
-          "border border-[var(--accent-bg)] bg-white text-[var(--main-text)] shadow-sm hover:bg-[var(--accent-bg)]/20 hover:text-[var(--main-text)] dark:border-[var(--accent-bg)] dark:bg-space dark:hover:bg-[var(--accent-bg)]/20 dark:hover:text-[var(--main-text)]",
+          "border border-[var(--accent-bg)] bg-white text-[var(--main-text)] shadow-sm hover:bg-[var(--accent-bg)]/20 hover:text-[var(--main-text)]",
         secondary:
           "bg-gray-dark text-surface hover:bg-text shadow-shadow px-8 py-6 text-base rounded-xl transition-all hover:scale-105",
         ghost: "hover:bg-space-300 hover:text-pure",

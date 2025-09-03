@@ -53,6 +53,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
+  const [assignedCount, setAssignedCount] = useState<number | null>(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState<boolean>(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [issuedBy, setIssuedBy] = useState("");
@@ -261,8 +263,22 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
     setIsEditOpen(true);
   };
 
-  const handleDeleteClick = () => {
-    if (editingBadge) {
+  const handleDeleteClick = async () => {
+    if (!editingBadge) return;
+    try {
+      setIsLoadingUsage(true);
+      setAssignedCount(null);
+      const response = await fetchWithAuth(`badges/usage/${editingBadge.id}`);
+      const data = await response.json();
+      if (response.ok && !data.error) {
+        setAssignedCount(data.studentCount ?? data.assignmentCount ?? 0);
+      } else {
+        setAssignedCount(null);
+      }
+    } catch (e) {
+      setAssignedCount(null);
+    } finally {
+      setIsLoadingUsage(false);
       setIsDeleteConfirmVisible(true);
     }
   };
@@ -285,11 +301,11 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
     const isDeleting = deleteBadge.isPending;
 
     return (
-      <form onSubmit={onSubmit}>
-        <div className="space-y-4 py-4">
+      <form onSubmit={onSubmit} className="flex flex-col">
+        <div className="space-y-4 py-4 overflow-y-auto flex-1">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[var(--main-text)]">
+              <Label htmlFor="name">
                 Badge Name
               </Label>
               <Input
@@ -302,7 +318,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="issuedBy" className="text-[var(--main-text)]">
+              <Label htmlFor="issuedBy">
                 Issued By
               </Label>
               <Input
@@ -316,7 +332,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-[var(--main-text)]">
+            <Label htmlFor="description">
               Description
             </Label>
             <Input
@@ -328,7 +344,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="courseLink" className="text-[var(--main-text)]">
+            <Label htmlFor="courseLink">
               Course Link
             </Label>
             <Input
@@ -340,7 +356,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="skills" className="text-[var(--main-text)]">
+            <Label htmlFor="skills">
               Skills
             </Label>
             <Input
@@ -352,10 +368,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             />
           </div>
           <div className="space-y-2">
-            <Label
-              htmlFor="earningCriteria"
-              className="text-[var(--main-text)]"
-            >
+            <Label htmlFor="earningCriteria">
               Earning Criteria
             </Label>
             <Input
@@ -367,7 +380,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="image" className="text-[var(--main-text)]">
+            <Label htmlFor="image">
               Badge Image
             </Label>
             <Input
@@ -376,22 +389,22 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               accept="image/png, image/jpeg, image/gif"
               onChange={handleFileChange}
               required={!isEdit || !editingBadge?.imageData}
-              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
+              className="file:mr-4 mt-1 file:px-4 file:rounded-full file:border file:border-black file:bg-transparent file:text-sm file:font-semibold file:text-black hover:file:bg-gray-100 disabled:opacity-50"
               disabled={isPending}
             />
             {editingBadge && !image && isEdit && (
-              <p className="text-sm text-[var(--main-text)]/80">
+              <p className="text-sm text-text-muted">
                 Using existing image. Upload a new one to replace it.
               </p>
             )}
             {image && (
-              <p className="text-sm text-[var(--main-text)]/80">
+              <p className="text-sm text-text-muted">
                 Selected: {image.name}
               </p>
             )}
           </div>
         </div>
-        <DialogFooter className={isEdit ? "justify-between" : ""}>
+        <DialogFooter className={`mt-4 ${isEdit ? "justify-between" : ""}`}>
           {isEdit && (
             <>
               {!isDeleteConfirmVisible ? (
@@ -410,9 +423,15 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                 </Button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="text-sm text-destructive font-medium mr-2">
-                    Confirm delete?
-                  </p>
+                  <div className="mr-2">
+                    {isLoadingUsage ? (
+                      <p className="text-sm text-text-muted">Checking usage...</p>
+                    ) : (
+                      <p className="text-sm text-destructive font-medium">
+                        Confirm delete?
+                      </p>
+                    )}
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
@@ -442,20 +461,16 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             </>
           )}
           <div className="flex space-x-2">
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button
               type="submit"
+              className="bg-primary text-white hover:bg-primary/90"
               disabled={
                 isPending || (!isEdit && (!image || !name || !issuedBy))
               }
             >
               {isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin text-[var(--main-text)]/80" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {isEdit ? "Updating..." : "Uploading..."}
                 </>
               ) : (
@@ -482,18 +497,18 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold tracking-tight text-[var(--main-text)]">
+      <h2 className="text-2xl font-bold tracking-tight text-text">
         Badges
       </h2>
 
       {/* Create Badge Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+        <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[var(--main-text)]">
+            <DialogTitle>
               Create New Badge
             </DialogTitle>
-            <DialogDescription className="text-[var(--main-text)]/80">
+            <DialogDescription>
               Create a new badge by providing the required information.
             </DialogDescription>
           </DialogHeader>
@@ -511,12 +526,12 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[600px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+        <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[var(--main-text)]">
+            <DialogTitle>
               Edit Badge
             </DialogTitle>
-            <DialogDescription className="text-[var(--main-text)]/80">
+            <DialogDescription>
               Update the badge information.
             </DialogDescription>
           </DialogHeader>
@@ -525,7 +540,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
       </Dialog>
 
       {/* Badge Grid Card */}
-      <Card className="bg-white/10 backdrop-filter backdrop-blur-">
+      <Card className="bg-surface-accent/50 border-gray-light">
         <CardHeader>
           <CardTitle>Available Badges</CardTitle>
           <CardDescription>
@@ -536,7 +551,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {/* Create New Badge Card */}
             <Card
-              className="overflow-hidden border-dashed border-2 border-black/40 cursor-pointer group h-full flex flex-col bg-white/5 backdrop-filter backdrop-blur-sm hover:bg-white/15 transition-all hover:shadow-lg hover:scale-[1.02]"
+              className="overflow-hidden border-dashed border-2 border-gray-light cursor-pointer group h-full flex flex-col bg-surface-accent/30 hover:bg-surface-accent/60 transition-all hover:shadow-lg hover:scale-[1.02]"
               onClick={() => {
                 resetForm();
                 setIsCreateOpen(true);
@@ -544,8 +559,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             >
               <CardContent className="p-0 flex-1 aspect-square flex items-center justify-center bg-muted/10 group-hover:bg-muted/20 transition-colors">
                 <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
-                  <Plus className="h-12 w-12 mb-2 text-black/40" />
-                  <p className="text-sm font-medium text-black/40">
+                  <Plus className="h-12 w-12 mb-2 text-text-muted" />
+                  <p className="text-sm font-medium text-text-muted">
                     Create New Badge
                   </p>
                 </div>
@@ -556,23 +571,23 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             {badges.map((badge: Badge) => (
               <Card
                 key={badge.id}
-                className="overflow-hidden border border-black/ group cursor-pointer h-full bg-white/10 backdrop-filter backdrop-blur-sm hover:bg-white/20 transition-all hover:shadow-lg hover:scale-[1.02]"
+                className="overflow-hidden border border-gray-light group cursor-pointer h-full bg-surface hover:bg-surface-accent transition-all hover:shadow-lg hover:scale-[1.02]"
                 onClick={() => openEditDialog(badge)}
               >
-                <CardContent className="p-4 aspect-square flex items-center justify-center bg-muted/20 group-hover:bg-muted/40 transition-colors relative">
+                <CardContent className="p-4 aspect-square flex items-center justify-center bg-surface-accent/30 group-hover:bg-surface-accent/50 transition-colors relative">
                   <img
                     src={badge.imageData}
                     alt={`Badge for ${badge.name}`}
                     className="max-w-[100%] max-h-[100%] object-contain transition-transform group-hover:scale-105"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Pencil className="h-8 w-8 text-white" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Pencil className="h-8 w-8 text-white drop-shadow-lg" />
                   </div>
                 </CardContent>
                 <CardHeader className="p-3">
                   <CardTitle
-                    className="text-base font-medium truncate text-[var(--main-text)]"
+                    className="text-base font-medium truncate text-text"
                     title={badge.name}
                   >
                     {badge.name}
@@ -582,7 +597,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                   </p> */}
                   {badge.description && (
                     <CardDescription
-                      className="text-xs mt-1 line-clamp-1 text-[var(--main-text)]/80"
+                      className="text-xs mt-1 line-clamp-1 text-text-muted"
                       title={badge.description}
                     >
                       {badge.description.split(" ").slice(0, 20).join(" ")}
@@ -599,8 +614,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             ))}
 
             {badges.length === 0 && (
-              <div className="col-span-full rounded-lg bg-white/5 backdrop-filter backdrop-blur-sm border border-white/20 p-6 text-center shadow-md">
-                <p className="text-[var(--main-text)]/80">
+              <div className="col-span-full rounded-lg bg-surface-accent/30 border border-gray-light p-6 text-center">
+                <p className="text-text-muted">
                   No badge templates available yet. Click the "Create New Badge"
                   card to get started.
                 </p>

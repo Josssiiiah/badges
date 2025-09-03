@@ -11,10 +11,38 @@ import { staticPlugin } from '@elysiajs/static'
 
 // Create a new Elysia app
 const app = new Elysia()
-  .use(cors())
-  // Define API routes first - these take precedence
+  // Global request logger
+  .onRequest((c) => {
+    try {
+      const url = new URL(c.request.url);
+      console.log(`[req] ${c.request.method} ${url.pathname}${url.search}`);
+    } catch {
+      console.log(`[req] ${c.request.method} <bad-url>`);
+    }
+  })
+  // Global error logger
+  .onError(({ request, code, error }) => {
+    try {
+      const url = new URL(request.url);
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`[error] code=${code} path=${url.pathname}${url.search} msg=${msg}`);
+      if (error instanceof Error && error.stack) console.error(error.stack);
+    } catch (err) {
+      console.error(`[error] code=${code} msg=${error}`);
+    }
+  })
+  .use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+  }))
+  // Mount Better Auth routes at root
+  .use(auth)
+
+  // Define API routes first - these take precedence (other than auth)
   .group("/api", (app) => 
-    app.use(auth)
+    app
        .use(studentRoutes)
        .use(badgeRoutes)
        .use(organizationRoutes)
@@ -23,26 +51,14 @@ const app = new Elysia()
 
   // Static assets
   .get("/assets/*", ({ params }) => {
-    const filePath = join(import.meta.dir, "../dist/assets", params["*"]);
+    const star = (params as Record<string, string>)["*"] || "";
+    const filePath = join(import.meta.dir, "../dist/assets", star);
     console.log(`Serving asset: ${filePath}`);
-    const file = Bun.file(filePath);
-    return file;
+    if (!star) return new Response("Not Found", { status: 404 });
+    return Bun.file(filePath);
   })
-  
-  // Serve image files from the root path
-  .get("/*.png", ({ params }) => {
-    const filePath = join(import.meta.dir, "../dist", params["*"]);
-    console.log(`Serving image: ${filePath}`);
-    const file = Bun.file(filePath);
-    return file;
-  }, {
-    params: t.Object({
-      "*": t.String()
-    })
-  })
-
   // Serve SPA for all other routes
-  .all("/*", ({ path, request }) => {
+  .all("*", ({ path, request }) => {
     // Only serve the SPA if it's not an API route
     if (!path.startsWith("/api")) {
       return Bun.file(join(import.meta.dir, "../dist/index.html"));

@@ -41,6 +41,17 @@ import {
 import { fetchWithAuth } from "@/lib/api-client";
 import { nanoid } from "nanoid";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Badge = {
   id: string;
@@ -96,7 +107,7 @@ export function StudentDashboard({
           // Find the badge TEMPLATE from badges prop if it's missing
           // This only adds badge details (name, image) but preserves the assignment ID
           const matchingBadge = badges.find(
-            (badge) => badge.id === student.badge?.id,
+            (badge) => badge.id === student.badge?.id
           );
           if (matchingBadge) {
             return {
@@ -158,7 +169,7 @@ export function StudentDashboard({
       setIsLookingUpUser(true);
       // Make API call to look up user by email in the users table
       const response = await fetchWithAuth(
-        `users/by-email?email=${encodeURIComponent(email)}`,
+        `users/by-email?email=${encodeURIComponent(email)}`
       );
 
       if (response.ok) {
@@ -252,6 +263,9 @@ export function StudentDashboard({
       }
 
       const result = await response.json();
+      if (!response.ok || (result && result.error)) {
+        throw new Error(result?.error || "Failed to update student");
+      }
 
       // Update local state
       setLocalStudents([...localStudents, result.student]);
@@ -294,19 +308,18 @@ export function StudentDashboard({
 
       // First update student info (but don't update badgeId yet if we're assigning a badge)
       // This prevents the badge template ID from replacing the badge assignment ID
+      const initialUpdatePayload: any = {
+        name: editingStudent.name,
+        email: editingStudent.email,
+        hasBadge: editingStudent.hasBadge,
+      };
+
       const response = await fetchWithAuth(
         `students/update/${editingStudent.studentId}`,
         {
           method: "PUT",
-          body: JSON.stringify({
-            name: editingStudent.name,
-            email: editingStudent.email,
-            hasBadge: editingStudent.hasBadge,
-            // Only include badgeId if we're not assigning a new badge
-            // If assigning, we'll update it after getting assignment ID
-            badgeId: !editingStudent.hasBadge ? null : editingStudent.badgeId,
-          }),
-        },
+          body: JSON.stringify(initialUpdatePayload),
+        }
       );
 
       if (!response.ok) {
@@ -314,8 +327,9 @@ export function StudentDashboard({
       }
 
       const result = await response.json();
-      // Get the student data from the response
-      let updatedStudent = result.student;
+      // Get the student data from the response; fall back to current state to avoid undefined
+      let updatedStudent: Student =
+        result && result.student ? result.student : { ...editingStudent };
 
       // If badge is being assigned, create a badge assignment
       if (editingStudent.hasBadge && editingStudent.badgeId) {
@@ -327,12 +341,11 @@ export function StudentDashboard({
           }),
         });
 
-        if (!badgeResponse.ok) {
-          throw new Error("Failed to assign badge");
-        }
-
         // Get the badge assignment information including its unique ID
         const badgeAssignment = await badgeResponse.json();
+        if (!badgeResponse.ok || (badgeAssignment && badgeAssignment.error)) {
+          throw new Error(badgeAssignment?.error || "Failed to assign badge");
+        }
 
         // Store the badge assignment ID which will be used for unique badge URLs
         if (badgeAssignment && badgeAssignment.assignment) {
@@ -349,21 +362,28 @@ export function StudentDashboard({
                 hasBadge: true,
                 badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
               }),
-            },
+            }
           );
 
-          if (!updateBadgeIdResponse.ok) {
-            console.warn("Failed to update student with badge assignment ID");
+          const updateBadgeIdResult = await updateBadgeIdResponse.json();
+          if (
+            !updateBadgeIdResponse.ok ||
+            (updateBadgeIdResult && updateBadgeIdResult.error)
+          ) {
+            throw new Error(
+              updateBadgeIdResult?.error ||
+                "Failed to persist badge assignment to student"
+            );
           }
         }
       }
 
       // Find the badge details if a badge is assigned
-      if (updatedStudent.hasBadge && updatedStudent.badgeId) {
+      if (updatedStudent?.hasBadge && updatedStudent.badgeId) {
         // Find the badge template data to display badge info (image, name)
         // but preserve the badge assignment ID for URLs
         const selectedBadgeTemplate = badges.find(
-          (badge) => badge.id === editingStudent.badgeId, // Use template ID to find badge details
+          (badge) => badge.id === editingStudent.badgeId // Use template ID to find badge details
         );
 
         if (selectedBadgeTemplate) {
@@ -378,8 +398,8 @@ export function StudentDashboard({
       // Update local state with the complete student information including badge
       setLocalStudents(
         localStudents.map((s) =>
-          s.studentId === editingStudent.studentId ? updatedStudent : s,
-        ),
+          s.studentId === editingStudent.studentId ? updatedStudent : s
+        )
       );
 
       // Close dialog
@@ -387,7 +407,7 @@ export function StudentDashboard({
 
       toast({
         title: "Success",
-        description: `${result.student.name} updated successfully`,
+        description: `${updatedStudent.name} updated successfully`,
       });
     } catch (error) {
       console.error("Error updating student:", error);
@@ -468,8 +488,8 @@ export function StudentDashboard({
         studentId: nanoid(8),
         name: email.split("@")[0], // Use email username as name
         email,
-        hasBadge: bulkAssignBadge,
-        badgeId: bulkAssignBadge ? bulkBadgeId : undefined,
+        // Do not set badgeId at creation time; assign afterwards
+        hasBadge: false,
       }));
 
       // Make API call for each student
@@ -478,8 +498,8 @@ export function StudentDashboard({
           fetchWithAuth("students/create", {
             method: "POST",
             body: JSON.stringify(student),
-          }).then((res) => res.json()),
-        ),
+          }).then((res) => res.json())
+        )
       );
 
       // Add successful students to the list
@@ -491,7 +511,7 @@ export function StudentDashboard({
       if (bulkAssignBadge && bulkBadgeId) {
         // Find the badge template
         const selectedBadgeTemplate = badges.find(
-          (badge) => badge.id === bulkBadgeId,
+          (badge) => badge.id === bulkBadgeId
         );
 
         // Assign badge to each student
@@ -503,8 +523,8 @@ export function StudentDashboard({
                 badgeId: bulkBadgeId,
                 email: student.email,
               }),
-            }).then((res) => res.json()),
-          ),
+            }).then((res) => res.json())
+          )
         );
 
         // Update students with badge assignment IDs and badge details
@@ -535,7 +555,7 @@ export function StudentDashboard({
               });
             }
             return Promise.resolve();
-          }),
+          })
         );
       }
 
@@ -567,17 +587,17 @@ export function StudentDashboard({
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-[var(--main-text)]">
-          Student Management
+          Students
         </h2>
         <div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button className="">
                 <Users className="mr-2 h-4 w-4 text-[var(--gray)]" />{" "}
                 <span className="text-gray-500">Bulk Import</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+            <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
               <DialogHeader>
                 <DialogTitle>Add Multiple Students</DialogTitle>
               </DialogHeader>
@@ -664,12 +684,12 @@ export function StudentDashboard({
           </Dialog>
           <Dialog>
             <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4 text-[var(--gray)]" />{" "}
-                <span className="text-gray-500">Add Student</span>
+              <Button className="bg-primary hover:bg-primary/90 text-white">
+                <PlusCircle className="h-4 w-4 text-[var(--gray)]" />{" "}
+                <span className="text-white">Add Student</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+            <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
               </DialogHeader>
@@ -710,7 +730,7 @@ export function StudentDashboard({
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
-                <Button onClick={addStudent} type="submit">
+                <Button onClick={addStudent} type="submit" className="bg-primary hover:bg-primary/90 text-white">
                   Add Student
                 </Button>
               </DialogFooter>
@@ -793,14 +813,14 @@ export function StudentDashboard({
                           >
                             <Copy className="h-3 w-3 text-[var(--gray)]" />
                           </Button>
-                          <Button
+                          {/* <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
                             onClick={() => openBadge(student.badgeId!)}
                           >
                             <ExternalLink className="h-3 w-3 text-[var(--gray)]" />
-                          </Button>
+                          </Button> */}
                         </div>
                       ) : (
                         <span className="text-[var(--main-text)]/80 text-xs">
@@ -821,7 +841,7 @@ export function StudentDashboard({
                               <Pencil className="h-4 w-4 text-[var(--gray)]" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px] bg-white/20 backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+                          <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
                             <DialogHeader>
                               <DialogTitle>Edit Student</DialogTitle>
                             </DialogHeader>
@@ -843,7 +863,7 @@ export function StudentDashboard({
                                             ...editingStudent,
                                             name: e.target.value,
                                           }
-                                        : null,
+                                        : null
                                     )
                                   }
                                   className="col-span-3"
@@ -867,7 +887,7 @@ export function StudentDashboard({
                                             ...editingStudent,
                                             email: e.target.value,
                                           }
-                                        : null,
+                                        : null
                                     )
                                   }
                                   onBlur={handleEditEmailBlur}
@@ -892,7 +912,7 @@ export function StudentDashboard({
                                                 ? editingStudent.badgeId
                                                 : undefined,
                                             }
-                                          : null,
+                                          : null
                                       )
                                     }
                                   />
@@ -921,7 +941,7 @@ export function StudentDashboard({
                                               ...editingStudent,
                                               badgeId: value,
                                             }
-                                          : null,
+                                          : null
                                       )
                                     }
                                   >
@@ -982,14 +1002,38 @@ export function StudentDashboard({
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteStudent(student.studentId)}
-                          className="h-8 w-8 text-[var(--gray)] hover:bg-[var(--gray)]/10 hover:text-[var(--gray)]"
-                        >
-                          <Trash2 className="h-4 w-4 text-[var(--gray)]" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-[var(--gray)] hover:bg-[var(--gray)]/10 hover:text-[var(--gray)]"
+                            >
+                              <Trash2 className="h-4 w-4 text-[var(--gray)]" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete student?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the student, their
+                                associated user account, and all of their badge
+                                assignments. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteStudent(student.studentId)}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

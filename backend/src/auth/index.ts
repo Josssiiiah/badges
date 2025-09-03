@@ -1,10 +1,12 @@
 import { db } from "../db/connection";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { magicLink } from "better-auth/plugins";
 import { account, session, user, verification, organizations, organizationUsers } from "../db/schema";
 import { APIError } from "better-auth/api";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
+import { sendVerificationEmail, sendMagicLinkEmail } from "../services/email";
 
 // Helper to generate a random short code for organizations
 function generateShortCode() {
@@ -40,6 +42,7 @@ export const auth = betterAuth({
       account,
     },
   }),
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000/api/auth',
   cookie: {
     secure: false,
     sameSite: "lax",
@@ -49,6 +52,21 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true, // If you want to use email and password auth
     autoSignIn: true, // Disable automatic sign in after signup
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      // Ensure post-verify redirect goes to frontend origin
+      const u = new URL(url);
+      u.searchParams.set(
+        "callbackURL",
+        (process.env.FRONTEND_URL || "http://localhost:3001") + "/"
+      );
+      console.log(`[auth] verification link for ${user.email}: ${u.toString()}`);
+      await sendVerificationEmail({ to: user.email, verificationUrl: u.toString() });
+    },
   },
   user: {
     additionalFields: {
@@ -253,6 +271,28 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3001", // Frontend origin
     "http://localhost:3000", // Backend origin
-    "https://badges-production.up.railway.app",
+  ],
+  session: {
+    // Ensure fresh sessions are created for magic links
+    cookieCache: {
+      enabled: false, // Disable cookie caching to prevent stale sessions
+    },
+  },
+  plugins: [
+    magicLink({
+      expiresIn: 24 * 60 * 60, // 24 hours
+      sendMagicLink: async ({ email, url }) => {
+        // Ensure post-magic-link redirect goes to frontend origin
+        const u = new URL(url);
+        u.searchParams.set(
+          "callbackURL",
+          (process.env.FRONTEND_URL || "http://localhost:3001") + "/"
+        );
+        console.log(`[auth] magic link for ${email}: ${u.toString()}`);
+        await sendMagicLinkEmail({ to: email, magicLinkUrl: u.toString() });
+      },
+    }),
   ],
 });
+
+export type AuthInstance = typeof auth;

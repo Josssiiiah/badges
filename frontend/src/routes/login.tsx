@@ -203,14 +203,14 @@ export default function Login() {
                         className={cn(
                           "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "student"
-                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300",
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-blue-300",
                         )}
                       >
                         <div className="flex flex-col items-center gap-1 md:gap-2">
                           <GraduationCap className="w-5 h-5 md:w-6 md:h-6" />
                           <span className="font-medium">Student</span>
-                          <p className="text-xs md:text-sm text-center text-gray-500 dark:text-gray-400">
+                          <p className="text-xs md:text-sm text-center text-gray-500">
                             Track and showcase your achievements
                           </p>
                         </div>
@@ -221,14 +221,14 @@ export default function Login() {
                         className={cn(
                           "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "administrator"
-                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                            : "border-gray-200 dark:border-gray-800 hover:border-blue-300",
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-blue-300",
                         )}
                       >
                         <div className="flex flex-col items-center gap-1 md:gap-2">
                           <Shield className="w-5 h-5 md:w-6 md:h-6" />
                           <span className="font-medium">Administrator</span>
-                          <p className="text-xs md:text-sm text-center text-gray-500 dark:text-gray-400">
+                          <p className="text-xs md:text-sm text-center text-gray-500">
                             Issue and manage badges
                           </p>
                         </div>
@@ -350,7 +350,7 @@ export default function Login() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full bg-black text-white hover:bg-black/80" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <svg

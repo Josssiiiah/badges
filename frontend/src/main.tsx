@@ -5,19 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { routeTree } from "./routeTree.gen";
 import "./index.css";
 
-// Set theme based on localStorage or user preference
-const storedTheme = localStorage.getItem("theme");
-const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-const initialTheme = storedTheme || (prefersDark ? "dark" : "light");
-document.documentElement.dataset.theme = initialTheme;
-
-// Theme toggle function
-window.toggleTheme = () => {
-  const currentTheme = document.documentElement.dataset.theme;
-  const newTheme = currentTheme === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = newTheme;
-  localStorage.setItem("theme", newTheme);
-};
 
 // Create a client
 const queryClient = new QueryClient({
@@ -51,12 +38,6 @@ declare module "@tanstack/react-router" {
   }
 }
 
-// Add theme type to Window interface
-declare global {
-  interface Window {
-    toggleTheme: () => void;
-  }
-}
 
 const rootElement = document.getElementById("app")!;
 

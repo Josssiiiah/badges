@@ -144,7 +144,17 @@ function RootComponent() {
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => authClient.signOut()}
+                    onClick={async () => {
+                      try {
+                        await authClient.signOut();
+                        // Force a hard refresh to clear any cached state
+                        window.location.href = "/";
+                      } catch (error) {
+                        console.error("Logout error:", error);
+                        // Still redirect even if there's an error
+                        window.location.href = "/";
+                      }
+                    }}
                     className="text-red-500 hover:bg-red-500/10 focus:bg-red-500/10 cursor-pointer"
                   >
                     Log out

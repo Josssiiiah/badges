@@ -42,7 +42,7 @@ export const auth = betterAuth({
       account,
     },
   }),
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000/api/auth',
+  baseURL: process.env.BETTER_AUTH_URL,
   cookie: {
     secure: false,
     sameSite: "lax",

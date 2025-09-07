@@ -284,6 +284,36 @@ function ProfileComponent() {
   // Use userData if available, otherwise fall back to session user
   const user = userData || session.user;
 
+  // If email not verified, block access with a prompt
+  if (session.user.emailVerified === false) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-xl mx-auto bg-surface border border-gray-light rounded-xl p-6 text-center">
+          <h2 className="text-2xl font-semibold text-text mb-2">Verify your email</h2>
+          <p className="text-text-muted mb-6">
+            Please confirm your email address to access your profile. We can resend the verification email if needed.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={async () => {
+                try {
+                  const resp = await fetchWithAuth("api/auth/send-verification-email", { method: "POST" });
+                  if (!resp.ok) throw new Error("Failed to send verification email");
+                  alert("Verification email sent. Please check your inbox.");
+                } catch (e) {
+                  alert(e instanceof Error ? e.message : "Error sending email");
+                }
+              }}
+              className="bg-black text-white hover:bg-black/80"
+            >
+              Resend verification email
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-5xl mx-auto">

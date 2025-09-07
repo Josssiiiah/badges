@@ -282,12 +282,14 @@ export const auth = betterAuth({
     magicLink({
       expiresIn: 24 * 60 * 60, // 24 hours
       sendMagicLink: async ({ email, url }) => {
-        // Ensure post-magic-link redirect goes to frontend origin
+        // Preserve provided callbackURL if present; otherwise default to frontend root
         const u = new URL(url);
-        u.searchParams.set(
-          "callbackURL",
-          (process.env.FRONTEND_URL || "http://localhost:3001") + "/"
-        );
+        if (!u.searchParams.get("callbackURL")) {
+          u.searchParams.set(
+            "callbackURL",
+            (process.env.FRONTEND_URL || "http://localhost:3001") + "/"
+          );
+        }
         console.log(`[auth] magic link for ${email}: ${u.toString()}`);
         await sendMagicLinkEmail({ to: email, magicLinkUrl: u.toString() });
       },

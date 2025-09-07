@@ -34,6 +34,10 @@ export const organizationRoutes = new Elysia({ prefix: "/organizations" })
         context.set.status = 401;
         return { error: "Unauthorized", organization: null };
       }
+      if (session.user.emailVerified === false) {
+        context.set.status = 403;
+        return { error: "Email not verified", organization: null };
+      }
       
       if (!session.user.organizationId) {
         console.log("User has no organization ID");
@@ -90,6 +94,10 @@ export const organizationRoutes = new Elysia({ prefix: "/organizations" })
         console.log("Unauthorized access attempt - no user in session");
         context.set.status = 401;
         return { error: "Unauthorized", users: [] };
+      }
+      if (session.user.emailVerified === false) {
+        context.set.status = 403;
+        return { error: "Email not verified", users: [] };
       }
       
       // Verify that the user has access to this organization

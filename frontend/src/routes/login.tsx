@@ -51,6 +51,8 @@ export default function Login() {
   const [orgOption, setOrgOption] = useState<"create" | "join">("create");
 
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [auxMessage, setAuxMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: session, isPending } = authClient.useSession();
@@ -109,15 +111,65 @@ export default function Login() {
         }, 2000);
       } else {
         const { data, error } = await authClient.signIn.email({
-          email,
+          email: email.trim(),
           password,
         });
         if (error) throw error;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      const msg = err instanceof Error ? err.message : "Authentication failed";
+      setError(msg);
+      // Heuristic: detect unverified error and enable resend/ML actions
+      if (/verify|verification|email.*not.*verified/i.test(msg)) {
+        setNeedsVerification(true);
+      }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setAuxMessage("");
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/send-verification-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+        credentials: "include",
+      });
+      if (!resp.ok) {
+        // Fallback: try magic-link explain
+        setAuxMessage(
+          "We couldn't resend the verification email. You can use a magic link below, then resend verification from your profile."
+        );
+      } else {
+        setAuxMessage("Verification email sent. Please check your inbox.");
+      }
+    } catch (e) {
+      setAuxMessage(
+        "We couldn't resend the verification email. You can use a magic link below, then resend verification from your profile."
+      );
+    }
+  };
+
+  const handleSendMagicLink = async () => {
+    setAuxMessage("");
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/sign-in/magic-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          callbackURL: `${import.meta.env.VITE_FRONTEND_URL}/`,
+        }),
+        credentials: "include",
+      });
+      if (!resp.ok) throw new Error("Failed to send magic link");
+      setAuxMessage(
+        "Magic link sent. Open it to sign in, then resend verification from the prompt."
+      );
+    } catch (e) {
+      setAuxMessage(e instanceof Error ? e.message : "Failed to send magic link");
     }
   };
 
@@ -175,6 +227,23 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleEmailAuth} className="space-y-4">
+              {!isSignUp && needsVerification && (
+                <div className="p-3 border border-yellow-400/30 bg-yellow-500/10 rounded text-sm text-yellow-200">
+                  Your email is not verified. You can resend the verification email
+                  or use a magic link to sign in and resend from your profile.
+                  <div className="flex gap-2 mt-3">
+                    <Button type="button" variant="outline" onClick={handleResendVerification}>
+                      Resend verification
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleSendMagicLink}>
+                      Send magic link
+                    </Button>
+                  </div>
+                  {auxMessage && (
+                    <div className="mt-2 text-xs text-[var(--main-text)]/80">{auxMessage}</div>
+                  )}
+                </div>
+              )}
               {isSignUp && (
                 <>
                   <div className="space-y-2">

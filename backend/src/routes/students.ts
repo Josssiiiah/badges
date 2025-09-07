@@ -13,6 +13,7 @@ import {
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
 import { userMiddleware } from "../middleware/auth-middleware";
+import { auth as authInstance } from "../auth";
 
 export const studentRoutes = new Elysia({ prefix: "/students" })
   .use(setup)
@@ -22,6 +23,9 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
       
       if (!session.user) {
         return { error: "Unauthorized" };
+      }
+      if (session.user.emailVerified === false) {
+        return { error: "Email not verified" };
       }
 
       // For administrators, filter students by organization
@@ -78,6 +82,9 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         if (!session.user) {
           return { error: "Unauthorized" };
         }
+        if (session.user.emailVerified === false) {
+          return { error: "Email not verified" };
+        }
 
         // Get student with optional organization filter for administrators
         let whereConditions = [eq(students.studentId, params.studentId)];
@@ -132,6 +139,9 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         if (!session.user) {
           return { error: "Unauthorized" };
         }
+        if (session.user.emailVerified === false) {
+          return { error: "Email not verified" };
+        }
         
         // Check if user is an administrator
         if (session.user.role !== "administrator") {
@@ -157,7 +167,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
 
         const student = newStudent[0];
 
-        // Auto-provision a minimal auth user for this student if one doesn't exist
+        // Auto-provision an auth user for this student using Better Auth signUp
         const existingUser = await db
           .select({ id: user.id })
           .from(user)
@@ -165,14 +175,53 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           .limit(1);
 
         if (!existingUser.length) {
-          await db.insert(user).values({
-            id: nanoid(),
-            name: student.name,
-            email: student.email,
-            role: "student",
-            organization: undefined,
-            organizationId: student.organizationId,
-          });
+          // Use a fixed temporary password that we can reference later
+          // This allows students to use changePassword with the known temp password
+          const tempPassword = process.env.VITE_TEMP_PASSWORD!;
+          
+          try {
+            // Use Better Auth signUp to create both user and account records
+            const signupResult = await authInstance.api.signUpEmail({
+              body: {
+                email: student.email,
+                password: tempPassword,
+                name: student.name,
+                role: "student",
+              },
+            });
+            
+            if (signupResult?.user) {
+              const newUserId = signupResult.user.id;
+              
+              // Update the user's organizationId after creation
+              if (student.organizationId) {
+                await db
+                  .update(user)
+                  .set({ 
+                    organizationId: student.organizationId,
+                    updatedAt: new Date(),
+                  })
+                  .where(eq(user.id, newUserId));
+                
+                // Ensure membership in organizationUsers for org-scoped queries
+                try {
+                  await db.insert(organizationUsers).values({
+                    organizationId: student.organizationId,
+                    userId: newUserId,
+                    role: "student",
+                  });
+                } catch (e) {
+                  console.log("[students.create] organizationUsers insert skipped:", e);
+                }
+              }
+              
+              console.log(`[students.create] Created user account for student ${student.email}`);
+            } else {
+              console.error("[students.create] Failed to create user account via Better Auth");
+            }
+          } catch (error) {
+            console.error("[students.create] Error creating user account:", error);
+          }
         }
 
         return { student };
@@ -200,6 +249,9 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         
         if (!session.user) {
           return { error: "Unauthorized" };
+        }
+        if (session.user.emailVerified === false) {
+          return { error: "Email not verified" };
         }
         
         // For administrators, verify student belongs to their organization
@@ -267,6 +319,9 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         
         if (!session.user) {
           return { error: "Unauthorized" };
+        }
+        if (session.user.emailVerified === false) {
+          return { error: "Email not verified" };
         }
         
         // For administrators, verify student belongs to their organization

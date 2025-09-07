@@ -16,6 +16,10 @@ export const userRoutes = new Elysia({ prefix: "/users" })
         context.set.status = 401;
         return { error: "Unauthorized" };
       }
+      if (session.user.emailVerified === false) {
+        context.set.status = 403;
+        return { error: "Email not verified" };
+      }
       
       // Fetch the user's complete profile
       const userData = await db
@@ -60,6 +64,10 @@ export const userRoutes = new Elysia({ prefix: "/users" })
       if (!session.user) {
         context.set.status = 401;
         return { error: "Unauthorized" };
+      }
+      if (session.user.emailVerified === false) {
+        context.set.status = 403;
+        return { error: "Email not verified" };
       }
       
       // Find the user by email
@@ -106,6 +114,10 @@ export const userRoutes = new Elysia({ prefix: "/users" })
         context.set.status = 401;
         return { error: "Unauthorized" };
       }
+      if (session.user.emailVerified === false) {
+        context.set.status = 403;
+        return { error: "Email not verified" };
+      }
       
       // Find the user by username (name)
       const userData = await db
@@ -146,6 +158,10 @@ export const userRoutes = new Elysia({ prefix: "/users" })
         context.set.status = 401;
         return { error: "Unauthorized" };
       }
+      if (session.user.emailVerified === false) {
+        context.set.status = 403;
+        return { error: "Email not verified" };
+      }
       
       const { biography } = context.body;
       
@@ -184,6 +200,10 @@ export const userRoutes = new Elysia({ prefix: "/users" })
         context.set.status = 401;
         return { error: "Unauthorized" };
       }
+      if (session.user.emailVerified === false) {
+        context.set.status = 403;
+        return { error: "Email not verified" };
+      }
       
       const { isPublic } = context.body;
       
@@ -206,4 +226,25 @@ export const userRoutes = new Elysia({ prefix: "/users" })
     body: t.Object({
       isPublic: t.Boolean(),
     }),
+  })
+  // Mark the current user's email as unverified (used to enforce verification step)
+  .post("/mark-unverified", async (context) => {
+    try {
+      const session = await userMiddleware(context);
+      if (!session.user) {
+        context.set.status = 401;
+        return { error: "Unauthorized" };
+      }
+
+      await db
+        .update(user)
+        .set({ emailVerified: false, updatedAt: new Date() })
+        .where(eq(user.id, session.user.id));
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error marking user unverified:", error);
+      context.set.status = 500;
+      return { error: String(error) };
+    }
   });

@@ -18,6 +18,9 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       if (!session.user) {
         return { error: "Unauthorized" };
       }
+      if (session.user.emailVerified === false) {
+        return { error: "Email not verified" };
+      }
 
       if (session.user.role !== "administrator" || !session.user.organizationId) {
         return { error: "Only administrators can view badge usage" };
@@ -58,6 +61,9 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       const session = await userMiddleware(context);
       if (!session.user) {
         return { error: "Unauthorized" };
+      }
+      if (session.user.emailVerified === false) {
+        return { error: "Email not verified" };
       }
 
       // If user is an administrator, fetch all badge templates for their organization
@@ -119,6 +125,9 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       
       if (!session.user) {
         return { error: "Unauthorized" };
+      }
+      if (session.user.emailVerified === false) {
+        return { error: "Email not verified" };
       }
 
       // Only allow fetching your own badges or if you're an admin
@@ -252,61 +261,24 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       if (!session.user) {
         return { error: "Unauthorized" };
       }
+      if (session.user.emailVerified === false) {
+        return { error: "Email not verified" };
+      }
 
       // Find the user by email; if not found, try to create one from a matching student
       let userId: string | null = null;
       const userResult = await db
-        .select()
+        .select({ id: user.id, emailVerified: user.emailVerified })
         .from(user)
         .where(eq(user.email, email))
         .limit(1);
 
-      if (userResult.length) {
+      if (userResult.length > 0) {
         userId = userResult[0].id;
       } else {
-        // Look for a student with this email
-        const studentMatch = await db
-          .select({
-            studentId: students.studentId,
-            name: students.name,
-            email: students.email,
-            organizationId: students.organizationId,
-          })
-          .from(students)
-          .where(eq(students.email, email))
-          .limit(1);
-
-        if (!studentMatch.length) {
-          return { error: "User not found with this email" };
-        }
-
-        const student = studentMatch[0];
-
-        // If admin, ensure student is in their organization (when both are present)
-        if (
-          session.user.role === "administrator" &&
-          session.user.organizationId &&
-          student.organizationId &&
-          student.organizationId !== session.user.organizationId
-        ) {
-          return { error: "Student does not belong to your organization" };
-        }
-
-        // Create a minimal auth user so we can attach the badge
-        const newUserId = nanoid();
-        const created = await db
-          .insert(user)
-          .values({
-            id: newUserId,
-            name: student.name,
-            email: student.email,
-            role: "student",
-            organization: undefined,
-            organizationId: student.organizationId || session.user.organizationId,
-          })
-          .returning();
-
-        userId = created[0].id;
+        // User should have been created when student was added
+        // If not found, the student wasn't properly created
+        return { error: "User not found. Please ensure the student was properly added to the system." };
       }
 
       // Verify the badge exists
@@ -338,7 +310,27 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         })
         .returning();
 
-      return { assignment: assignment[0] };
+      // Send secure invite link to set password and view badge
+      try {
+        const frontend = process.env.FRONTEND_URL || "http://localhost:3001";
+        const backendOrigin = process.env.BACKEND_URL || "http://localhost:3000";
+        const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
+        
+        // Send students to create-account to set their password
+        const callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}`;
+        const res = await fetch(`${betterAuthBase}/sign-in/magic-link`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, callbackURL }),
+        });
+        if (!res.ok) {
+          console.error("Failed to send invite magic link:", res.status, await res.text());
+        }
+      } catch (e) {
+        console.error("Error sending invite link:", e);
+      }
+
+      return { assignment: assignment[0], inviteSent: true };
     } catch (error) {
       console.error("Error assigning badge:", error);
       return { error: String(error) };

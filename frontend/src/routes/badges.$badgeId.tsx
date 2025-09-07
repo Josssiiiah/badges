@@ -117,6 +117,18 @@ function BadgeViewComponent() {
   };
 
   React.useEffect(() => {
+    // Show verification reminder toast when redirected from account creation
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("verifyNotice") === "1") {
+        toast({
+          title: "Check your email",
+          description:
+            "We sent a confirmation email. Confirm to view or modify your badge.",
+        });
+      }
+    } catch {}
+
     if (isVerified) {
       const interval = setInterval(() => {
         setVerificationStep((prev) => {

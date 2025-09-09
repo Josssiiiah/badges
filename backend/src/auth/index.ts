@@ -51,7 +51,7 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true, // If you want to use email and password auth
-    autoSignIn: true, // Disable automatic sign in after signup
+    autoSignIn: false, // Disable automatic sign in after signup
     requireEmailVerification: true,
   },
   emailVerification: {

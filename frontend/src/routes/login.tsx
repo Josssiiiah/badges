@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { GraduationCap, Shield } from "lucide-react";
+import { GraduationCap, Shield, CheckCircle } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
@@ -55,6 +55,7 @@ export default function Login() {
   const [auxMessage, setAuxMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
@@ -103,12 +104,19 @@ export default function Login() {
 
         if (error) throw error;
 
-        setSuccessMessage("Account created successfully! Please sign in.");
-        setTimeout(() => {
-          setIsSignUp(false);
+        if (role === "administrator") {
+          // Show verification modal for administrators instead of switching to sign-in
+          setShowVerifyModal(true);
           setSuccessMessage("");
-          setPassword("");
-        }, 2000);
+        } else {
+          // Preserve existing student flow
+          setSuccessMessage("Account created successfully! Please sign in.");
+          setTimeout(() => {
+            setIsSignUp(false);
+            setSuccessMessage("");
+            setPassword("");
+          }, 2000);
+        }
       } else {
         const { data, error } = await authClient.signIn.email({
           email: email.trim(),
@@ -448,6 +456,34 @@ export default function Login() {
                   <>{isSignUp ? "Create account" : "Sign in"}</>
                 )}
               </Button>
+
+              {showVerifyModal && isSignUp && role === "administrator" && (
+                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-600 mt-0.5" />
+                    <div>
+                      <div className="font-semibold">Check your email</div>
+                      <p className="mt-1 text-sm leading-6">
+                        We sent a confirmation email to <span className="font-semibold">{email}</span>. Click the link to verify your address. After verification, you’ll be redirected and signed in automatically.
+                      </p>
+                      <p className="mt-3 text-sm">
+                        Didn’t receive the email?{' '}
+                        <button
+                          type="button"
+                          onClick={handleResendVerification}
+                          className="underline text-emerald-700 hover:text-emerald-800"
+                        >
+                          Resend verification
+                        </button>
+                        .
+                      </p>
+                      {auxMessage && (
+                        <div className="mt-2 text-xs text-gray-700">{auxMessage}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           </CardContent>
           <Separator />
@@ -464,6 +500,7 @@ export default function Login() {
           </CardFooter>
         </Card>
       </div>
+
     </div>
   );
 }

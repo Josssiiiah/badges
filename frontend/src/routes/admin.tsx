@@ -29,10 +29,39 @@ function AdminRoute() {
     );
   }
 
-  // Check if the user is an administrator
+  // Check if the user is an administrator and verified
   if (!session || session.user?.role !== "administrator") {
     // Redirect to login page instead of showing access denied
     return <Navigate to="/login" />;
+  }
+  if (session.user?.emailVerified === false) {
+    return (
+      <div className="min-h-screen bg-surface-secondary flex items-center justify-center px-4">
+        <div className="max-w-xl w-full bg-surface border border-gray-light rounded-xl p-6 text-center">
+          <h2 className="text-2xl font-semibold text-text mb-2">Verify your email</h2>
+          <p className="text-text-muted mb-6">
+            Please confirm your email address to access the Admin Dashboard.
+          </p>
+          <button
+            onClick={async () => {
+              try {
+                const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/send-verification-email`, {
+                  method: "POST",
+                  credentials: "include",
+                });
+                if (!resp.ok) throw new Error("Failed to send verification email");
+                alert("Verification email sent. Please check your inbox.");
+              } catch (e) {
+                alert(e instanceof Error ? e.message : "Error sending email");
+              }
+            }}
+            className="px-4 py-2 bg-black text-white rounded hover:bg-black/80 transition-colors"
+          >
+            Resend verification email
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return <AdminPage />;

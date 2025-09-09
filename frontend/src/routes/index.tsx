@@ -31,6 +31,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DemoDashboard } from "@/components/DemoDashboard";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 // Animation variants for consistent effects
 const fadeIn = {
@@ -95,7 +97,16 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeComponent() {
-  const { isPending } = authClient.useSession();
+  const navigate = useNavigate();
+  const { data: session, isPending } = authClient.useSession();
+
+  // After email verification, Better Auth redirects here and sets a session.
+  // If the user is an administrator and verified, route to the admin dashboard.
+  useEffect(() => {
+    if (session?.user?.role === "administrator" && session?.user?.emailVerified) {
+      navigate({ to: "/admin", replace: true });
+    }
+  }, [session, navigate]);
 
   if (isPending) {
     return (

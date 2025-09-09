@@ -23,10 +23,10 @@ export const organizationUsers = sqliteTable("organization_users", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   organizationId: text("organization_id")
-    .references(() => organizations.id)
+    .references(() => organizations.id, { onDelete: "cascade" })
     .notNull(),
   userId: text("user_id")
-    .references(() => user.id)
+    .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
   role: text("role", { enum: ["student", "administrator"] })
     .default("student")
@@ -49,7 +49,7 @@ export const createdBadges = sqliteTable("created_badges", {
   courseLink: text("course_link"),
   skills: text("skills"),
   earningCriteria: text("earning_criteria"),
-  organizationId: text("organization_id").references(() => organizations.id),
+  organizationId: text("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
@@ -64,10 +64,10 @@ export const badges = sqliteTable("badges", {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   badgeId: text("badge_id")
-    .references(() => createdBadges.id)
+    .references(() => createdBadges.id, { onDelete: "cascade" })
     .notNull(),
   userId: text("user_id")
-    .references(() => user.id)
+    .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
   earnedAt: integer("earned_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
@@ -89,8 +89,8 @@ export const students = sqliteTable("students", {
   hasBadge: integer("has_badge", { mode: "boolean" })
     .default(false)
     .$type<boolean>(),
-  badgeId: text("badge_id").references(() => badges.id),
-  organizationId: text("organization_id").references(() => organizations.id),
+  badgeId: text("badge_id").references(() => badges.id, { onDelete: "set null" }),
+  organizationId: text("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
@@ -116,7 +116,7 @@ export const user = sqliteTable("user", {
     .default("student")
     .notNull(),
   organization: text("organization"),
-  organizationId: text("organization_id").references(() => organizations.id),
+  organizationId: text("organization_id").references(() => organizations.id, { onDelete: "set null" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)
     .$type<Date>(),
@@ -127,7 +127,7 @@ export const user = sqliteTable("user", {
 
 export const session = sqliteTable("session", {
   id: text("id").primaryKey(),
-  userId: text("user_id").references(() => user.id),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
   token: text("token"),
   expiresAt: integer("expires_at", { mode: "timestamp" }).$type<Date>(),
   ipAddress: text("ip_address"),
@@ -142,7 +142,7 @@ export const session = sqliteTable("session", {
 
 export const account = sqliteTable("account", {
   id: text("id").primaryKey(),
-  userId: text("user_id").references(() => user.id),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
   accountId: text("account_id"),
   providerId: text("provider_id"),
   accessToken: text("access_token"),

@@ -27,6 +27,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session;
+  const isVerified = !!session?.user?.emailVerified;
   const isAdministrator = session?.user?.role === "administrator";
   const matchRoute = useMatchRoute();
   const isIndexRoute = matchRoute({ to: "/" });
@@ -53,7 +54,7 @@ function RootComponent() {
             </Link>
 
             <nav className="hidden sm:flex items-center space-x-4">
-              {isAuthenticated && (
+              {isAuthenticated && isVerified && (
                 <>
                   <Link
                     to="/dashboard"
@@ -77,7 +78,7 @@ function RootComponent() {
                   </Link>
                 </>
               )}
-              {isAuthenticated && isAdministrator && (
+              {isAuthenticated && isVerified && isAdministrator && (
                 <Link
                   to="/admin"
                   className="text-text-muted hover:text-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -144,7 +145,17 @@ function RootComponent() {
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => authClient.signOut()}
+                    onClick={async () => {
+                      try {
+                        await authClient.signOut();
+                        // Force a hard refresh to clear any cached state
+                        window.location.href = "/";
+                      } catch (error) {
+                        console.error("Logout error:", error);
+                        // Still redirect even if there's an error
+                        window.location.href = "/";
+                      }
+                    }}
                     className="text-red-500 hover:bg-red-500/10 focus:bg-red-500/10 cursor-pointer"
                   >
                     Log out

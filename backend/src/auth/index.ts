@@ -42,7 +42,7 @@ export const auth = betterAuth({
       account,
     },
   }),
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000/api/auth',
+  baseURL: process.env.BETTER_AUTH_URL,
   cookie: {
     secure: false,
     sameSite: "lax",
@@ -51,7 +51,7 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true, // If you want to use email and password auth
-    autoSignIn: true, // Disable automatic sign in after signup
+    autoSignIn: false, // Disable automatic sign in after signup
     requireEmailVerification: true,
   },
   emailVerification: {
@@ -282,12 +282,14 @@ export const auth = betterAuth({
     magicLink({
       expiresIn: 24 * 60 * 60, // 24 hours
       sendMagicLink: async ({ email, url }) => {
-        // Ensure post-magic-link redirect goes to frontend origin
+        // Preserve provided callbackURL if present; otherwise default to frontend root
         const u = new URL(url);
-        u.searchParams.set(
-          "callbackURL",
-          (process.env.FRONTEND_URL || "http://localhost:3001") + "/"
-        );
+        if (!u.searchParams.get("callbackURL")) {
+          u.searchParams.set(
+            "callbackURL",
+            (process.env.FRONTEND_URL || "http://localhost:3001") + "/"
+          );
+        }
         console.log(`[auth] magic link for ${email}: ${u.toString()}`);
         await sendMagicLinkEmail({ to: email, magicLinkUrl: u.toString() });
       },

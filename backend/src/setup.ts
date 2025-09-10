@@ -11,7 +11,7 @@ export const setup = new Elysia().use(
     origin: [frontendUrl, "http://localhost:3001"],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['Set-Cookie'],
+    exposeHeaders: ['Set-Cookie'],
   }),
   // ).decorate("groq", createGroq({
   //   apiKey: process.env.GROQ_API_KEY,

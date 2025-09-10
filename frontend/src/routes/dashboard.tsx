@@ -485,7 +485,7 @@ function Dashboard() {
 
                     <div className="mt-6 pt-5 border-t border-primary/10">
                       <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between space-x-2">
                           <Link
                             to="/badges/$badgeId"
                             params={{ badgeId: badge.id }}

@@ -316,8 +316,13 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         const backendOrigin = process.env.BACKEND_URL || "http://localhost:3000";
         const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
         
+        // Check if user has verified email (existing user) or not (new student)
+        const isExistingUser = userResult[0].emailVerified === true;
+        
         // Send students to create-account to set their password
-        const callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}`;
+        // Add existing=1 parameter if user is already verified (has set password before)
+        const existingParam = isExistingUser ? '&existing=1' : '';
+        const callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}${existingParam}`;
         const res = await fetch(`${betterAuthBase}/sign-in/magic-link`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

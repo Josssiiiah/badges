@@ -302,7 +302,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
     return (
       <form onSubmit={onSubmit} className="flex flex-col">
-        <div className="space-y-4 py-4 overflow-y-auto flex-1">
+        <div className="space-y-4 py-4 px-1 overflow-y-auto flex-1">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">

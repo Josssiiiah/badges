@@ -58,6 +58,14 @@ export const auth = betterAuth({
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
+      // Skip sending verification email for student accounts
+      // They'll get the magic link when badge is assigned instead
+      if ((user as any).role === 'student') {
+        console.log(`[auth] Skipping verification email for student: ${user.email} - will send magic link when badge is assigned`);
+        return; // Don't send the email
+      }
+      
+      // For non-students (administrators), send verification email normally
       // Ensure post-verify redirect goes to frontend origin
       const u = new URL(url);
       u.searchParams.set(

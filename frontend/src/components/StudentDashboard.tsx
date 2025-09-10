@@ -79,7 +79,8 @@ export function StudentDashboard({
 }) {
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [loading, setLoading] = useState<boolean>(students.length === 0);
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isBadgeDialogOpen, setIsBadgeDialogOpen] = useState<boolean>(false);
   const [newStudent, setNewStudent] = useState<Student>({
     studentId: "",
     name: "",
@@ -92,6 +93,7 @@ export function StudentDashboard({
   const [bulkAssignBadge, setBulkAssignBadge] = useState<boolean>(false);
   const [bulkBadgeId, setBulkBadgeId] = useState<string>("");
   const [isLookingUpUser, setIsLookingUpUser] = useState<boolean>(false);
+  const [selectedBadgeId, setSelectedBadgeId] = useState<string>("");
 
   // Update students state when students prop changes
   useEffect(() => {
@@ -209,28 +211,6 @@ export function StudentDashboard({
     }
   };
 
-  // Handle editing student email blur
-  const handleEditEmailBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    if (!editingStudent) return;
-
-    const email = e.target.value;
-    // Only try to update the name if it wasn't changed by the admin
-    const currentName = editingStudent.name || "";
-    const originalName =
-      localStudents.find((s) => s.studentId === editingStudent.studentId)
-        ?.name || "";
-
-    // Only lookup if the name hasn't been manually changed
-    if (email && (currentName === originalName || !currentName)) {
-      const userName = await lookupUserByEmail(email);
-      if (userName) {
-        setEditingStudent({
-          ...editingStudent,
-          name: userName,
-        });
-      }
-    }
-  };
 
   const addStudent = async () => {
     try {
@@ -279,6 +259,7 @@ export function StudentDashboard({
       });
 
       toast({
+        variant: "success",
         title: "Success",
         description: `${result.student.name} added successfully`,
       });
@@ -292,129 +273,151 @@ export function StudentDashboard({
     }
   };
 
-  const updateStudent = async () => {
-    if (!editingStudent) return;
-
+  const removeBadgeFromStudent = async (student: Student) => {
     try {
-      // Validate form
-      if (!editingStudent.name || !editingStudent.email) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please fill in all required fields",
-        });
-        return;
+      // First, delete the badge assignment from the badges table
+      const deleteResponse = await fetchWithAuth(
+        `badges/remove-assignment-by-email/${encodeURIComponent(student.email)}`,
+        {
+          method: "DELETE",
+        }
+      );
+      
+      if (!deleteResponse.ok) {
+        const deleteResult = await deleteResponse.json();
+        console.error("Failed to delete badge assignment:", deleteResult.error);
       }
-
-      // First update student info (but don't update badgeId yet if we're assigning a badge)
-      // This prevents the badge template ID from replacing the badge assignment ID
-      const initialUpdatePayload: any = {
-        name: editingStudent.name,
-        email: editingStudent.email,
-        hasBadge: editingStudent.hasBadge,
-      };
-
+      
+      // Then update the student record to remove the badge reference
       const response = await fetchWithAuth(
-        `students/update/${editingStudent.studentId}`,
+        `students/update/${student.studentId}`,
         {
           method: "PUT",
-          body: JSON.stringify(initialUpdatePayload),
+          body: JSON.stringify({
+            name: student.name,
+            email: student.email,
+            hasBadge: false,
+            // Don't include badgeId when removing
+          }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to update student");
-      }
-
       const result = await response.json();
-      // Get the student data from the response; fall back to current state to avoid undefined
-      let updatedStudent: Student =
-        result && result.student ? result.student : { ...editingStudent };
-
-      // If badge is being assigned, create a badge assignment
-      if (editingStudent.hasBadge && editingStudent.badgeId) {
-        const badgeResponse = await fetchWithAuth("badges/assign-by-email", {
-          method: "POST",
-          body: JSON.stringify({
-            badgeId: editingStudent.badgeId, // This is template badge ID for new assignment
-            email: editingStudent.email,
-          }),
-        });
-
-        // Get the badge assignment information including its unique ID
-        const badgeAssignment = await badgeResponse.json();
-        if (!badgeResponse.ok || (badgeAssignment && badgeAssignment.error)) {
-          throw new Error(badgeAssignment?.error || "Failed to assign badge");
-        }
-
-        // Store the badge assignment ID which will be used for unique badge URLs
-        if (badgeAssignment && badgeAssignment.assignment) {
-          updatedStudent.badgeId = badgeAssignment.assignment.id;
-
-          // Update the student record with the badge assignment ID
-          const updateBadgeIdResponse = await fetchWithAuth(
-            `students/update/${editingStudent.studentId}`,
-            {
-              method: "PUT",
-              body: JSON.stringify({
-                name: editingStudent.name,
-                email: editingStudent.email,
-                hasBadge: true,
-                badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
-              }),
-            }
-          );
-
-          const updateBadgeIdResult = await updateBadgeIdResponse.json();
-          if (
-            !updateBadgeIdResponse.ok ||
-            (updateBadgeIdResult && updateBadgeIdResult.error)
-          ) {
-            throw new Error(
-              updateBadgeIdResult?.error ||
-                "Failed to persist badge assignment to student"
-            );
-          }
-        }
+      if (!response.ok || (result && result.error)) {
+        throw new Error(result?.error || "Failed to remove badge");
       }
 
-      // Find the badge details if a badge is assigned
-      if (updatedStudent?.hasBadge && updatedStudent.badgeId) {
-        // Find the badge template data to display badge info (image, name)
-        // but preserve the badge assignment ID for URLs
-        const selectedBadgeTemplate = badges.find(
-          (badge) => badge.id === editingStudent.badgeId // Use template ID to find badge details
-        );
-
-        if (selectedBadgeTemplate) {
-          // Include badge details in the updatedStudent but keep assignment ID
-          updatedStudent = {
-            ...updatedStudent,
-            badge: selectedBadgeTemplate,
-          };
-        }
-      }
-
-      // Update local state with the complete student information including badge
+      // Update local state
       setLocalStudents(
         localStudents.map((s) =>
-          s.studentId === editingStudent.studentId ? updatedStudent : s
+          s.studentId === student.studentId
+            ? { ...s, hasBadge: false, badgeId: undefined, badge: undefined }
+            : s
         )
       );
 
-      // Close dialog
-      setEditingStudent(null);
-
       toast({
+        variant: "success",
         title: "Success",
-        description: `${updatedStudent.name} updated successfully`,
+        description: `Badge removed from ${student.name}`,
       });
     } catch (error) {
-      console.error("Error updating student:", error);
+      console.error("Error removing badge:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update student",
+        description: "Failed to remove badge",
+      });
+    }
+  };
+
+  const assignBadgeToStudent = async () => {
+    if (!selectedStudent || !selectedBadgeId) return;
+
+    try {
+      // Assign badge to student
+      const badgeResponse = await fetchWithAuth("badges/assign-by-email", {
+        method: "POST",
+        body: JSON.stringify({
+          badgeId: selectedBadgeId, // This is template badge ID for new assignment
+          email: selectedStudent.email,
+        }),
+      });
+
+      // Get the badge assignment information including its unique ID
+      const badgeAssignment = await badgeResponse.json();
+      if (!badgeResponse.ok || (badgeAssignment && badgeAssignment.error)) {
+        throw new Error(badgeAssignment?.error || "Failed to assign badge");
+      }
+
+      let updatedStudent = { ...selectedStudent };
+
+      // Store the badge assignment ID which will be used for unique badge URLs
+      if (badgeAssignment && badgeAssignment.assignment) {
+        updatedStudent.badgeId = badgeAssignment.assignment.id;
+
+        // Update the student record with the badge assignment ID
+        const updateBadgeIdResponse = await fetchWithAuth(
+          `students/update/${selectedStudent.studentId}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              name: selectedStudent.name,
+              email: selectedStudent.email,
+              hasBadge: true,
+              badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
+            }),
+          }
+        );
+
+        const updateBadgeIdResult = await updateBadgeIdResponse.json();
+        if (
+          !updateBadgeIdResponse.ok ||
+          (updateBadgeIdResult && updateBadgeIdResult.error)
+        ) {
+          throw new Error(
+            updateBadgeIdResult?.error ||
+              "Failed to persist badge assignment to student"
+          );
+        }
+      }
+
+      // Find the badge template data to display badge info (image, name)
+      const selectedBadgeTemplate = badges.find(
+        (badge) => badge.id === selectedBadgeId
+      );
+
+      if (selectedBadgeTemplate) {
+        updatedStudent = {
+          ...updatedStudent,
+          hasBadge: true,
+          badge: selectedBadgeTemplate,
+        };
+      }
+
+      // Update local state
+      setLocalStudents(
+        localStudents.map((s) =>
+          s.studentId === selectedStudent.studentId ? updatedStudent : s
+        )
+      );
+
+      // Close dialog and reset
+      setIsBadgeDialogOpen(false);
+      setSelectedStudent(null);
+      setSelectedBadgeId("");
+
+      toast({
+        variant: "success",
+        title: "Success",
+        description: `Badge assigned to ${updatedStudent.name} successfully`,
+      });
+    } catch (error) {
+      console.error("Error assigning badge:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to assign badge",
       });
     }
   };
@@ -433,6 +436,7 @@ export function StudentDashboard({
       setLocalStudents(localStudents.filter((s) => s.studentId !== studentId));
 
       toast({
+        variant: "success",
         title: "Success",
         description: "Student deleted successfully",
       });
@@ -453,6 +457,7 @@ export function StudentDashboard({
     const url = `${window.location.origin}/badges/${badgeId}`;
     navigator.clipboard.writeText(url);
     toast({
+      variant: "success",
       title: "URL Copied",
       description: "Badge URL copied to clipboard",
     });
@@ -468,13 +473,14 @@ export function StudentDashboard({
   const addBulkStudents = async () => {
     try {
       setIsBulkImporting(true);
-      // Split by commas, remove whitespace, and filter out empty strings
-      const emails = bulkEmails
-        .split(",")
+      
+      // Split by commas or newlines, remove whitespace, and filter out empty strings
+      const emailList = bulkEmails
+        .split(/[,\n]+/)
         .map((email) => email.trim())
         .filter((email) => email.length > 0);
 
-      if (emails.length === 0) {
+      if (emailList.length === 0) {
         toast({
           variant: "destructive",
           title: "Error",
@@ -483,93 +489,134 @@ export function StudentDashboard({
         return;
       }
 
-      // Create student objects
-      const studentsToAdd = emails.map((email) => ({
-        studentId: nanoid(8),
-        name: email.split("@")[0], // Use email username as name
-        email,
-        // Do not set badgeId at creation time; assign afterwards
-        hasBadge: false,
-      }));
-
-      // Make API call for each student
-      const results = await Promise.all(
-        studentsToAdd.map((student) =>
-          fetchWithAuth("students/create", {
-            method: "POST",
-            body: JSON.stringify(student),
-          }).then((res) => res.json())
-        )
-      );
-
-      // Add successful students to the list
-      let addedStudents = results
-        .filter((result) => result.student)
-        .map((result) => result.student);
-
-      // If badge assignment is enabled, assign badges to all students
-      if (bulkAssignBadge && bulkBadgeId) {
-        // Find the badge template
-        const selectedBadgeTemplate = badges.find(
-          (badge) => badge.id === bulkBadgeId
-        );
-
-        // Assign badge to each student
-        const badgeAssignments = await Promise.all(
-          addedStudents.map((student) =>
-            fetchWithAuth("badges/assign-by-email", {
-              method: "POST",
-              body: JSON.stringify({
-                badgeId: bulkBadgeId,
-                email: student.email,
-              }),
-            }).then((res) => res.json())
-          )
-        );
-
-        // Update students with badge assignment IDs and badge details
-        addedStudents = addedStudents.map((student, index) => {
-          const assignment = badgeAssignments[index]?.assignment;
-          if (assignment) {
-            return {
-              ...student,
-              badgeId: assignment.id,
-              badge: selectedBadgeTemplate,
-            };
-          }
-          return student;
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const invalidEmails = emailList.filter(email => !emailRegex.test(email));
+      if (invalidEmails.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Email(s)",
+          description: `Invalid email format: ${invalidEmails.join(", ")}`,
         });
-
-        // Update student records with badge assignment IDs
-        await Promise.all(
-          addedStudents.map((student) => {
-            if (student.badgeId) {
-              return fetchWithAuth(`students/update/${student.studentId}`, {
-                method: "PUT",
-                body: JSON.stringify({
-                  name: student.name,
-                  email: student.email,
-                  hasBadge: true,
-                  badgeId: student.badgeId,
-                }),
-              });
-            }
-            return Promise.resolve();
-          })
-        );
+        return;
       }
 
-      setLocalStudents([...localStudents, ...addedStudents]);
+      const addedStudents = [];
+      const failedStudents = [];
+
+      // Process each student sequentially to avoid issues
+      for (const email of emailList) {
+        try {
+          // Create student object
+          const studentData = {
+            studentId: nanoid(8),
+            name: email.split("@")[0], // Use email username as default name
+            email,
+            hasBadge: false,
+          };
+
+          // Create the student
+          const response = await fetchWithAuth("students/create", {
+            method: "POST",
+            body: JSON.stringify(studentData),
+          });
+
+          const result = await response.json();
+          
+          if (result.student) {
+            let finalStudent = result.student;
+
+            // If badge assignment is enabled, assign the badge
+            if (bulkAssignBadge && bulkBadgeId) {
+              try {
+                // Assign badge and send magic link email
+                const badgeResponse = await fetchWithAuth("badges/assign-by-email", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    badgeId: bulkBadgeId,
+                    email: finalStudent.email,
+                  }),
+                });
+
+                const badgeResult = await badgeResponse.json();
+                
+                if (badgeResult.assignment) {
+                  // Update student with badge assignment ID
+                  const updateResponse = await fetchWithAuth(
+                    `students/update/${finalStudent.studentId}`,
+                    {
+                      method: "PUT",
+                      body: JSON.stringify({
+                        name: finalStudent.name,
+                        email: finalStudent.email,
+                        hasBadge: true,
+                        badgeId: badgeResult.assignment.id,
+                      }),
+                    }
+                  );
+
+                  if (updateResponse.ok) {
+                    // Find the badge template for display
+                    const selectedBadgeTemplate = badges.find(
+                      (badge) => badge.id === bulkBadgeId
+                    );
+
+                    finalStudent = {
+                      ...finalStudent,
+                      hasBadge: true,
+                      badgeId: badgeResult.assignment.id,
+                      badge: selectedBadgeTemplate,
+                    };
+                  }
+                }
+              } catch (badgeError) {
+                console.error(`Failed to assign badge to ${email}:`, badgeError);
+                // Student was created but badge assignment failed
+                // Continue with the student without badge
+              }
+            }
+
+            addedStudents.push(finalStudent);
+          } else {
+            failedStudents.push(email);
+            console.error(`Failed to create student ${email}:`, result.error);
+          }
+        } catch (error) {
+          failedStudents.push(email);
+          console.error(`Error creating student ${email}:`, error);
+        }
+      }
+
+      // Update local state with all successfully added students
+      if (addedStudents.length > 0) {
+        setLocalStudents([...localStudents, ...addedStudents]);
+      }
 
       // Reset form
       setBulkEmails("");
       setBulkAssignBadge(false);
       setBulkBadgeId("");
 
-      toast({
-        title: "Success",
-        description: `Added ${addedStudents.length} students successfully`,
-      });
+      // Show results
+      if (addedStudents.length > 0 && failedStudents.length === 0) {
+        toast({
+          variant: "success",
+          title: "Success",
+          description: `Added ${addedStudents.length} student${addedStudents.length > 1 ? 's' : ''} successfully`,
+        });
+      } else if (addedStudents.length > 0 && failedStudents.length > 0) {
+        toast({
+          variant: "warning",
+          title: "Partial Success",
+          description: `Added ${addedStudents.length} student${addedStudents.length > 1 ? 's' : ''}. Failed: ${failedStudents.join(", ")}`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to add any students",
+        });
+      }
     } catch (error) {
       console.error("Error adding students in bulk:", error);
       toast({
@@ -748,9 +795,8 @@ export function StudentDashboard({
                 <TableHead className="text-[var(--main-text)]">Name</TableHead>
                 <TableHead className="text-[var(--main-text)]">Email</TableHead>
                 <TableHead className="text-[var(--main-text)]">Badge</TableHead>
-                <TableHead className="text-[var(--main-text)]">
-                  Badge URL
-                </TableHead>
+                <TableHead className="text-[var(--main-text)]">Badge URL</TableHead>
+                <TableHead className="text-[var(--main-text)]">Badge Assignment</TableHead>
                 <TableHead className="text-right text-[var(--main-text)]">
                   Actions
                 </TableHead>
@@ -760,7 +806,7 @@ export function StudentDashboard({
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-24 text-center text-[var(--main-text)]/80"
                   >
                     Loading...
@@ -769,7 +815,7 @@ export function StudentDashboard({
               ) : localStudents.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-24 text-center text-[var(--main-text)]/80"
                   >
                     No students found.
@@ -829,179 +875,21 @@ export function StudentDashboard({
                       )}
                     </TableCell>
                     <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedStudent(student);
+                          setSelectedBadgeId(student.badge?.id || "");
+                          setIsBadgeDialogOpen(true);
+                        }}
+                        className="h-8"
+                      >
+                        {student.hasBadge ? 'Manage Badge' : 'Add Badge'}
+                      </Button>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex justify-end gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditingStudent(student)}
-                              className="h-8 w-8"
-                            >
-                              <Pencil className="h-4 w-4 text-[var(--gray)]" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
-                            <DialogHeader>
-                              <DialogTitle>Edit Student</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label
-                                  htmlFor="edit-name"
-                                  className="text-right text-[var(--main-text)]"
-                                >
-                                  Name
-                                </Label>
-                                <Input
-                                  id="edit-name"
-                                  value={editingStudent?.name || ""}
-                                  onChange={(e) =>
-                                    setEditingStudent(
-                                      editingStudent
-                                        ? {
-                                            ...editingStudent,
-                                            name: e.target.value,
-                                          }
-                                        : null
-                                    )
-                                  }
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label
-                                  htmlFor="edit-email"
-                                  className="text-right text-[var(--main-text)]"
-                                >
-                                  Email
-                                </Label>
-                                <Input
-                                  id="edit-email"
-                                  type="email"
-                                  value={editingStudent?.email || ""}
-                                  onChange={(e) =>
-                                    setEditingStudent(
-                                      editingStudent
-                                        ? {
-                                            ...editingStudent,
-                                            email: e.target.value,
-                                          }
-                                        : null
-                                    )
-                                  }
-                                  onBlur={handleEditEmailBlur}
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right text-[var(--main-text)]">
-                                  Badge
-                                </Label>
-                                <div className="col-span-3 flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`edit-hasBadge-${student.studentId}`}
-                                    checked={editingStudent?.hasBadge || false}
-                                    onCheckedChange={(checked) =>
-                                      setEditingStudent(
-                                        editingStudent
-                                          ? {
-                                              ...editingStudent,
-                                              hasBadge: checked as boolean,
-                                              badgeId: checked
-                                                ? editingStudent.badgeId
-                                                : undefined,
-                                            }
-                                          : null
-                                      )
-                                    }
-                                  />
-                                  <Label
-                                    htmlFor={`edit-hasBadge-${student.studentId}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-[var(--main-text)]"
-                                  >
-                                    Assign Badge
-                                  </Label>
-                                </div>
-                              </div>
-                              {editingStudent?.hasBadge && (
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <Label
-                                    htmlFor="edit-badge"
-                                    className="text-right text-[var(--main-text)]"
-                                  >
-                                    Select Badge
-                                  </Label>
-                                  <Select
-                                    value={editingStudent.badgeId}
-                                    onValueChange={(value) =>
-                                      setEditingStudent(
-                                        editingStudent
-                                          ? {
-                                              ...editingStudent,
-                                              badgeId: value,
-                                            }
-                                          : null
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger className="col-span-3">
-                                      <SelectValue placeholder="Select a badge" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {badges?.map((badge) => (
-                                        <SelectItem
-                                          key={badge.id}
-                                          value={badge.id}
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <img
-                                              src={badge.imageData}
-                                              alt={badge.name}
-                                              className="w-6 h-6 object-contain rounded-sm"
-                                            />
-                                            {badge.name}
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              )}
-                              {editingStudent?.hasBadge &&
-                                editingStudent?.badgeId && (
-                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right text-[var(--main-text)]">
-                                      Badge URL
-                                    </Label>
-                                    <div className="col-span-3 flex items-center gap-2">
-                                      <span className="text-xs text-blue-400 truncate max-w-[150px]">
-                                        /badges/{editingStudent.badgeId}
-                                      </span>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6"
-                                        onClick={() =>
-                                          copyBadgeUrl(editingStudent.badgeId!)
-                                        }
-                                      >
-                                        <Copy className="h-3 w-3 text-[var(--gray)]" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
-                            </div>
-                            <DialogFooter>
-                              <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                              </DialogClose>
-                              <Button onClick={updateStudent} type="submit">
-                                Save Changes
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -1043,6 +931,106 @@ export function StudentDashboard({
           </Table>
         </CardContent>
       </Card>
+
+      {/* Badge Management Dialog */}
+      <Dialog open={isBadgeDialogOpen} onOpenChange={setIsBadgeDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+          <DialogHeader>
+            <DialogTitle>
+              Manage Badge for {selectedStudent?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {selectedStudent?.hasBadge && (
+              <div className="p-3 bg-gray-100 rounded-lg">
+                <Label className="text-sm text-gray-600">Current Badge</Label>
+                <div className="flex items-center gap-2 mt-2">
+                  <img
+                    src={selectedStudent.badge?.imageData}
+                    alt={selectedStudent.badge?.name}
+                    className="w-8 h-8 object-contain rounded-sm"
+                  />
+                  <span className="font-medium text-gray-900">{selectedStudent.badge?.name}</span>
+                </div>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label
+                htmlFor="badge-select"
+                className="text-right text-[var(--main-text)]"
+              >
+                {selectedStudent?.hasBadge ? 'Change to' : 'Select Badge'}
+              </Label>
+              <Select value={selectedBadgeId} onValueChange={setSelectedBadgeId}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Choose a badge" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(() => {
+                    const availableBadges = badges?.filter(badge => {
+                      // Show all badges except the current one if changing
+                      if (selectedStudent?.hasBadge && selectedStudent?.badge) {
+                        return badge.id !== selectedStudent.badge.id;
+                      }
+                      return true;
+                    }) || [];
+                    
+                    if (availableBadges.length === 0) {
+                      return (
+                        <div className="px-2 py-4 text-center text-sm text-gray-500">
+                          No available badges
+                        </div>
+                      );
+                    }
+                    
+                    return availableBadges.map((badge) => (
+                      <SelectItem key={badge.id} value={badge.id}>
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={badge.imageData}
+                            alt={badge.name}
+                            className="w-6 h-6 object-contain rounded-sm"
+                          />
+                          {badge.name}
+                        </div>
+                      </SelectItem>
+                    ));
+                  })()}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
+              {selectedStudent?.hasBadge && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    removeBadgeFromStudent(selectedStudent);
+                    setIsBadgeDialogOpen(false);
+                    setSelectedStudent(null);
+                    setSelectedBadgeId("");
+                  }}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  Remove Badge
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={assignBadgeToStudent} 
+                disabled={!selectedBadgeId}
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
+                {selectedStudent?.hasBadge ? 'Change Badge' : 'Assign Badge'}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

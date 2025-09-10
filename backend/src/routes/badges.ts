@@ -231,12 +231,17 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         return { error: "Badge does not belong to your organization" };
       }
 
+      // Delete any existing badge assignments for this user first
+      // (since a user should only have one badge at a time)
+      await db.delete(badges).where(eq(badges.userId, userId));
+      
       // Create the assignment
       const assignment = await db
         .insert(badges)
         .values({
           badgeId,
           userId,
+          earnedAt: new Date(),
         })
         .returning();
 
@@ -301,12 +306,17 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         return { error: "Badge does not belong to your organization" };
       }
 
+      // Delete any existing badge assignments for this user first
+      // (since a user should only have one badge at a time)
+      await db.delete(badges).where(eq(badges.userId, userId!));
+      
       // Create the assignment
       const assignment = await db
         .insert(badges)
         .values({
           badgeId,
           userId: userId!,
+          earnedAt: new Date(),
         })
         .returning();
 
@@ -316,8 +326,19 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         const backendOrigin = process.env.BACKEND_URL || "http://localhost:3000";
         const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
         
-        // Send students to create-account to set their password
-        const callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}`;
+        // Check if user has verified email (existing user) or not (new student)
+        const isExistingUser = userResult[0].emailVerified === true;
+        
+        // Different callback URLs for existing vs new users
+        let callbackURL;
+        if (isExistingUser) {
+          // Existing users go directly to view their badge
+          callbackURL = `${frontend}/badges/${encodeURIComponent(assignment[0].id)}?existing=1`;
+        } else {
+          // New users need to create account first
+          callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}`;
+        }
+        
         const res = await fetch(`${betterAuthBase}/sign-in/magic-link`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -594,6 +615,50 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         return { success: true, deleted };
       } catch (error) {
         console.error("Error deleting badge:", error);
+        return { error: String(error) };
+      }
+    }
+  )
+  // Remove badge assignment for a user by email
+  .delete(
+    "/remove-assignment-by-email/:email",
+    async (context) => {
+      try {
+        const { params } = context;
+        const { email } = params;
+        const session = await userMiddleware(context);
+        
+        if (!session.user) {
+          return { error: "Unauthorized" };
+        }
+        
+        // Only administrators can remove badge assignments
+        if (session.user.role !== "administrator") {
+          return { error: "Only administrators can remove badge assignments" };
+        }
+        
+        // Find the user by email
+        const userResult = await db
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.email, decodeURIComponent(email)))
+          .limit(1);
+        
+        if (userResult.length === 0) {
+          return { error: "User not found" };
+        }
+        
+        const userId = userResult[0].id;
+        
+        // Delete all badge assignments for this user
+        const deleted = await db
+          .delete(badges)
+          .where(eq(badges.userId, userId))
+          .returning();
+        
+        return { success: true, deleted: deleted.length };
+      } catch (error) {
+        console.error("Error removing badge assignment:", error);
         return { error: String(error) };
       }
     }

@@ -227,11 +227,11 @@ export function OrganizationsDashboard() {
   const getRoleColor = (role: string) => {
     switch (role.toLowerCase()) {
       case "administrator":
-        return "bg-blue-100 text-black dark:bg-blue-900/30 dark:text-black";
+        return "bg-blue-500 text-white dark:bg-blue-600 dark:text-white";
       case "student":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+        return "bg-green-500 text-white dark:bg-green-600 dark:text-white";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+        return "bg-gray-500 text-white dark:bg-gray-600 dark:text-white";
     }
   };
 

@@ -626,10 +626,10 @@ export function DemoDashboard() {
                           </div>
                         </div>
 
-                        <Button className="w-full bg-primary hover:bg-primary/90 text-white">
+                        {/* <Button className="w-full bg-primary hover:bg-primary/90 text-white">
                           <User className="h-4 w-4 mr-2" />
                           Invite New Administrator
-                        </Button>
+                        </Button> */}
                       </CardContent>
                     </Card>
                   </motion.div>

@@ -50,7 +50,7 @@ type Badge = {
   id: string;
   // ID from the createdBadges table (badge template ID)
   badgeId: string;
-  earnedAt: Date;
+  earnedAt: Date | string | null;
   // Badge details from createdBadges
   issuedBy: string;
   name: string;
@@ -99,10 +99,10 @@ function Dashboard() {
   const [showLoading, setShowLoading] = useState(true);
   const [stats, setStats] = useState({
     totalBadges: 0,
-    profileViews: 156, // This would come from a different API
+    profileViews: "N/A", // Not implemented
     recentBadge: "None",
     issueDate: "N/A",
-    badgeShares: 0,
+    badgeShares: "N/A", // Not implemented
   });
 
   // If session is still loading, show loading indicator
@@ -177,24 +177,21 @@ function Dashboard() {
 
         setStats({
           totalBadges: data.badges.length,
-          profileViews: 156, // This would come from a different API
+          profileViews: "N/A", // Not implemented
           recentBadge: mostRecentBadge?.name || "None",
           issueDate: mostRecentBadge
-            ? new Date(mostRecentBadge.earnedAt).toLocaleDateString()
+            ? formatDate(mostRecentBadge.earnedAt)
             : "N/A",
-          badgeShares: data.badges.reduce(
-            (total: number, badge: Badge) => total + (badge.sharesCount || 0),
-            0
-          ),
+          badgeShares: "N/A", // Not implemented
         });
       } else {
         // Reset stats if no badges are found
         setStats({
           totalBadges: 0,
-          profileViews: 156,
+          profileViews: "N/A", // Not implemented
           recentBadge: "None",
           issueDate: "N/A",
-          badgeShares: 0,
+          badgeShares: "N/A", // Not implemented
         });
       }
 
@@ -208,9 +205,14 @@ function Dashboard() {
   });
 
   // Format date helper function
-  const formatDate = (date: Date | null) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return "N/A";
+    const parsedDate = new Date(date);
+    // Check for invalid date or Unix epoch (1970)
+    if (isNaN(parsedDate.getTime()) || parsedDate.getFullYear() < 2000) {
+      return "N/A";
+    }
+    return parsedDate.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",

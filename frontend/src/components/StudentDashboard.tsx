@@ -275,7 +275,20 @@ export function StudentDashboard({
 
   const removeBadgeFromStudent = async (student: Student) => {
     try {
-      // Update the student record to remove the badge (don't send badgeId at all)
+      // First, delete the badge assignment from the badges table
+      const deleteResponse = await fetchWithAuth(
+        `badges/remove-assignment-by-email/${encodeURIComponent(student.email)}`,
+        {
+          method: "DELETE",
+        }
+      );
+      
+      if (!deleteResponse.ok) {
+        const deleteResult = await deleteResponse.json();
+        console.error("Failed to delete badge assignment:", deleteResult.error);
+      }
+      
+      // Then update the student record to remove the badge reference
       const response = await fetchWithAuth(
         `students/update/${student.studentId}`,
         {

@@ -319,10 +319,16 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         // Check if user has verified email (existing user) or not (new student)
         const isExistingUser = userResult[0].emailVerified === true;
         
-        // Send students to create-account to set their password
-        // Add existing=1 parameter if user is already verified (has set password before)
-        const existingParam = isExistingUser ? '&existing=1' : '';
-        const callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}${existingParam}`;
+        // Different callback URLs for existing vs new users
+        let callbackURL;
+        if (isExistingUser) {
+          // Existing users go directly to view their badge
+          callbackURL = `${frontend}/badges/${encodeURIComponent(assignment[0].id)}?existing=1`;
+        } else {
+          // New users need to create account first
+          callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}`;
+        }
+        
         const res = await fetch(`${betterAuthBase}/sign-in/magic-link`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

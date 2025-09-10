@@ -62,6 +62,7 @@ export async function sendMagicLinkEmail({ to, magicLinkUrl }: SendMagicLinkEmai
   const primaryFrom = process.env.RESEND_FROM || 'Badges <onboarding@resend.dev>';
   // Detect if the callbackURL includes existing=1 to tailor copy
   let isExisting = false;
+  let isBadgeView = false;
   try {
     const link = new URL(magicLinkUrl);
     const rawCallback = link.searchParams.get('callbackURL');
@@ -69,14 +70,16 @@ export async function sendMagicLinkEmail({ to, magicLinkUrl }: SendMagicLinkEmai
       const decoded = decodeURIComponent(rawCallback);
       const cb = new URL(decoded);
       isExisting = cb.searchParams.get('existing') === '1';
+      // Check if it's a direct badge view (for existing users)
+      isBadgeView = cb.pathname.includes('/badges/');
     }
   } catch {}
 
-  const heading = isExisting ? 'View your badge' : 'Create your account to view your badge';
-  const lead = isExisting
-    ? 'Click below to securely view your badge.'
+  const heading = isExisting || isBadgeView ? "You've received a badge!" : 'Create your account to view your badge';
+  const lead = isExisting || isBadgeView
+    ? 'Congratulations! Click below to securely sign in and view your new badge.'
     : 'Click below to securely set your password. Afterwards, you will be redirected to your badge page.';
-  const cta = isExisting ? 'View badge' : 'Create Account';
+  const cta = isExisting || isBadgeView ? 'View Your Badge' : 'Create Account';
 
   const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -93,7 +96,7 @@ export async function sendMagicLinkEmail({ to, magicLinkUrl }: SendMagicLinkEmai
         </p>
       </div>
     `;
-  const subject = isExisting ? 'View your badge' : 'Create your account to view your badge';
+  const subject = isExisting || isBadgeView ? "You've received a badge!" : 'Create your account to view your badge';
   return await sendWithFallback({
     to,
     subject,

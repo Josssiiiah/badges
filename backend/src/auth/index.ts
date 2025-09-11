@@ -3,7 +3,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { magicLink } from "better-auth/plugins";
 import { account, session, user, verification, organizations, organizationUsers } from "../db/schema";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
 import { sendVerificationEmail, sendMagicLinkEmail } from "../services/email";
@@ -53,6 +53,53 @@ export const auth = betterAuth({
     enabled: true, // If you want to use email and password auth
     autoSignIn: false, // Disable automatic sign in after signup
     requireEmailVerification: true,
+  },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      const path = ctx.path;
+      const response = ctx.context.returned as any;
+      
+      // Check if there's an error response
+      if (response?.body?.code) {
+        // Custom error for sign-in failures
+        if (path === "/sign-in/email") {
+          if (response.body.code === "INVALID_EMAIL_OR_PASSWORD") {
+            // Check if it's because the user doesn't exist or wrong password
+            const userEmail = ctx.body?.email;
+            if (userEmail) {
+              const existingUser = await db
+                .select({ id: user.id, emailVerified: user.emailVerified })
+                .from(user)
+                .where(eq(user.email, userEmail))
+                .limit(1);
+              
+              if (existingUser.length === 0) {
+                throw new APIError("UNAUTHORIZED", {
+                  message: "Account not found. Please check your email address or create a new account.",
+                });
+              } else if (!existingUser[0].emailVerified) {
+                throw new APIError("UNAUTHORIZED", {
+                  message: "Account not verified. Please check your email for the verification link.",
+                });
+              } else {
+                throw new APIError("UNAUTHORIZED", {
+                  message: "Incorrect password. Please try again.",
+                });
+              }
+            }
+          }
+        }
+        
+        // Custom error for sign-up failures
+        if (path === "/sign-up/email") {
+          if (response.body.code === "USER_ALREADY_EXISTS") {
+            throw new APIError("BAD_REQUEST", {
+              message: "An account with this email already exists. Please sign in instead.",
+            });
+          }
+        }
+      }
+    }),
   },
   emailVerification: {
     sendOnSignUp: true,

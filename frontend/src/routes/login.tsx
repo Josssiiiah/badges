@@ -75,12 +75,12 @@ export default function Login() {
         if (role === "administrator") {
           if (orgOption === "create" && !organization) {
             throw new Error(
-              "Organization name is required when creating a new organization",
+              "Organization name is required when creating a new organization"
             );
           }
           if (orgOption === "join" && !shortCode) {
             throw new Error(
-              "Organization short code is required when joining an existing organization",
+              "Organization short code is required when joining an existing organization"
             );
           }
         }
@@ -125,10 +125,34 @@ export default function Login() {
         if (error) throw error;
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Authentication failed";
+      // Prefer a specific message from various possible error shapes
+      let msg = "Authentication failed";
+      // Standard Error instance
+      if (err instanceof Error && err.message) {
+        msg = err.message;
+      } else if (typeof err === "string" && err) {
+        // Thrown string
+        msg = err;
+      } else if (err && typeof err === "object") {
+        // Better Auth client often returns a plain object with message
+        const anyErr: any = err;
+        if (typeof anyErr.message === "string" && anyErr.message) {
+          msg = anyErr.message;
+        } else if (anyErr.error && typeof anyErr.error.message === "string") {
+          msg = anyErr.error.message;
+        } else if (anyErr.data && typeof anyErr.data.message === "string") {
+          msg = anyErr.data.message;
+        } else if (
+          anyErr.response &&
+          anyErr.response.data &&
+          typeof anyErr.response.data.message === "string"
+        ) {
+          msg = anyErr.response.data.message;
+        }
+      }
       setError(msg);
-      // Heuristic: detect unverified error and enable resend/ML actions
-      if (/verify|verification|email.*not.*verified/i.test(msg)) {
+      // Detect unverified error and enable resend/ML actions
+      if (/not verified|verification|email.*not.*verified/i.test(msg)) {
         setNeedsVerification(true);
       }
     } finally {
@@ -139,12 +163,15 @@ export default function Login() {
   const handleResendVerification = async () => {
     setAuxMessage("");
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/send-verification-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-        credentials: "include",
-      });
+      const resp = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/send-verification-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+          credentials: "include",
+        }
+      );
       if (!resp.ok) {
         // Fallback: try magic-link explain
         setAuxMessage(
@@ -163,21 +190,26 @@ export default function Login() {
   const handleSendMagicLink = async () => {
     setAuxMessage("");
     try {
-      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/sign-in/magic-link`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          callbackURL: `${import.meta.env.VITE_FRONTEND_URL}/`,
-        }),
-        credentials: "include",
-      });
+      const resp = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/sign-in/magic-link`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            callbackURL: `${import.meta.env.VITE_FRONTEND_URL}/`,
+          }),
+          credentials: "include",
+        }
+      );
       if (!resp.ok) throw new Error("Failed to send magic link");
       setAuxMessage(
         "Magic link sent. Open it to sign in, then resend verification from the prompt."
       );
     } catch (e) {
-      setAuxMessage(e instanceof Error ? e.message : "Failed to send magic link");
+      setAuxMessage(
+        e instanceof Error ? e.message : "Failed to send magic link"
+      );
     }
   };
 
@@ -237,18 +269,29 @@ export default function Login() {
             <form onSubmit={handleEmailAuth} className="space-y-4">
               {!isSignUp && needsVerification && (
                 <div className="p-3 border border-yellow-400/30 bg-yellow-500/10 rounded text-sm text-yellow-200">
-                  Your email is not verified. You can resend the verification email
-                  or use a magic link to sign in and resend from your profile.
+                  Your email is not verified. You can resend the verification
+                  email or use a magic link to sign in and resend from your
+                  profile.
                   <div className="flex gap-2 mt-3">
-                    <Button type="button" variant="outline" onClick={handleResendVerification}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleResendVerification}
+                    >
                       Resend verification
                     </Button>
-                    <Button type="button" variant="outline" onClick={handleSendMagicLink}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSendMagicLink}
+                    >
                       Send magic link
                     </Button>
                   </div>
                   {auxMessage && (
-                    <div className="mt-2 text-xs text-[var(--main-text)]/80">{auxMessage}</div>
+                    <div className="mt-2 text-xs text-[var(--main-text)]/80">
+                      {auxMessage}
+                    </div>
                   )}
                 </div>
               )}
@@ -281,7 +324,7 @@ export default function Login() {
                           "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "student"
                             ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 hover:border-blue-300",
+                            : "border-gray-200 hover:border-blue-300"
                         )}
                       >
                         <div className="flex flex-col items-center gap-1 md:gap-2">
@@ -299,7 +342,7 @@ export default function Login() {
                           "p-3 md:p-4 border rounded-lg transition-all duration-200",
                           role === "administrator"
                             ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 hover:border-blue-300",
+                            : "border-gray-200 hover:border-blue-300"
                         )}
                       >
                         <div className="flex flex-col items-center gap-1 md:gap-2">
@@ -427,7 +470,11 @@ export default function Login() {
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-black text-white hover:bg-black/80" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="w-full bg-black text-white hover:bg-black/80"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <>
                     <svg
@@ -464,10 +511,13 @@ export default function Login() {
                     <div>
                       <div className="font-semibold">Check your email</div>
                       <p className="mt-1 text-sm leading-6">
-                        We sent a confirmation email to <span className="font-semibold">{email}</span>. Click the link to verify your address. After verification, you’ll be redirected and signed in automatically.
+                        We sent a confirmation email to{" "}
+                        <span className="font-semibold">{email}</span>. Click
+                        the link to verify your address. After verification,
+                        you’ll be redirected and signed in automatically.
                       </p>
                       <p className="mt-3 text-sm">
-                        Didn’t receive the email?{' '}
+                        Didn’t receive the email?{" "}
                         <button
                           type="button"
                           onClick={handleResendVerification}
@@ -478,7 +528,9 @@ export default function Login() {
                         .
                       </p>
                       {auxMessage && (
-                        <div className="mt-2 text-xs text-gray-700">{auxMessage}</div>
+                        <div className="mt-2 text-xs text-gray-700">
+                          {auxMessage}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -500,7 +552,6 @@ export default function Login() {
           </CardFooter>
         </Card>
       </div>
-
     </div>
   );
 }

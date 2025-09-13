@@ -179,6 +179,29 @@ export const auth = betterAuth({
           
           // Handle administrator accounts based on orgOption
           if (role === "administrator") {
+            // Enforce allowed_admin_emails allowlist for admin sign-ups
+            const emailToCreate = (
+              (ctx?.body?.email as string | undefined) ||
+              ((userData as any)?.email as string | undefined) ||
+              ""
+            )
+              .toLowerCase()
+              .trim();
+
+            const allowedEnv = process.env.ALLOWED_ADMIN_EMAILS || "";
+            const allowedEmails = allowedEnv
+              .split(",")
+              .map((e) => e.trim().toLowerCase())
+              .filter(Boolean);
+
+            // If no allowed emails configured or email not in list, block admin sign-up
+            if (allowedEmails.length === 0 || !allowedEmails.includes(emailToCreate)) {
+              throw new APIError("BAD_REQUEST", {
+                message:
+                  "This email is not authorized to create administrator accounts. Please contact your program lead to request access.",
+              });
+            }
+
             if (orgOption === "create") {
               // Creating a new organization
               if (!organization) {

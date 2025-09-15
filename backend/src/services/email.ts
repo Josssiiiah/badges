@@ -6,25 +6,99 @@ if (!resendApiKey) {
 }
 const resend = new Resend(resendApiKey);
 
-async function sendWithFallback({
-  to,
-  subject,
-  html,
-  fromCandidates,
-}: {
+// Rate limiting configuration
+const RATE_LIMIT_MS = 1000; // 1 second between emails (Resend allows ~10 emails/second on free tier)
+let lastEmailSend = 0;
+
+// Simple email queue for rate limiting
+interface QueuedEmail {
   to: string;
   subject: string;
   html: string;
   fromCandidates: string[];
-}) {
+  resolve: (value: any) => void;
+  reject: (reason?: any) => void;
+}
+
+const emailQueue: QueuedEmail[] = [];
+let isProcessingQueue = false;
+
+async function processEmailQueue() {
+  if (isProcessingQueue || emailQueue.length === 0) return;
+
+  isProcessingQueue = true;
+
+  while (emailQueue.length > 0) {
+    const email = emailQueue.shift()!;
+
+    try {
+      // Rate limiting: ensure minimum delay between sends
+      const now = Date.now();
+      const timeSinceLastSend = now - lastEmailSend;
+      if (timeSinceLastSend < RATE_LIMIT_MS) {
+        const delay = RATE_LIMIT_MS - timeSinceLastSend;
+        console.log(`[email.service] Rate limiting: waiting ${delay}ms before sending email`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+
+      const result = await sendWithFallback(email.to, email.subject, email.html, email.fromCandidates);
+      lastEmailSend = Date.now();
+      email.resolve(result);
+    } catch (error) {
+      console.error('[email.service] Failed to send queued email:', error);
+      email.reject(error);
+    }
+  }
+
+  isProcessingQueue = false;
+}
+
+async function sendWithFallback(
+  to: string,
+  subject: string,
+  html: string,
+  fromCandidates: string[]
+) {
   let lastError: unknown = null;
   for (const from of fromCandidates) {
-    const { error, data } = await resend.emails.send({ from, to: [to], subject, html });
-    if (!error) return data;
-    lastError = error;
-    console.log('[email.service] send error with from=', from, error);
+    try {
+      const { error, data } = await resend.emails.send({ from, to: [to], subject, html });
+      if (!error) return data;
+      lastError = error;
+      console.log('[email.service] send error with from=', from, error);
+
+      // If it's a rate limit error, add extra delay
+      if (error.message && error.message.includes('429')) {
+        console.log('[email.service] Rate limit detected, adding extra delay');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay on rate limit
+      }
+    } catch (err) {
+      lastError = err;
+      console.log('[email.service] send error with from=', from, err);
+    }
   }
   throw new Error('Failed to send email via all from candidates: ' + String(lastError));
+}
+
+async function queueEmailSend(
+  to: string,
+  subject: string,
+  html: string,
+  fromCandidates: string[]
+): Promise<any> {
+  return new Promise((resolve, reject) => {
+    emailQueue.push({
+      to,
+      subject,
+      html,
+      fromCandidates,
+      resolve,
+      reject,
+    });
+
+    // Start processing if not already running
+    processEmailQueue();
+  });
 }
 
 type SendVerificationEmailArgs = {
@@ -45,12 +119,13 @@ export async function sendVerificationEmail({ to, verificationUrl }: SendVerific
         <p>If you didn't create an account, you can safely ignore this email.</p>
       </div>
     `;
-  return await sendWithFallback({
+
+  return await queueEmailSend(
     to,
-    subject: 'Verify your email address',
+    'Verify your email address',
     html,
-    fromCandidates: [primaryFrom, 'Badges <onboarding@resend.dev>'],
-  });
+    [primaryFrom, 'Badges <onboarding@resend.dev>']
+  );
 }
 
 type SendMagicLinkEmailArgs = {
@@ -60,6 +135,7 @@ type SendMagicLinkEmailArgs = {
 
 export async function sendMagicLinkEmail({ to, magicLinkUrl }: SendMagicLinkEmailArgs) {
   const primaryFrom = process.env.RESEND_FROM || 'Badges <onboarding@resend.dev>';
+
   // Detect if the callbackURL includes existing=1 to tailor copy
   let isExisting = false;
   let isBadgeView = false;
@@ -86,7 +162,7 @@ export async function sendMagicLinkEmail({ to, magicLinkUrl }: SendMagicLinkEmai
         <h2>${heading}</h2>
         <p>${lead}</p>
         <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
-          <a href="${magicLinkUrl}" 
+          <a href="${magicLinkUrl}"
              style="display: inline-block; background-color: #111827; color: white; padding: 12px 18px; text-decoration: none; border-radius: 6px; font-weight: 500;">
             ${cta}
           </a>
@@ -96,11 +172,13 @@ export async function sendMagicLinkEmail({ to, magicLinkUrl }: SendMagicLinkEmai
         </p>
       </div>
     `;
+
   const subject = isExisting || isBadgeView ? "You've received a badge!" : 'Create your account to view your badge';
-  return await sendWithFallback({
+
+  return await queueEmailSend(
     to,
     subject,
     html,
-    fromCandidates: [primaryFrom, 'Badges <onboarding@resend.dev>'],
-  });
+    [primaryFrom, 'Badges <onboarding@resend.dev>']
+  );
 }

@@ -182,3 +182,83 @@ export async function sendMagicLinkEmail({ to, magicLinkUrl }: SendMagicLinkEmai
     [primaryFrom, 'Badges <onboarding@resend.dev>']
   );
 }
+
+type SendBatchMagicLinkEmailsArgs = {
+  emails: Array<{
+    to: string;
+    magicLinkUrl: string;
+  }>;
+};
+
+export async function sendBatchMagicLinkEmails({ emails }: SendBatchMagicLinkEmailsArgs) {
+  if (!resendApiKey) {
+    console.log('[email.service] WARN: Cannot send batch emails - RESEND_API_KEY is not set');
+    return { error: 'Email service not configured' };
+  }
+
+  const primaryFrom = process.env.RESEND_FROM || 'Badges <onboarding@resend.dev>';
+
+  // Prepare batch email data
+  const batchEmails = emails.map(({ to, magicLinkUrl }) => {
+    // Detect if the callbackURL includes existing=1 to tailor copy
+    let isExisting = false;
+    let isBadgeView = false;
+    try {
+      const link = new URL(magicLinkUrl);
+      const rawCallback = link.searchParams.get('callbackURL');
+      if (rawCallback) {
+        const decoded = decodeURIComponent(rawCallback);
+        const cb = new URL(decoded);
+        isExisting = cb.searchParams.get('existing') === '1';
+        isBadgeView = cb.pathname.includes('/badges/');
+      }
+    } catch {}
+
+    const heading = isExisting || isBadgeView ? "You've received a badge!" : 'Create your account to view your badge';
+    const lead = isExisting || isBadgeView
+      ? 'Congratulations! Click below to securely sign in and view your new badge.'
+      : 'Click below to securely set your password. Afterwards, you will be redirected to your badge page.';
+    const cta = isExisting || isBadgeView ? 'View Your Badge' : 'Create Account';
+
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>${heading}</h2>
+          <p>${lead}</p>
+          <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+            <a href="${magicLinkUrl}"
+               style="display: inline-block; background-color: #111827; color: white; padding: 12px 18px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+              ${cta}
+            </a>
+          </div>
+          <p style="color: #666; font-size: 14px;">
+            This link will expire in 24 hours. If you didn't request this email, you can safely ignore it.
+          </p>
+        </div>
+      `;
+
+    const subject = isExisting || isBadgeView ? "You've received a badge!" : 'Create your account to view your badge';
+
+    return {
+      from: primaryFrom,
+      to: [to],
+      subject,
+      html,
+    };
+  });
+
+  try {
+    // Use Resend's batch API to send up to 100 emails at once
+    const { data, error } = await resend.batch.send(batchEmails);
+    
+    if (error) {
+      console.error('[email.service] Batch send error:', error);
+      return { error: error.message || 'Failed to send batch emails' };
+    }
+
+    console.log(`[email.service] Successfully sent ${batchEmails.length} batch emails`);
+    return { data, emailsSent: batchEmails.length };
+  } catch (error) {
+    console.error('[email.service] Batch send exception:', error);
+    return { error: String(error) };
+  }
+}

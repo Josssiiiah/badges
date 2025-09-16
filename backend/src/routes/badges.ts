@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { eq, and, inArray } from "drizzle-orm";
 import { setup } from "../setup";
 import { userMiddleware } from "../middleware/auth-middleware";
+import { sendBatchMagicLinkEmails } from "../services/email";
 
 export const badgeRoutes = new Elysia({ prefix: "/badges" })
   .use(setup)
@@ -662,4 +663,153 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         return { error: String(error) };
       }
     }
-  );
+  )
+  // Bulk assign badges to multiple users by email using batch email sending
+  .post("/assign-bulk", async (context) => {
+    try {
+      const { body } = context;
+      const { badgeId, emails } = body;
+      const session = await userMiddleware(context);
+      
+      if (!session.user) {
+        return { error: "Unauthorized" };
+      }
+      if (session.user.emailVerified === false) {
+        return { error: "Email not verified" };
+      }
+
+      // Only administrators can bulk assign badges
+      if (session.user.role !== "administrator") {
+        return { error: "Only administrators can bulk assign badges" };
+      }
+
+      // Verify the badge exists
+      const badge = await db
+        .select()
+        .from(createdBadges)
+        .where(eq(createdBadges.id, badgeId))
+        .limit(1);
+
+      if (!badge.length) {
+        return { error: "Badge not found" };
+      }
+      
+      // If administrator, verify the badge belongs to their organization
+      if (
+        session.user.role === "administrator" && 
+        session.user.organizationId && 
+        badge[0].organizationId !== session.user.organizationId
+      ) {
+        return { error: "Badge does not belong to your organization" };
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const invalidEmails = emails.filter((email: string) => !emailRegex.test(email));
+      if (invalidEmails.length > 0) {
+        return { error: `Invalid email format: ${invalidEmails.join(", ")}` };
+      }
+
+      // Limit batch size to Resend's limit of 100 emails
+      if (emails.length > 100) {
+        return { error: "Maximum 100 emails allowed per batch" };
+      }
+
+      const assignments: any[] = [];
+      const emailsToSend: Array<{ to: string; magicLinkUrl: string }> = [];
+      const failedAssignments: Array<{ email: string; error: string }> = [];
+
+      // Process each email
+      for (const email of emails) {
+        try {
+          // Find the user by email
+          const userResult = await db
+            .select({ id: user.id, emailVerified: user.emailVerified })
+            .from(user)
+            .where(eq(user.email, email))
+            .limit(1);
+
+          if (!userResult.length) {
+            failedAssignments.push({ email, error: "User not found" });
+            continue;
+          }
+
+          const userId = userResult[0].id;
+
+          // Delete any existing badge assignments for this user first
+          await db.delete(badges).where(eq(badges.userId, userId));
+          
+          // Create the assignment
+          const assignment = await db
+            .insert(badges)
+            .values({
+              badgeId,
+              userId,
+              earnedAt: new Date(),
+            })
+            .returning();
+
+          assignments.push(assignment[0]);
+
+          // Prepare magic link for batch sending
+          const frontend = process.env.FRONTEND_URL || "http://localhost:3001";
+          const backendOrigin = process.env.BACKEND_URL || "http://localhost:3000";
+          const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
+          
+          // Check if user has verified email (existing user) or not (new student)
+          const isExistingUser = userResult[0].emailVerified === true;
+          
+          // Different callback URLs for existing vs new users
+          let callbackURL;
+          if (isExistingUser) {
+            // Existing users go directly to view their badge
+            callbackURL = `${frontend}/badges/${encodeURIComponent(assignment[0].id)}?existing=1`;
+          } else {
+            // New users need to create account first
+            callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}`;
+          }
+
+          // Generate magic link URL
+          const magicLinkUrl = `${betterAuthBase}/sign-in/magic-link?email=${encodeURIComponent(email)}&callbackURL=${encodeURIComponent(callbackURL)}`;
+          
+          emailsToSend.push({
+            to: email,
+            magicLinkUrl,
+          });
+
+        } catch (error) {
+          console.error(`Failed to assign badge to ${email}:`, error);
+          failedAssignments.push({ email, error: String(error) });
+        }
+      }
+
+      // Send batch emails
+      let emailResult = null;
+      if (emailsToSend.length > 0) {
+        try {
+          emailResult = await sendBatchMagicLinkEmails({ emails: emailsToSend });
+          if (emailResult.error) {
+            console.error("Failed to send batch emails:", emailResult.error);
+          }
+        } catch (e) {
+          console.error("Error sending batch emails:", e);
+        }
+      }
+
+      return {
+        success: true,
+        assignments: assignments.length,
+        emailsSent: emailResult?.emailsSent || 0,
+        failed: failedAssignments,
+        emailError: emailResult?.error || null,
+      };
+    } catch (error) {
+      console.error("Error in bulk badge assignment:", error);
+      return { error: String(error) };
+    }
+  }, {
+    body: t.Object({
+      badgeId: t.String(),
+      emails: t.Array(t.String())
+    })
+  });

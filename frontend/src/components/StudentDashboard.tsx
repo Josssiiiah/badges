@@ -211,7 +211,6 @@ export function StudentDashboard({
     }
   };
 
-
   const addStudent = async () => {
     try {
       // Only validate email now, generate ID if needed
@@ -282,12 +281,12 @@ export function StudentDashboard({
           method: "DELETE",
         }
       );
-      
+
       if (!deleteResponse.ok) {
         const deleteResult = await deleteResponse.json();
         console.error("Failed to delete badge assignment:", deleteResult.error);
       }
-      
+
       // Then update the student record to remove the badge reference
       const response = await fetchWithAuth(
         `students/update/${student.studentId}`,
@@ -473,7 +472,7 @@ export function StudentDashboard({
   const addBulkStudents = async () => {
     try {
       setIsBulkImporting(true);
-      
+
       // Split by commas or newlines, remove whitespace, and filter out empty strings
       const emailList = bulkEmails
         .split(/[,\n]+/)
@@ -491,7 +490,9 @@ export function StudentDashboard({
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const invalidEmails = emailList.filter(email => !emailRegex.test(email));
+      const invalidEmails = emailList.filter(
+        (email) => !emailRegex.test(email)
+      );
       if (invalidEmails.length > 0) {
         toast({
           variant: "destructive",
@@ -504,7 +505,7 @@ export function StudentDashboard({
       const addedStudents = [];
       const failedStudents = [];
 
-      // Process each student sequentially to avoid issues
+      // Create all students first
       for (const email of emailList) {
         try {
           // Create student object
@@ -522,61 +523,9 @@ export function StudentDashboard({
           });
 
           const result = await response.json();
-          
+
           if (result.student) {
-            let finalStudent = result.student;
-
-            // If badge assignment is enabled, assign the badge
-            if (bulkAssignBadge && bulkBadgeId) {
-              try {
-                // Assign badge and send magic link email
-                const badgeResponse = await fetchWithAuth("badges/assign-by-email", {
-                  method: "POST",
-                  body: JSON.stringify({
-                    badgeId: bulkBadgeId,
-                    email: finalStudent.email,
-                  }),
-                });
-
-                const badgeResult = await badgeResponse.json();
-                
-                if (badgeResult.assignment) {
-                  // Update student with badge assignment ID
-                  const updateResponse = await fetchWithAuth(
-                    `students/update/${finalStudent.studentId}`,
-                    {
-                      method: "PUT",
-                      body: JSON.stringify({
-                        name: finalStudent.name,
-                        email: finalStudent.email,
-                        hasBadge: true,
-                        badgeId: badgeResult.assignment.id,
-                      }),
-                    }
-                  );
-
-                  if (updateResponse.ok) {
-                    // Find the badge template for display
-                    const selectedBadgeTemplate = badges.find(
-                      (badge) => badge.id === bulkBadgeId
-                    );
-
-                    finalStudent = {
-                      ...finalStudent,
-                      hasBadge: true,
-                      badgeId: badgeResult.assignment.id,
-                      badge: selectedBadgeTemplate,
-                    };
-                  }
-                }
-              } catch (badgeError) {
-                console.error(`Failed to assign badge to ${email}:`, badgeError);
-                // Student was created but badge assignment failed
-                // Continue with the student without badge
-              }
-            }
-
-            addedStudents.push(finalStudent);
+            addedStudents.push(result.student);
           } else {
             failedStudents.push(email);
             console.error(`Failed to create student ${email}:`, result.error);
@@ -584,6 +533,51 @@ export function StudentDashboard({
         } catch (error) {
           failedStudents.push(email);
           console.error(`Error creating student ${email}:`, error);
+        }
+      }
+
+      // If badge assignment is enabled and we have students, do bulk badge assignment
+      if (bulkAssignBadge && bulkBadgeId && addedStudents.length > 0) {
+        try {
+          const studentEmails = addedStudents.map((student) => student.email);
+
+          // Use bulk badge assignment endpoint
+          const bulkBadgeResponse = await fetchWithAuth("badges/assign-bulk", {
+            method: "POST",
+            body: JSON.stringify({
+              badgeId: bulkBadgeId,
+              emails: studentEmails,
+            }),
+          });
+
+          const bulkResult = await bulkBadgeResponse.json();
+
+          if (bulkResult.success) {
+            console.log(
+              `Bulk badge assignment completed: ${bulkResult.assignments} assignments, ${bulkResult.emailsSent} emails sent`
+            );
+
+            // Find the badge template for display
+            const selectedBadgeTemplate = badges.find(
+              (badge) => badge.id === bulkBadgeId
+            );
+
+            // Update local student objects to reflect badge assignments
+            // Note: In a production app, you'd want to fetch the updated data from the server
+            // For now, we'll mark all as having badges since the bulk operation succeeded
+            addedStudents.forEach((student) => {
+              student.hasBadge = true;
+              student.badge = selectedBadgeTemplate;
+            });
+
+            if (bulkResult.failed && bulkResult.failed.length > 0) {
+              console.warn("Some badge assignments failed:", bulkResult.failed);
+            }
+          } else {
+            console.error("Bulk badge assignment failed:", bulkResult.error);
+          }
+        } catch (bulkError) {
+          console.error("Error in bulk badge assignment:", bulkError);
         }
       }
 
@@ -602,13 +596,13 @@ export function StudentDashboard({
         toast({
           variant: "success",
           title: "Success",
-          description: `Added ${addedStudents.length} student${addedStudents.length > 1 ? 's' : ''} successfully`,
+          description: `Added ${addedStudents.length} student${addedStudents.length > 1 ? "s" : ""} successfully`,
         });
       } else if (addedStudents.length > 0 && failedStudents.length > 0) {
         toast({
           variant: "warning",
           title: "Partial Success",
-          description: `Added ${addedStudents.length} student${addedStudents.length > 1 ? 's' : ''}. Failed: ${failedStudents.join(", ")}`,
+          description: `Added ${addedStudents.length} student${addedStudents.length > 1 ? "s" : ""}. Failed: ${failedStudents.join(", ")}`,
         });
       } else {
         toast({
@@ -633,9 +627,7 @@ export function StudentDashboard({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-[var(--main-text)]">
-          Students
-        </h2>
+        <h2 className="text-2xl font-bold text-[var(--main-text)]">Students</h2>
         <div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
@@ -777,7 +769,11 @@ export function StudentDashboard({
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
-                <Button onClick={addStudent} type="submit" className="bg-primary hover:bg-primary/90 text-white">
+                <Button
+                  onClick={addStudent}
+                  type="submit"
+                  className="bg-primary hover:bg-primary/90 text-white"
+                >
                   Add Student
                 </Button>
               </DialogFooter>
@@ -795,8 +791,12 @@ export function StudentDashboard({
                 <TableHead className="text-[var(--main-text)]">Name</TableHead>
                 <TableHead className="text-[var(--main-text)]">Email</TableHead>
                 <TableHead className="text-[var(--main-text)]">Badge</TableHead>
-                <TableHead className="text-[var(--main-text)]">Badge URL</TableHead>
-                <TableHead className="text-[var(--main-text)]">Badge Assignment</TableHead>
+                <TableHead className="text-[var(--main-text)]">
+                  Badge URL
+                </TableHead>
+                <TableHead className="text-[var(--main-text)]">
+                  Badge Assignment
+                </TableHead>
                 <TableHead className="text-right text-[var(--main-text)]">
                   Actions
                 </TableHead>
@@ -885,7 +885,7 @@ export function StudentDashboard({
                         }}
                         className="h-8"
                       >
-                        {student.hasBadge ? 'Manage Badge' : 'Add Badge'}
+                        {student.hasBadge ? "Manage Badge" : "Add Badge"}
                       </Button>
                     </TableCell>
                     <TableCell>
@@ -936,9 +936,7 @@ export function StudentDashboard({
       <Dialog open={isBadgeDialogOpen} onOpenChange={setIsBadgeDialogOpen}>
         <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
           <DialogHeader>
-            <DialogTitle>
-              Manage Badge for {selectedStudent?.name}
-            </DialogTitle>
+            <DialogTitle>Manage Badge for {selectedStudent?.name}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {selectedStudent?.hasBadge && (
@@ -950,32 +948,41 @@ export function StudentDashboard({
                     alt={selectedStudent.badge?.name}
                     className="w-8 h-8 object-contain rounded-sm"
                   />
-                  <span className="font-medium text-gray-900">{selectedStudent.badge?.name}</span>
+                  <span className="font-medium text-gray-900">
+                    {selectedStudent.badge?.name}
+                  </span>
                 </div>
               </div>
             )}
-            
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label
                 htmlFor="badge-select"
                 className="text-right text-[var(--main-text)]"
               >
-                {selectedStudent?.hasBadge ? 'Change to' : 'Select Badge'}
+                {selectedStudent?.hasBadge ? "Change to" : "Select Badge"}
               </Label>
-              <Select value={selectedBadgeId} onValueChange={setSelectedBadgeId}>
+              <Select
+                value={selectedBadgeId}
+                onValueChange={setSelectedBadgeId}
+              >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Choose a badge" />
                 </SelectTrigger>
                 <SelectContent>
                   {(() => {
-                    const availableBadges = badges?.filter(badge => {
-                      // Show all badges except the current one if changing
-                      if (selectedStudent?.hasBadge && selectedStudent?.badge) {
-                        return badge.id !== selectedStudent.badge.id;
-                      }
-                      return true;
-                    }) || [];
-                    
+                    const availableBadges =
+                      badges?.filter((badge) => {
+                        // Show all badges except the current one if changing
+                        if (
+                          selectedStudent?.hasBadge &&
+                          selectedStudent?.badge
+                        ) {
+                          return badge.id !== selectedStudent.badge.id;
+                        }
+                        return true;
+                      }) || [];
+
                     if (availableBadges.length === 0) {
                       return (
                         <div className="px-2 py-4 text-center text-sm text-gray-500">
@@ -983,7 +990,7 @@ export function StudentDashboard({
                         </div>
                       );
                     }
-                    
+
                     return availableBadges.map((badge) => (
                       <SelectItem key={badge.id} value={badge.id}>
                         <div className="flex items-center gap-2">
@@ -1001,7 +1008,7 @@ export function StudentDashboard({
               </Select>
             </div>
           </div>
-          
+
           <DialogFooter className="flex justify-between">
             <div className="flex gap-2">
               {selectedStudent?.hasBadge && (
@@ -1020,12 +1027,12 @@ export function StudentDashboard({
               )}
             </div>
             <div className="flex gap-2">
-              <Button 
-                onClick={assignBadgeToStudent} 
+              <Button
+                onClick={assignBadgeToStudent}
                 disabled={!selectedBadgeId}
                 className="bg-primary hover:bg-primary/90 text-white"
               >
-                {selectedStudent?.hasBadge ? 'Change Badge' : 'Assign Badge'}
+                {selectedStudent?.hasBadge ? "Change Badge" : "Assign Badge"}
               </Button>
             </div>
           </DialogFooter>

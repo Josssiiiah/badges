@@ -716,7 +716,7 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       }
 
       const assignments: any[] = [];
-      const emailsToSend: Array<{ to: string; magicLinkUrl: string }> = [];
+      const magicLinksSuccessful: string[] = [];
       const failedAssignments: Array<{ email: string; error: string }> = [];
 
       // Process each email
@@ -769,13 +769,28 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
             callbackURL = `${frontend}/create-account?assignmentId=${encodeURIComponent(assignment[0].id)}`;
           }
 
-          // Generate magic link URL
-          const magicLinkUrl = `${betterAuthBase}/sign-in/magic-link?email=${encodeURIComponent(email)}&callbackURL=${encodeURIComponent(callbackURL)}`;
-          
-          emailsToSend.push({
-            to: email,
-            magicLinkUrl,
-          });
+          // Generate proper magic link through Better Auth API
+          try {
+            const res = await fetch(`${betterAuthBase}/sign-in/magic-link`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, callbackURL }),
+            });
+
+            if (!res.ok) {
+              console.error(`Failed to generate magic link for ${email}:`, await res.text());
+              failedAssignments.push({ email, error: "Failed to generate magic link" });
+              continue;
+            }
+
+            // Magic link is sent via email by Better Auth automatically
+            magicLinksSuccessful.push(email);
+            console.log(`[bulk-assign] Magic link sent for ${email}`);
+          } catch (magicLinkError) {
+            console.error(`Error generating magic link for ${email}:`, magicLinkError);
+            failedAssignments.push({ email, error: "Magic link generation failed" });
+            continue;
+          }
 
         } catch (error) {
           console.error(`Failed to assign badge to ${email}:`, error);
@@ -783,25 +798,11 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         }
       }
 
-      // Send batch emails
-      let emailResult = null;
-      if (emailsToSend.length > 0) {
-        try {
-          emailResult = await sendBatchMagicLinkEmails({ emails: emailsToSend });
-          if (emailResult.error) {
-            console.error("Failed to send batch emails:", emailResult.error);
-          }
-        } catch (e) {
-          console.error("Error sending batch emails:", e);
-        }
-      }
-
       return {
         success: true,
         assignments: assignments.length,
-        emailsSent: emailResult?.emailsSent || 0,
+        magicLinksSent: magicLinksSuccessful.length,
         failed: failedAssignments,
-        emailError: emailResult?.error || null,
       };
     } catch (error) {
       console.error("Error in bulk badge assignment:", error);

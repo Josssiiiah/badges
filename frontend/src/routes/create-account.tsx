@@ -53,7 +53,7 @@ function CreateAccountPage() {
         return;
       }
       try {
-        const resp = await fetchWithAuth(`api/badges/${assignmentId}`);
+        const resp = await fetchWithAuth(`badges/${assignmentId}`);
         const data = await resp.json();
         if (data && data.badge) {
           if (!isMounted) return;
@@ -113,7 +113,7 @@ function CreateAccountPage() {
 
       // Update name if changed
       if (name && name !== (session.user.name || "")) {
-        const resp = await fetchWithAuth("api/auth/update-user", {
+        const resp = await fetchWithAuth("auth/update-user", {
           method: "POST",
           body: JSON.stringify({ name }),
         });

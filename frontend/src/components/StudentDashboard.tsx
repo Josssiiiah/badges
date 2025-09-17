@@ -554,7 +554,7 @@ export function StudentDashboard({
 
           if (bulkResult.success) {
             console.log(
-              `Bulk badge assignment completed: ${bulkResult.assignments} assignments, ${bulkResult.emailsSent} emails sent`
+              `Bulk badge assignment completed: ${bulkResult.assignments} assignments, ${bulkResult.magicLinksSent} magic links sent`
             );
 
             // Find the badge template for display

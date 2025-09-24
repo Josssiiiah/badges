@@ -1,6 +1,12 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db/connection";
-import { createdBadges, badges, user, students } from "../db/schema";
+import {
+  createdBadges,
+  badges,
+  user,
+  students,
+  session as sessionTable,
+} from "../db/schema";
 import { nanoid } from "nanoid";
 import { eq, and, inArray } from "drizzle-orm";
 import { setup } from "../setup";
@@ -309,14 +315,14 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
 
       // Delete any existing badge assignments for this user first
       // (since a user should only have one badge at a time)
-      await db.delete(badges).where(eq(badges.userId, userId!));
+      await db.delete(badges).where(eq(badges.userId, userId));
       
       // Create the assignment
       const assignment = await db
         .insert(badges)
         .values({
           badgeId,
-          userId: userId!,
+          userId,
           earnedAt: new Date(),
         })
         .returning();
@@ -328,11 +334,21 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
         
         // Check if user has verified email (existing user) or not (new student)
-        const isExistingUser = userResult[0].emailVerified === true;
+        let hasLoggedIn = userResult[0].emailVerified === true;
+
+        if (!hasLoggedIn) {
+          const existingSession = await db
+            .select({ id: sessionTable.id })
+            .from(sessionTable)
+            .where(eq(sessionTable.userId, userId))
+            .limit(1);
+
+          hasLoggedIn = existingSession.length > 0;
+        }
         
         // Different callback URLs for existing vs new users
         let callbackURL;
-        if (isExistingUser) {
+        if (hasLoggedIn) {
           // Existing users go directly to view their badge
           callbackURL = `${frontend}/badges/${encodeURIComponent(assignment[0].id)}?existing=1`;
         } else {
@@ -757,11 +773,21 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
           const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
           
           // Check if user has verified email (existing user) or not (new student)
-          const isExistingUser = userResult[0].emailVerified === true;
+          let hasLoggedIn = userResult[0].emailVerified === true;
+
+          if (!hasLoggedIn) {
+            const existingSession = await db
+              .select({ id: sessionTable.id })
+              .from(sessionTable)
+              .where(eq(sessionTable.userId, userId))
+              .limit(1);
+
+            hasLoggedIn = existingSession.length > 0;
+          }
           
           // Different callback URLs for existing vs new users
           let callbackURL;
-          if (isExistingUser) {
+          if (hasLoggedIn) {
             // Existing users go directly to view their badge
             callbackURL = `${frontend}/badges/${encodeURIComponent(assignment[0].id)}?existing=1`;
           } else {

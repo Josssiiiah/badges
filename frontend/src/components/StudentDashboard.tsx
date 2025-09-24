@@ -37,6 +37,7 @@ import {
   ExternalLink,
   Share2,
   Users,
+  Settings,
 } from "lucide-react";
 import { fetchWithAuth } from "@/lib/api-client";
 import { nanoid } from "nanoid";
@@ -94,6 +95,9 @@ export function StudentDashboard({
   const [bulkBadgeId, setBulkBadgeId] = useState<string>("");
   const [isLookingUpUser, setIsLookingUpUser] = useState<boolean>(false);
   const [selectedBadgeId, setSelectedBadgeId] = useState<string>("");
+  const [isResendDialogOpen, setIsResendDialogOpen] = useState<boolean>(false);
+  const [resendStudent, setResendStudent] = useState<Student | null>(null);
+  const [isResending, setIsResending] = useState<boolean>(false);
 
   // Update students state when students prop changes
   useEffect(() => {
@@ -418,6 +422,52 @@ export function StudentDashboard({
         title: "Error",
         description: "Failed to assign badge",
       });
+    }
+  };
+
+  const resendBadgeEmail = async () => {
+    if (!resendStudent || !resendStudent.badgeId) {
+      return;
+    }
+
+    try {
+      setIsResending(true);
+
+      const response = await fetchWithAuth("students/resend-badge", {
+        method: "POST",
+        body: JSON.stringify({ studentId: resendStudent.studentId }),
+      });
+
+      let result: any = null;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error("Error parsing resend response:", jsonError);
+      }
+
+      if (!response.ok || (result && result.error)) {
+        const errorMessage =
+          (result && result.error) || "Failed to resend badge email";
+        throw new Error(errorMessage);
+      }
+
+      toast({
+        variant: "success",
+        title: "Email sent",
+        description: `Badge email resent to ${resendStudent.email}`,
+      });
+
+      setIsResendDialogOpen(false);
+      setResendStudent(null);
+    } catch (error) {
+      console.error("Error resending badge email:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -890,6 +940,24 @@ export function StudentDashboard({
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-[var(--gray)] hover:bg-[var(--gray)]/10 hover:text-[var(--gray)] disabled:opacity-40 disabled:hover:bg-transparent"
+                          onClick={() => {
+                            if (!student.badgeId) return;
+                            setResendStudent(student);
+                            setIsResendDialogOpen(true);
+                          }}
+                          disabled={!student.badgeId}
+                          title={
+                            student.badgeId
+                              ? "Resend badge email"
+                              : "Assign a badge to enable resending"
+                          }
+                        >
+                          <Settings className="h-4 w-4 text-[var(--gray)]" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -931,6 +999,53 @@ export function StudentDashboard({
           </Table>
         </CardContent>
       </Card>
+
+      {/* Resend Badge Dialog */}
+      <Dialog
+        open={isResendDialogOpen}
+        onOpenChange={(open) => {
+          setIsResendDialogOpen(open);
+          if (!open) {
+            setResendStudent(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[400px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+          <DialogHeader>
+            <DialogTitle>Resend badge email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-left">
+            <p className="text-sm text-gray-600">
+              We’ll send a fresh magic link to help this student access their badge again.
+            </p>
+            <div className="rounded-md bg-gray-100 p-3">
+              <div className="text-sm font-medium text-gray-900">
+                {resendStudent?.name}
+              </div>
+              <div className="text-sm text-gray-700">
+                {resendStudent?.email}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button
+                variant="outline"
+                onClick={() => setResendStudent(null)}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button
+              onClick={resendBadgeEmail}
+              disabled={isResending || !resendStudent?.badgeId}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
+              {isResending ? "Sending..." : "Resend Badge"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Badge Management Dialog */}
       <Dialog open={isBadgeDialogOpen} onOpenChange={setIsBadgeDialogOpen}>

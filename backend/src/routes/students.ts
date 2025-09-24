@@ -240,6 +240,166 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
       }),
     },
   )
+  .post(
+    "/resend-badge",
+    async (context) => {
+      try {
+        const session = await userMiddleware(context);
+
+        if (!session.user) {
+          context.set.status = 401;
+          return { error: "Unauthorized" };
+        }
+        if (session.user.emailVerified === false) {
+          context.set.status = 403;
+          return { error: "Email not verified" };
+        }
+        if (session.user.role !== "administrator") {
+          context.set.status = 403;
+          return { error: "Only administrators can resend badge emails" };
+        }
+
+        const { studentId } = context.body;
+        if (!studentId) {
+          context.set.status = 400;
+          return { error: "studentId is required" };
+        }
+
+        const studentResult = await db
+          .select({
+            studentId: students.studentId,
+            email: students.email,
+            name: students.name,
+            hasBadge: students.hasBadge,
+            badgeId: students.badgeId,
+            organizationId: students.organizationId,
+          })
+          .from(students)
+          .where(eq(students.studentId, studentId))
+          .limit(1);
+
+        if (!studentResult.length) {
+          context.set.status = 404;
+          return { error: "Student not found" };
+        }
+
+        const student = studentResult[0];
+
+        if (
+          session.user.organizationId &&
+          student.organizationId &&
+          session.user.organizationId !== student.organizationId
+        ) {
+          context.set.status = 403;
+          return { error: "You can only resend badges for your organization" };
+        }
+
+        if (!student.hasBadge || !student.badgeId) {
+          context.set.status = 400;
+          return { error: "Student does not have an assigned badge" };
+        }
+
+        const badgeAssignmentResult = await db
+          .select({
+            id: badges.id,
+            badgeId: badges.badgeId,
+            userId: badges.userId,
+          })
+          .from(badges)
+          .where(eq(badges.id, student.badgeId))
+          .limit(1);
+
+        if (!badgeAssignmentResult.length) {
+          context.set.status = 404;
+          return { error: "Badge assignment not found" };
+        }
+
+        const badgeAssignment = badgeAssignmentResult[0];
+
+        const badgeRecipientResult = await db
+          .select({
+            id: user.id,
+            email: user.email,
+            emailVerified: user.emailVerified,
+          })
+          .from(user)
+          .where(eq(user.id, badgeAssignment.userId))
+          .limit(1);
+
+        if (!badgeRecipientResult.length) {
+          context.set.status = 404;
+          return { error: "Badge recipient user not found" };
+        }
+
+        const badgeRecipient = badgeRecipientResult[0];
+
+        const frontend = process.env.FRONTEND_URL || "http://localhost:3001";
+        const backendOrigin = process.env.BACKEND_URL || "http://localhost:3000";
+        const betterAuthBase =
+          process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
+
+        let hasLoggedIn = badgeRecipient.emailVerified === true;
+
+        if (!hasLoggedIn) {
+          const existingSession = await db
+            .select({ id: sessionTable.id })
+            .from(sessionTable)
+            .where(eq(sessionTable.userId, badgeRecipient.id))
+            .limit(1);
+
+          hasLoggedIn = existingSession.length > 0;
+        }
+
+        const assignmentId = badgeAssignment.id;
+
+        const callbackURL = hasLoggedIn
+          ? `${frontend}/badges/${encodeURIComponent(assignmentId)}?existing=1`
+          : `${frontend}/create-account?assignmentId=${encodeURIComponent(
+              assignmentId,
+            )}`;
+
+        const magicLinkResponse = await fetch(
+          `${betterAuthBase}/sign-in/magic-link`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: badgeRecipient.email ?? student.email,
+              callbackURL,
+            }),
+          },
+        );
+
+        if (!magicLinkResponse.ok) {
+          const errorDetail = await magicLinkResponse.text();
+          console.error(
+            `[students.resend-badge] Failed to request magic link: ${magicLinkResponse.status} ${errorDetail}`,
+          );
+          context.set.status = 500;
+          return { error: "Failed to resend badge email" };
+        }
+
+        console.log(
+          `[students.resend-badge] Magic link resent for ${badgeRecipient.email} (assignment ${assignmentId})`,
+        );
+
+        return {
+          success: true,
+          assignmentId,
+          message: "Badge email resent",
+        };
+      } catch (error) {
+        console.error("Error resending badge email:", error);
+        context.set.status = 500;
+        return { error: String(error) };
+      }
+    },
+    {
+      body: t.Object({
+        studentId: t.String(),
+      }),
+    },
+  )
   .put(
     "/update/:studentId",
     async (context) => {

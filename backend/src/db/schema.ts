@@ -86,10 +86,6 @@ export const students = sqliteTable("students", {
   studentId: text("student_id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull(),
-  hasBadge: integer("has_badge", { mode: "boolean" })
-    .default(false)
-    .$type<boolean>(),
-  badgeId: text("badge_id").references(() => badges.id, { onDelete: "set null" }),
   organizationId: text("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .default(sql`CURRENT_TIMESTAMP`)

@@ -29,16 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Pencil,
-  Trash2,
-  PlusCircle,
-  Copy,
-  ExternalLink,
-  Share2,
-  Users,
-  Settings,
-} from "lucide-react";
+import { Trash2, PlusCircle, Copy, Share2, Users } from "lucide-react";
 import { fetchWithAuth } from "@/lib/api-client";
 import { nanoid } from "nanoid";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +44,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Badge = {
   id: string;
@@ -62,13 +54,17 @@ type Badge = {
   imageData: string;
 };
 
+type BadgeAssignment = {
+  assignmentId: string;
+  earnedAt: Date;
+  badge: Badge;
+};
+
 type Student = {
   studentId: string;
   name: string;
   email: string;
-  hasBadge: boolean;
-  badgeId?: string;
-  badge?: Badge;
+  badges: BadgeAssignment[];
 };
 
 export function StudentDashboard({
@@ -78,15 +74,13 @@ export function StudentDashboard({
   students?: Student[];
   badges?: Badge[];
 }) {
+  const queryClient = useQueryClient();
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [loading, setLoading] = useState<boolean>(students.length === 0);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [isBadgeDialogOpen, setIsBadgeDialogOpen] = useState<boolean>(false);
-  const [newStudent, setNewStudent] = useState<Student>({
+  const [newStudent, setNewStudent] = useState({
     studentId: "",
     name: "",
     email: "",
-    hasBadge: false,
   });
   const { toast } = useToast();
   const [bulkEmails, setBulkEmails] = useState<string>("");
@@ -95,44 +89,20 @@ export function StudentDashboard({
   const [bulkBadgeId, setBulkBadgeId] = useState<string>("");
   const [isLookingUpUser, setIsLookingUpUser] = useState<boolean>(false);
   const [selectedBadgeId, setSelectedBadgeId] = useState<string>("");
-  const [isResendDialogOpen, setIsResendDialogOpen] = useState<boolean>(false);
-  const [resendStudent, setResendStudent] = useState<Student | null>(null);
-  const [isResending, setIsResending] = useState<boolean>(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
+  const [viewStudent, setViewStudent] = useState<Student | null>(null);
+  const [isResending, setIsResending] = useState<string | null>(null);
 
-  // Update students state when students prop changes
+  // Sync local state with prop changes from React Query
   useEffect(() => {
     if (students.length > 0) {
-      // Preserve the badge assignment ID from students and only enrich with badge metadata
-      const enhancedStudents = students.map((student) => {
-        if (
-          student.hasBadge &&
-          student.badgeId &&
-          !student.badge &&
-          badges.length > 0
-        ) {
-          // Find the badge TEMPLATE from badges prop if it's missing
-          // This only adds badge details (name, image) but preserves the assignment ID
-          const matchingBadge = badges.find(
-            (badge) => badge.id === student.badge?.id
-          );
-          if (matchingBadge) {
-            return {
-              ...student,
-              badge: matchingBadge,
-            };
-          }
-        }
-        return student;
-      });
-
-      setLocalStudents(enhancedStudents);
+      setLocalStudents(students);
       setLoading(false);
     } else if (localStudents.length === 0) {
       fetchStudents();
     }
-  }, [students, badges]);
+  }, [students]); // Re-sync whenever React Query updates the students
 
-  // Update fetchStudents function to enrich students with badge data if needed
   const fetchStudents = async () => {
     if (students.length > 0) {
       setLocalStudents(students);
@@ -146,14 +116,12 @@ export function StudentDashboard({
       const data = await response.json();
 
       if (data.students) {
-        // Important: preserve the badgeId from the API - this is the badge assignment ID
-        // Only add badge metadata like image and name
-        const enhancedStudents = data.students.map((student: Student) => {
-          // badgeId from API is the badge assignment ID - preserve it
-          return student;
-        });
-
-        setLocalStudents(enhancedStudents);
+        // Ensure all students have badges array initialized
+        const studentsWithBadges = data.students.map((s: Student) => ({
+          ...s,
+          badges: s.badges || [],
+        }));
+        setLocalStudents(studentsWithBadges);
       }
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -250,16 +218,15 @@ export function StudentDashboard({
         throw new Error(result?.error || "Failed to update student");
       }
 
-      // Update local state
-      setLocalStudents([...localStudents, result.student]);
-
       // Reset form
       setNewStudent({
         studentId: "",
         name: "",
         email: "",
-        hasBadge: false,
       });
+
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
 
       toast({
         variant: "success",
@@ -276,48 +243,33 @@ export function StudentDashboard({
     }
   };
 
-  const removeBadgeFromStudent = async (student: Student) => {
+  const removeBadgeFromStudent = async (
+    student: Student,
+    assignmentId: string
+  ) => {
     try {
-      // First, delete the badge assignment from the badges table
+      // Delete the specific badge assignment
       const deleteResponse = await fetchWithAuth(
-        `badges/remove-assignment-by-email/${encodeURIComponent(student.email)}`,
-        {
-          method: "DELETE",
-        }
+        `badges/remove-assignment/${assignmentId}`,
+        { method: "DELETE" }
       );
 
       if (!deleteResponse.ok) {
         const deleteResult = await deleteResponse.json();
-        console.error("Failed to delete badge assignment:", deleteResult.error);
+        throw new Error(
+          deleteResult.error || "Failed to delete badge assignment"
+        );
       }
 
-      // Then update the student record to remove the badge reference
-      const response = await fetchWithAuth(
-        `students/update/${student.studentId}`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            name: student.name,
-            email: student.email,
-            hasBadge: false,
-            // Don't include badgeId when removing
-          }),
-        }
-      );
+      // Invalidate and refetch - let React Query handle the state update
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
 
-      const result = await response.json();
-      if (!response.ok || (result && result.error)) {
-        throw new Error(result?.error || "Failed to remove badge");
-      }
-
-      // Update local state
-      setLocalStudents(
-        localStudents.map((s) =>
-          s.studentId === student.studentId
-            ? { ...s, hasBadge: false, badgeId: undefined, badge: undefined }
-            : s
-        )
-      );
+      // Update viewStudent to reflect the change immediately
+      const updatedStudent = {
+        ...student,
+        badges: student.badges.filter((b) => b.assignmentId !== assignmentId),
+      };
+      setViewStudent(updatedStudent);
 
       toast({
         variant: "success",
@@ -335,85 +287,60 @@ export function StudentDashboard({
   };
 
   const assignBadgeToStudent = async () => {
-    if (!selectedStudent || !selectedBadgeId) return;
+    if (!viewStudent || !selectedBadgeId) return;
 
     try {
       // Assign badge to student
       const badgeResponse = await fetchWithAuth("badges/assign-by-email", {
         method: "POST",
         body: JSON.stringify({
-          badgeId: selectedBadgeId, // This is template badge ID for new assignment
-          email: selectedStudent.email,
+          badgeId: selectedBadgeId,
+          email: viewStudent.email,
         }),
       });
 
-      // Get the badge assignment information including its unique ID
       const badgeAssignment = await badgeResponse.json();
       if (!badgeResponse.ok || (badgeAssignment && badgeAssignment.error)) {
         throw new Error(badgeAssignment?.error || "Failed to assign badge");
       }
 
-      let updatedStudent = { ...selectedStudent };
-
-      // Store the badge assignment ID which will be used for unique badge URLs
-      if (badgeAssignment && badgeAssignment.assignment) {
-        updatedStudent.badgeId = badgeAssignment.assignment.id;
-
-        // Update the student record with the badge assignment ID
-        const updateBadgeIdResponse = await fetchWithAuth(
-          `students/update/${selectedStudent.studentId}`,
-          {
-            method: "PUT",
-            body: JSON.stringify({
-              name: selectedStudent.name,
-              email: selectedStudent.email,
-              hasBadge: true,
-              badgeId: badgeAssignment.assignment.id, // Update with badge assignment ID
-            }),
-          }
-        );
-
-        const updateBadgeIdResult = await updateBadgeIdResponse.json();
-        if (
-          !updateBadgeIdResponse.ok ||
-          (updateBadgeIdResult && updateBadgeIdResult.error)
-        ) {
-          throw new Error(
-            updateBadgeIdResult?.error ||
-              "Failed to persist badge assignment to student"
-          );
-        }
+      // If already assigned, just show message
+      if (badgeAssignment.alreadyAssigned) {
+        toast({
+          title: "Already Assigned",
+          description: "This student already has this badge",
+        });
+        setSelectedBadgeId("");
+        return;
       }
 
-      // Find the badge template data to display badge info (image, name)
+      // Reset badge selection
+      setSelectedBadgeId("");
+
+      // Invalidate and refetch - let React Query handle the state update
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+
+      // Update viewStudent to reflect the change immediately
       const selectedBadgeTemplate = badges.find(
         (badge) => badge.id === selectedBadgeId
       );
-
-      if (selectedBadgeTemplate) {
-        updatedStudent = {
-          ...updatedStudent,
-          hasBadge: true,
-          badge: selectedBadgeTemplate,
-        };
-      }
-
-      // Update local state
-      setLocalStudents(
-        localStudents.map((s) =>
-          s.studentId === selectedStudent.studentId ? updatedStudent : s
-        )
-      );
-
-      // Close dialog and reset
-      setIsBadgeDialogOpen(false);
-      setSelectedStudent(null);
-      setSelectedBadgeId("");
+      const newBadgeAssignment: BadgeAssignment = {
+        assignmentId: badgeAssignment.assignment.id,
+        earnedAt: new Date(),
+        badge: selectedBadgeTemplate!,
+      };
+      const updatedStudent = {
+        ...viewStudent,
+        badges: viewStudent.badges
+          ? [...viewStudent.badges, newBadgeAssignment]
+          : [newBadgeAssignment],
+      };
+      setViewStudent(updatedStudent);
 
       toast({
         variant: "success",
         title: "Success",
-        description: `Badge assigned to ${updatedStudent.name} successfully`,
+        description: `Badge assigned to ${viewStudent.name} successfully`,
       });
     } catch (error) {
       console.error("Error assigning badge:", error);
@@ -425,17 +352,16 @@ export function StudentDashboard({
     }
   };
 
-  const resendBadgeEmail = async () => {
-    if (!resendStudent || !resendStudent.badgeId) {
-      return;
-    }
-
+  const resendBadgeEmail = async (student: Student, assignmentId: string) => {
     try {
-      setIsResending(true);
+      setIsResending(assignmentId);
 
       const response = await fetchWithAuth("students/resend-badge", {
         method: "POST",
-        body: JSON.stringify({ studentId: resendStudent.studentId }),
+        body: JSON.stringify({
+          studentId: student.studentId,
+          assignmentId: assignmentId,
+        }),
       });
 
       let result: any = null;
@@ -454,11 +380,8 @@ export function StudentDashboard({
       toast({
         variant: "success",
         title: "Email sent",
-        description: `Badge email resent to ${resendStudent.email}`,
+        description: `Badge email resent to ${student.email}`,
       });
-
-      setIsResendDialogOpen(false);
-      setResendStudent(null);
     } catch (error) {
       console.error("Error resending badge email:", error);
       toast({
@@ -467,7 +390,7 @@ export function StudentDashboard({
         description: error instanceof Error ? error.message : String(error),
       });
     } finally {
-      setIsResending(false);
+      setIsResending(null);
     }
   };
 
@@ -481,8 +404,14 @@ export function StudentDashboard({
         throw new Error("Failed to delete student");
       }
 
-      // Update local state
-      setLocalStudents(localStudents.filter((s) => s.studentId !== studentId));
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+
+      // Close the view dialog if the deleted student was being viewed
+      if (viewStudent?.studentId === studentId) {
+        setViewStudent(null);
+        setIsViewDialogOpen(false);
+      }
 
       toast({
         variant: "success",
@@ -563,7 +492,6 @@ export function StudentDashboard({
             studentId: nanoid(8),
             name: email.split("@")[0], // Use email username as default name
             email,
-            hasBadge: false,
           };
 
           // Create the student
@@ -613,11 +541,13 @@ export function StudentDashboard({
             );
 
             // Update local student objects to reflect badge assignments
-            // Note: In a production app, you'd want to fetch the updated data from the server
-            // For now, we'll mark all as having badges since the bulk operation succeeded
             addedStudents.forEach((student) => {
-              student.hasBadge = true;
-              student.badge = selectedBadgeTemplate;
+              if (!student.badges) student.badges = [];
+              student.badges.push({
+                assignmentId: nanoid(), // Placeholder - real ID would come from backend
+                earnedAt: new Date(),
+                badge: selectedBadgeTemplate,
+              });
             });
 
             if (bulkResult.failed && bulkResult.failed.length > 0) {
@@ -631,15 +561,15 @@ export function StudentDashboard({
         }
       }
 
-      // Update local state with all successfully added students
-      if (addedStudents.length > 0) {
-        setLocalStudents([...localStudents, ...addedStudents]);
-      }
-
       // Reset form
       setBulkEmails("");
       setBulkAssignBadge(false);
       setBulkBadgeId("");
+
+      // Invalidate and refetch to get updated student list
+      if (addedStudents.length > 0) {
+        await queryClient.invalidateQueries({ queryKey: ["students"] });
+      }
 
       // Show results
       if (addedStudents.length > 0 && failedStudents.length === 0) {
@@ -840,12 +770,8 @@ export function StudentDashboard({
               <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
                 <TableHead className="text-[var(--main-text)]">Name</TableHead>
                 <TableHead className="text-[var(--main-text)]">Email</TableHead>
-                <TableHead className="text-[var(--main-text)]">Badge</TableHead>
                 <TableHead className="text-[var(--main-text)]">
-                  Badge URL
-                </TableHead>
-                <TableHead className="text-[var(--main-text)]">
-                  Badge Assignment
+                  Badges
                 </TableHead>
                 <TableHead className="text-right text-[var(--main-text)]">
                   Actions
@@ -856,7 +782,7 @@ export function StudentDashboard({
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={4}
                     className="h-24 text-center text-[var(--main-text)]/80"
                   >
                     Loading...
@@ -865,7 +791,7 @@ export function StudentDashboard({
               ) : localStudents.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={4}
                     className="h-24 text-center text-[var(--main-text)]/80"
                   >
                     No students found.
@@ -873,91 +799,34 @@ export function StudentDashboard({
                 </TableRow>
               ) : (
                 localStudents.map((student) => (
-                  <TableRow key={student.studentId}>
+                  <TableRow
+                    key={student.studentId}
+                    className="cursor-pointer hover:bg-[var(--gray)]/5"
+                    onClick={() => {
+                      setViewStudent(student);
+                      setIsViewDialogOpen(true);
+                    }}
+                  >
                     <TableCell className="text-[var(--main-text)]">
                       {student.name}
                     </TableCell>
                     <TableCell className="text-[var(--main-text)]">
                       {student.email}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        {student.badge?.imageData ? (
-                          <img
-                            src={student.badge.imageData}
-                            alt={student.badge.name}
-                            className="w-8 h-8 object-contain rounded-sm mr-2"
-                          />
-                        ) : (
-                          <span className="text-[var(--main-text)]/80 text-sm">
-                            No Badge
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
                     <TableCell className="text-[var(--main-text)]">
-                      {student.badgeId ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs truncate max-w-[100px] text-blue-400">
-                            /badges/{student.badgeId}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => copyBadgeUrl(student.badgeId!)}
-                          >
-                            <Copy className="h-3 w-3 text-[var(--gray)]" />
-                          </Button>
-                          {/* <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => openBadge(student.badgeId!)}
-                          >
-                            <ExternalLink className="h-3 w-3 text-[var(--gray)]" />
-                          </Button> */}
-                        </div>
+                      {student.badges && student.badges.length > 0 ? (
+                        <span className="text-sm font-medium">
+                          {student.badges.length}{" "}
+                          {student.badges.length === 1 ? "badge" : "badges"}
+                        </span>
                       ) : (
-                        <span className="text-[var(--main-text)]/80 text-xs">
-                          None
+                        <span className="text-[var(--main-text)]/60 text-sm">
+                          No badges
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedStudent(student);
-                          setSelectedBadgeId(student.badge?.id || "");
-                          setIsBadgeDialogOpen(true);
-                        }}
-                        className="h-8"
-                      >
-                        {student.hasBadge ? "Manage Badge" : "Add Badge"}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-[var(--gray)] hover:bg-[var(--gray)]/10 hover:text-[var(--gray)] disabled:opacity-40 disabled:hover:bg-transparent"
-                          onClick={() => {
-                            if (!student.badgeId) return;
-                            setResendStudent(student);
-                            setIsResendDialogOpen(true);
-                          }}
-                          disabled={!student.badgeId}
-                          title={
-                            student.badgeId
-                              ? "Resend badge email"
-                              : "Assign a badge to enable resending"
-                          }
-                        >
-                          <Settings className="h-4 w-4 text-[var(--gray)]" />
-                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -1000,156 +869,181 @@ export function StudentDashboard({
         </CardContent>
       </Card>
 
-      {/* Resend Badge Dialog */}
-      <Dialog
-        open={isResendDialogOpen}
-        onOpenChange={(open) => {
-          setIsResendDialogOpen(open);
-          if (!open) {
-            setResendStudent(null);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[400px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+      {/* View/Manage Student Badges Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Resend badge email</DialogTitle>
+            <DialogTitle>Manage Badges for {viewStudent?.name}</DialogTitle>
+            <p className="text-sm text-gray-600">{viewStudent?.email}</p>
           </DialogHeader>
-          <div className="space-y-4 text-left">
-            <p className="text-sm text-gray-600">
-              We’ll send a fresh magic link to help this student access their badge again.
-            </p>
-            <div className="rounded-md bg-gray-100 p-3">
-              <div className="text-sm font-medium text-gray-900">
-                {resendStudent?.name}
-              </div>
-              <div className="text-sm text-gray-700">
-                {resendStudent?.email}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button
-                variant="outline"
-                onClick={() => setResendStudent(null)}
-              >
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              onClick={resendBadgeEmail}
-              disabled={isResending || !resendStudent?.badgeId}
-              className="bg-primary hover:bg-primary/90 text-white"
-            >
-              {isResending ? "Sending..." : "Resend Badge"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Badge Management Dialog */}
-      <Dialog open={isBadgeDialogOpen} onOpenChange={setIsBadgeDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
-          <DialogHeader>
-            <DialogTitle>Manage Badge for {selectedStudent?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {selectedStudent?.hasBadge && (
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <Label className="text-sm text-gray-600">Current Badge</Label>
-                <div className="flex items-center gap-2 mt-2">
-                  <img
-                    src={selectedStudent.badge?.imageData}
-                    alt={selectedStudent.badge?.name}
-                    className="w-8 h-8 object-contain rounded-sm"
-                  />
-                  <span className="font-medium text-gray-900">
-                    {selectedStudent.badge?.name}
-                  </span>
+          <div className="space-y-6 py-4">
+            {/* Current Badges */}
+            {viewStudent &&
+            viewStudent.badges &&
+            viewStudent.badges.length > 0 ? (
+              <div>
+                <h3 className="text-sm font-medium text-[var(--main-text)] mb-3">
+                  Current Badges ({viewStudent.badges.length})
+                </h3>
+                <div className="space-y-3">
+                  {viewStudent.badges.map((badgeAssignment, idx) => (
+                    <Card key={idx} className="p-4">
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={badgeAssignment.badge.imageData}
+                          alt={badgeAssignment.badge.name}
+                          className="w-24 h-24 object-contain rounded-sm flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-[var(--main-text)] mb-1">
+                            {badgeAssignment.badge.name}
+                          </h4>
+                          <p className="text-xs text-[var(--main-text)]/60 mb-2">
+                            Earned:{" "}
+                            {new Date(
+                              badgeAssignment.earnedAt
+                            ).toLocaleDateString()}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                copyBadgeUrl(badgeAssignment.assignmentId)
+                              }
+                              className="h-8 text-xs"
+                            >
+                              <Copy className="h-3 w-3 mr-1" />
+                              Copy URL
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                resendBadgeEmail(
+                                  viewStudent,
+                                  badgeAssignment.assignmentId
+                                )
+                              }
+                              disabled={
+                                isResending === badgeAssignment.assignmentId
+                              }
+                              className="h-8 text-xs"
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              {isResending === badgeAssignment.assignmentId
+                                ? "Sending..."
+                                : "Resend Email"}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Remove Badge
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Remove this badge?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will remove the "
+                                    {badgeAssignment.badge.name}" badge from{" "}
+                                    {viewStudent.name}. This action cannot be
+                                    undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      removeBadgeFromStudent(
+                                        viewStudent,
+                                        badgeAssignment.assignmentId
+                                      )
+                                    }
+                                    className="bg-red-600 hover:bg-red-700 text-white"
+                                  >
+                                    Remove
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-[var(--main-text)]/60">
+                No badges assigned yet
               </div>
             )}
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label
-                htmlFor="badge-select"
-                className="text-right text-[var(--main-text)]"
-              >
-                {selectedStudent?.hasBadge ? "Change to" : "Select Badge"}
-              </Label>
-              <Select
-                value={selectedBadgeId}
-                onValueChange={setSelectedBadgeId}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Choose a badge" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(() => {
-                    const availableBadges =
-                      badges?.filter((badge) => {
-                        // Show all badges except the current one if changing
-                        if (
-                          selectedStudent?.hasBadge &&
-                          selectedStudent?.badge
-                        ) {
-                          return badge.id !== selectedStudent.badge.id;
-                        }
-                        return true;
-                      }) || [];
-
-                    if (availableBadges.length === 0) {
-                      return (
-                        <div className="px-2 py-4 text-center text-sm text-gray-500">
-                          No available badges
-                        </div>
-                      );
-                    }
-
-                    return availableBadges.map((badge) => (
-                      <SelectItem key={badge.id} value={badge.id}>
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={badge.imageData}
-                            alt={badge.name}
-                            className="w-6 h-6 object-contain rounded-sm"
-                          />
-                          {badge.name}
-                        </div>
-                      </SelectItem>
-                    ));
-                  })()}
-                </SelectContent>
-              </Select>
+            {/* Add New Badge Section */}
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-medium text-[var(--main-text)] mb-3">
+                Assign New Badge
+              </h3>
+              <div className="flex gap-2">
+                <Select
+                  value={selectedBadgeId}
+                  onValueChange={setSelectedBadgeId}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Choose a badge to assign" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {badges && badges.length > 0 ? (
+                      badges.map((badge) => (
+                        <SelectItem key={badge.id} value={badge.id}>
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={badge.imageData}
+                              alt={badge.name}
+                              className="w-6 h-6 object-contain rounded-sm"
+                            />
+                            {badge.name}
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-4 text-center text-sm text-gray-500">
+                        No available badges
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={assignBadgeToStudent}
+                  disabled={!selectedBadgeId}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                >
+                  Assign
+                </Button>
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="flex justify-between">
-            <div className="flex gap-2">
-              {selectedStudent?.hasBadge && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    removeBadgeFromStudent(selectedStudent);
-                    setIsBadgeDialogOpen(false);
-                    setSelectedStudent(null);
-                    setSelectedBadgeId("");
-                  }}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  Remove Badge
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={assignBadgeToStudent}
-                disabled={!selectedBadgeId}
-                className="bg-primary hover:bg-primary/90 text-white"
-              >
-                {selectedStudent?.hasBadge ? "Change Badge" : "Assign Badge"}
-              </Button>
-            </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsViewDialogOpen(false);
+                setViewStudent(null);
+                setSelectedBadgeId("");
+              }}
+            >
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

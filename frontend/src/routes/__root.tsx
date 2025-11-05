@@ -22,7 +22,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const Route = createRootRoute({
   component: RootComponent,
-});
+})
 
 function RootComponent() {
   const { data: session } = authClient.useSession();

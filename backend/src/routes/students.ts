@@ -30,43 +30,118 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
 
       // For administrators, filter students by organization
       if (session.user.role === "administrator" && session.user.organizationId) {
-        const result = await db
+        // Get all students
+        const allStudents = await db
           .select({
             studentId: students.studentId,
             name: students.name,
             email: students.email,
-            hasBadge: students.hasBadge,
-            badgeId: students.badgeId, // This is the badge assignment ID
-            badge: createdBadges,
             createdAt: students.createdAt,
             updatedAt: students.updatedAt,
             organizationId: students.organizationId
           })
           .from(students)
-          .leftJoin(badges, eq(students.badgeId, badges.id))
-          .leftJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
           .where(eq(students.organizationId, session.user.organizationId));
-        
-        return { students: result };
+
+        // Get all badge assignments for students in this organization
+        const userRecords = await db
+          .select({ id: user.id, email: user.email })
+          .from(user)
+          .where(eq(user.organizationId, session.user.organizationId));
+
+        const userIdMap = new Map(userRecords.map(u => [u.email, u.id]));
+        const userIds = Array.from(userIdMap.values());
+
+        // Get all badge assignments for these users
+        const badgeAssignments = userIds.length > 0 ? await db
+          .select({
+            userId: badges.userId,
+            assignmentId: badges.id,
+            earnedAt: badges.earnedAt,
+            badge: createdBadges,
+          })
+          .from(badges)
+          .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
+          .innerJoin(user, eq(badges.userId, user.id))
+          .where(eq(user.organizationId, session.user.organizationId)) : [];
+
+        // Group badges by user email
+        const badgesByEmail = new Map<string, any[]>();
+        for (const assignment of badgeAssignments) {
+          const userEmail = userRecords.find(u => u.id === assignment.userId)?.email;
+          if (userEmail) {
+            if (!badgesByEmail.has(userEmail)) {
+              badgesByEmail.set(userEmail, []);
+            }
+            badgesByEmail.get(userEmail)!.push({
+              assignmentId: assignment.assignmentId,
+              earnedAt: assignment.earnedAt,
+              badge: assignment.badge,
+            });
+          }
+        }
+
+        // Combine students with their badges
+        const studentsWithBadges = allStudents.map(student => ({
+          ...student,
+          badges: badgesByEmail.get(student.email) || [],
+        }));
+
+        return { students: studentsWithBadges };
       }
-      
+
       // For non-administrators or if no organizationId is available
-      const result = await db
+      const allStudents = await db
         .select({
           studentId: students.studentId,
           name: students.name,
           email: students.email,
-          hasBadge: students.hasBadge,
-          badgeId: students.badgeId, // This is the badge assignment ID
-          badge: createdBadges,
           createdAt: students.createdAt,
           updatedAt: students.updatedAt,
         })
-        .from(students)
-        .leftJoin(badges, eq(students.badgeId, badges.id))
-        .leftJoin(createdBadges, eq(badges.badgeId, createdBadges.id));
-      
-      return { students: result };
+        .from(students);
+
+      // Get all users and their badges
+      const userRecords = await db
+        .select({ id: user.id, email: user.email })
+        .from(user);
+
+      const userIdMap = new Map(userRecords.map(u => [u.email, u.id]));
+      const userIds = Array.from(userIdMap.values());
+
+      const badgeAssignments = userIds.length > 0 ? await db
+        .select({
+          userId: badges.userId,
+          assignmentId: badges.id,
+          earnedAt: badges.earnedAt,
+          badge: createdBadges,
+        })
+        .from(badges)
+        .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id)) : [];
+
+      // Group badges by user email
+      const badgesByEmail = new Map<string, any[]>();
+      for (const assignment of badgeAssignments) {
+        const userEmail = userRecords.find(u => u.id === assignment.userId)?.email;
+        if (userEmail) {
+          if (!badgesByEmail.has(userEmail)) {
+            badgesByEmail.set(userEmail, []);
+          }
+          badgesByEmail.get(userEmail)!.push({
+            assignmentId: assignment.assignmentId,
+            earnedAt: assignment.earnedAt,
+            badge: assignment.badge,
+          });
+        }
+      }
+
+      // Combine students with their badges
+      const studentsWithBadges = allStudents.map(student => ({
+        ...student,
+        badges: badgesByEmail.get(student.email) || [],
+      }));
+
+      return { students: studentsWithBadges };
     } catch (error) {
       console.error("Error fetching students:", error);
       return { error: String(error) };
@@ -95,29 +170,51 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         }
         
         // Build the query with all conditions
-        const student = await db
+        const studentResult = await db
           .select({
             studentId: students.studentId,
             name: students.name,
             email: students.email,
-            hasBadge: students.hasBadge,
-            badgeId: students.badgeId,
-            badge: createdBadges,
             createdAt: students.createdAt,
             updatedAt: students.updatedAt,
             organizationId: students.organizationId
           })
           .from(students)
-          .leftJoin(badges, eq(students.badgeId, badges.id))
-          .leftJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
           .where(and(...whereConditions))
           .limit(1);
 
-        if (student.length === 0) {
+        if (studentResult.length === 0) {
           return { error: "Student not found" };
         }
 
-        return { student: student[0] };
+        const student = studentResult[0];
+
+        // Get badges for this student via user email
+        const userRecord = await db
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.email, student.email))
+          .limit(1);
+
+        let studentBadges: any[] = [];
+        if (userRecord.length > 0) {
+          studentBadges = await db
+            .select({
+              assignmentId: badges.id,
+              earnedAt: badges.earnedAt,
+              badge: createdBadges,
+            })
+            .from(badges)
+            .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id))
+            .where(eq(badges.userId, userRecord[0].id));
+        }
+
+        return {
+          student: {
+            ...student,
+            badges: studentBadges,
+          }
+        };
       } catch (error) {
         console.error("Error fetching student:", error);
         return { error: String(error) };
@@ -159,8 +256,6 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             studentId: body.studentId,
             name: body.name,
             email: body.email,
-            hasBadge: body.hasBadge || false,
-            badgeId: body.badgeId,
             organizationId: session.user.organizationId, // Associate with organization
           })
           .returning();
@@ -235,8 +330,6 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         studentId: t.String(),
         name: t.String(),
         email: t.String(),
-        hasBadge: t.Optional(t.Boolean()),
-        badgeId: t.Optional(t.String()),
       }),
     },
   )
@@ -259,10 +352,15 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           return { error: "Only administrators can resend badge emails" };
         }
 
-        const { studentId } = context.body;
+        const { studentId, assignmentId } = context.body;
         if (!studentId) {
           context.set.status = 400;
           return { error: "studentId is required" };
+        }
+
+        if (!assignmentId) {
+          context.set.status = 400;
+          return { error: "assignmentId is required" };
         }
 
         const studentResult = await db
@@ -270,8 +368,6 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             studentId: students.studentId,
             email: students.email,
             name: students.name,
-            hasBadge: students.hasBadge,
-            badgeId: students.badgeId,
             organizationId: students.organizationId,
           })
           .from(students)
@@ -294,19 +390,28 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           return { error: "You can only resend badges for your organization" };
         }
 
-        if (!student.hasBadge || !student.badgeId) {
-          context.set.status = 400;
-          return { error: "Student does not have an assigned badge" };
+        // Find the user by email
+        const userResult = await db
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.email, student.email))
+          .limit(1);
+
+        if (!userResult.length) {
+          context.set.status = 404;
+          return { error: "User account not found for student" };
         }
 
+        // Get the specific badge assignment by assignmentId
         const badgeAssignmentResult = await db
           .select({
             id: badges.id,
             badgeId: badges.badgeId,
             userId: badges.userId,
+            earnedAt: badges.earnedAt,
           })
           .from(badges)
-          .where(eq(badges.id, student.badgeId))
+          .where(and(eq(badges.id, assignmentId), eq(badges.userId, userResult[0].id)))
           .limit(1);
 
         if (!badgeAssignmentResult.length) {
@@ -349,8 +454,6 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
 
           hasLoggedIn = existingSession.length > 0;
         }
-
-        const assignmentId = badgeAssignment.id;
 
         const callbackURL = hasLoggedIn
           ? `${frontend}/badges/${encodeURIComponent(assignmentId)}?existing=1`
@@ -397,6 +500,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
     {
       body: t.Object({
         studentId: t.String(),
+        assignmentId: t.String(),
       }),
     },
   )
@@ -431,16 +535,12 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
           }
         }
         
-        // Build update data, but only include badgeId if it was explicitly provided
-        const updateData: any = {
+        // Build update data
+        const updateData = {
           name: body.name,
           email: body.email,
-          hasBadge: body.hasBadge,
           updatedAt: new Date(),
         };
-        if (Object.prototype.hasOwnProperty.call(body, "badgeId")) {
-          updateData.badgeId = body.badgeId;
-        }
 
         const updatedStudent = await db
           .update(students)
@@ -465,8 +565,6 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
       body: t.Object({
         name: t.String(),
         email: t.String(),
-        hasBadge: t.Boolean(),
-        badgeId: t.Optional(t.String()),
       }),
     },
   )
@@ -514,7 +612,7 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
 
         const studentEmail = target[0].email;
 
-        // Perform cascading deletes in a transaction: clear student FK -> badges -> user deps -> user -> student
+        // Perform cascading deletes in a transaction
         await db.transaction(async (tx) => {
           // Find associated user by email
           const u = await tx
@@ -522,12 +620,6 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
             .from(user)
             .where(eq(user.email, studentEmail))
             .limit(1);
-
-          // Clear student's badge reference first to satisfy FK (students.badge_id -> badges.id)
-          await tx
-            .update(students)
-            .set({ badgeId: null, hasBadge: false, updatedAt: new Date() })
-            .where(eq(students.studentId, params.studentId));
 
           if (u.length && u[0].role === "student") {
             const uid = u[0].id;

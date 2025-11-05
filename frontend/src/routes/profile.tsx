@@ -67,8 +67,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfileComponent() {
-  const { data: session, isPending: isSessionLoading } =
-    authClient.useSession();
+  const { data: session, isPending: isSessionLoading } = authClient.useSession();
   const [biography, setBiography] = React.useState("");
   const [initialBiography, setInitialBiography] = React.useState("");
   const [isPublic, setIsPublic] = React.useState(true);
@@ -358,20 +357,6 @@ function ProfileComponent() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-text-muted">Profile</h1>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="profile-visibility"
-                  checked={isPublic}
-                  onCheckedChange={handleToggleVisibility}
-                  disabled={isTogglingVisibility}
-                />
-                <Label
-                  htmlFor="profile-visibility"
-                  className="text-sm text-text-muted"
-                >
-                  Allow my profile to be publically visible
-                </Label>
-              </div>
             </div>
 
             {/* Personal Summary Section in rounded div with background */}

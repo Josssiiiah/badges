@@ -4,11 +4,10 @@ import {
   createdBadges,
   badges,
   user,
-  students,
   session as sessionTable,
 } from "../db/schema";
 import { nanoid } from "nanoid";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { setup } from "../setup";
 import { userMiddleware } from "../middleware/auth-middleware";
 import { sendBatchMagicLinkEmails } from "../services/email";
@@ -231,17 +230,28 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       
       // If administrator, verify the badge belongs to their organization
       if (
-        session.user.role === "administrator" && 
-        session.user.organizationId && 
+        session.user.role === "administrator" &&
+        session.user.organizationId &&
         badge[0].organizationId !== session.user.organizationId
       ) {
         return { error: "Badge does not belong to your organization" };
       }
 
-      // Delete any existing badge assignments for this user first
-      // (since a user should only have one badge at a time)
-      await db.delete(badges).where(eq(badges.userId, userId));
-      
+      // Check if this user already has this specific badge assigned
+      const existingAssignment = await db
+        .select({ id: badges.id })
+        .from(badges)
+        .where(and(eq(badges.userId, userId), eq(badges.badgeId, badgeId)))
+        .limit(1);
+
+      if (existingAssignment.length > 0) {
+        return {
+          message: "User already has this badge assigned",
+          assignment: existingAssignment[0],
+          alreadyAssigned: true
+        };
+      }
+
       // Create the assignment
       const assignment = await db
         .insert(badges)
@@ -306,17 +316,57 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       
       // If administrator, verify the badge belongs to their organization
       if (
-        session.user.role === "administrator" && 
-        session.user.organizationId && 
+        session.user.role === "administrator" &&
+        session.user.organizationId &&
         badge[0].organizationId !== session.user.organizationId
       ) {
         return { error: "Badge does not belong to your organization" };
       }
 
-      // Delete any existing badge assignments for this user first
-      // (since a user should only have one badge at a time)
-      await db.delete(badges).where(eq(badges.userId, userId));
-      
+      // Check if user is an existing user BEFORE creating the assignment
+      // (has verified email, sessions, or other badges)
+      // Use Boolean() to handle SQLite integer (1/0) vs boolean (true/false)
+      let hasLoggedIn = Boolean(userResult[0].emailVerified);
+
+      if (!hasLoggedIn) {
+        // Check for existing sessions
+        const existingSession = await db
+          .select({ id: sessionTable.id })
+          .from(sessionTable)
+          .where(eq(sessionTable.userId, userId))
+          .limit(1);
+
+        hasLoggedIn = existingSession.length > 0;
+      }
+
+      // If still not confirmed, check if they have other badge assignments
+      // (if they have other badges, they're definitely an existing user)
+      if (!hasLoggedIn) {
+        const existingBadges = await db
+          .select({ id: badges.id })
+          .from(badges)
+          .where(eq(badges.userId, userId))
+          .limit(1);
+
+        hasLoggedIn = existingBadges.length > 0;
+      }
+
+      // Check if this user already has this specific badge assigned
+      const existingAssignment = await db
+        .select({ id: badges.id })
+        .from(badges)
+        .where(and(eq(badges.userId, userId), eq(badges.badgeId, badgeId)))
+        .limit(1);
+
+      if (existingAssignment.length > 0) {
+        return {
+          message: "User already has this badge assigned",
+          assignment: existingAssignment[0],
+          alreadyAssigned: true,
+          inviteSent: false
+        };
+      }
+
       // Create the assignment
       const assignment = await db
         .insert(badges)
@@ -332,19 +382,6 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
         const frontend = process.env.FRONTEND_URL || "http://localhost:3001";
         const backendOrigin = process.env.BACKEND_URL || "http://localhost:3000";
         const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
-        
-        // Check if user has verified email (existing user) or not (new student)
-        let hasLoggedIn = userResult[0].emailVerified === true;
-
-        if (!hasLoggedIn) {
-          const existingSession = await db
-            .select({ id: sessionTable.id })
-            .from(sessionTable)
-            .where(eq(sessionTable.userId, userId))
-            .limit(1);
-
-          hasLoggedIn = existingSession.length > 0;
-        }
         
         // Different callback URLs for existing vs new users
         let callbackURL;
@@ -600,25 +637,9 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
           return { error: "Badge not found or you don't have permission to delete it" };
         }
 
-        // Revoke assignments from students, delete assignments, then delete the badge template
+        // Delete assignments and badge template
         const deleted = await db.transaction(async (tx) => {
-          // Collect assignment IDs for this template
-          const assignmentRows = await tx
-            .select({ id: badges.id })
-            .from(badges)
-            .where(eq(badges.badgeId, badgeId));
-
-          const assignmentIds = assignmentRows.map((r) => r.id);
-
-          // Clear student references first to satisfy FK: students.badge_id -> badges.id
-          if (assignmentIds.length > 0) {
-            await tx
-              .update(students)
-              .set({ badgeId: null, hasBadge: false, updatedAt: new Date() })
-              .where(inArray(students.badgeId, assignmentIds));
-          }
-
-          // Delete badge assignments
+          // Delete badge assignments (cascade will handle cleanup)
           await tx.delete(badges).where(eq(badges.badgeId, badgeId));
 
           // Delete the badge template
@@ -636,43 +657,36 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       }
     }
   )
-  // Remove badge assignment for a user by email
+  // Remove specific badge assignment
   .delete(
-    "/remove-assignment-by-email/:email",
+    "/remove-assignment/:assignmentId",
     async (context) => {
       try {
         const { params } = context;
-        const { email } = params;
+        const assignmentId = params.assignmentId;
         const session = await userMiddleware(context);
-        
         if (!session.user) {
           return { error: "Unauthorized" };
         }
-        
+
         // Only administrators can remove badge assignments
         if (session.user.role !== "administrator") {
           return { error: "Only administrators can remove badge assignments" };
         }
-        
-        // Find the user by email
-        const userResult = await db
-          .select({ id: user.id })
-          .from(user)
-          .where(eq(user.email, decodeURIComponent(email)))
-          .limit(1);
-        
-        if (userResult.length === 0) {
-          return { error: "User not found" };
-        }
-        
-        const userId = userResult[0].id;
-        
-        // Delete all badge assignments for this user
+
+        // Delete only the specific badge assignment by assignment ID
         const deleted = await db
           .delete(badges)
-          .where(eq(badges.userId, userId))
+          .where(
+              eq(badges.id, assignmentId)
+          )
           .returning();
-        
+        console.log(deleted);
+
+        if (deleted.length === 0) {
+          return { error: "Badge assignment not found" };
+        }
+
         return { success: true, deleted: deleted.length };
       } catch (error) {
         console.error("Error removing badge assignment:", error);
@@ -752,9 +766,19 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
 
           const userId = userResult[0].id;
 
-          // Delete any existing badge assignments for this user first
-          await db.delete(badges).where(eq(badges.userId, userId));
-          
+          // Check if this user already has this specific badge assigned
+          const existingAssignment = await db
+            .select({ id: badges.id })
+            .from(badges)
+            .where(and(eq(badges.userId, userId), eq(badges.badgeId, badgeId)))
+            .limit(1);
+
+          if (existingAssignment.length > 0) {
+            // User already has this badge, skip
+            console.log(`[bulk-assign] User ${email} already has badge ${badgeId}, skipping`);
+            continue;
+          }
+
           // Create the assignment
           const assignment = await db
             .insert(badges)

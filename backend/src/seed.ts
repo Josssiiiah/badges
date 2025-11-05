@@ -238,8 +238,6 @@ async function seedStudents() {
       studentId: student.studentId,
       name: student.name,
       email: student.email,
-      hasBadge: student.hasBadge,
-      badgeId: student.badgeId,
       organizationId: student.organizationId,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -29,13 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Trash2,
-  PlusCircle,
-  Copy,
-  Share2,
-  Users,
-} from "lucide-react";
+import { Trash2, PlusCircle, Copy, Share2, Users } from "lucide-react";
 import { fetchWithAuth } from "@/lib/api-client";
 import { nanoid } from "nanoid";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,6 +44,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Badge = {
   id: string;
@@ -79,6 +74,7 @@ export function StudentDashboard({
   students?: Student[];
   badges?: Badge[];
 }) {
+  const queryClient = useQueryClient();
   const [localStudents, setLocalStudents] = useState<Student[]>(students);
   const [loading, setLoading] = useState<boolean>(students.length === 0);
   const [newStudent, setNewStudent] = useState({
@@ -97,7 +93,7 @@ export function StudentDashboard({
   const [viewStudent, setViewStudent] = useState<Student | null>(null);
   const [isResending, setIsResending] = useState<string | null>(null);
 
-  // Update students state when students prop changes
+  // Sync local state with prop changes from React Query
   useEffect(() => {
     if (students.length > 0) {
       setLocalStudents(students);
@@ -105,7 +101,7 @@ export function StudentDashboard({
     } else if (localStudents.length === 0) {
       fetchStudents();
     }
-  }, [students]);
+  }, [students]); // Re-sync whenever React Query updates the students
 
   const fetchStudents = async () => {
     if (students.length > 0) {
@@ -222,15 +218,15 @@ export function StudentDashboard({
         throw new Error(result?.error || "Failed to update student");
       }
 
-      // Update local state
-      setLocalStudents([...localStudents, result.student]);
-
       // Reset form
       setNewStudent({
         studentId: "",
         name: "",
         email: "",
       });
+
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
 
       toast({
         variant: "success",
@@ -247,7 +243,10 @@ export function StudentDashboard({
     }
   };
 
-  const removeBadgeFromStudent = async (student: Student, assignmentId: string) => {
+  const removeBadgeFromStudent = async (
+    student: Student,
+    assignmentId: string
+  ) => {
     try {
       // Delete the specific badge assignment
       const deleteResponse = await fetchWithAuth(
@@ -257,23 +256,20 @@ export function StudentDashboard({
 
       if (!deleteResponse.ok) {
         const deleteResult = await deleteResponse.json();
-        throw new Error(deleteResult.error || "Failed to delete badge assignment");
+        throw new Error(
+          deleteResult.error || "Failed to delete badge assignment"
+        );
       }
 
-      // Update local state - remove the specific badge from the student
+      // Invalidate and refetch - let React Query handle the state update
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+
+      // Update viewStudent to reflect the change immediately
       const updatedStudent = {
         ...student,
-        badges: student.badges.filter(b => b.assignmentId !== assignmentId)
+        badges: student.badges.filter((b) => b.assignmentId !== assignmentId),
       };
-
       setViewStudent(updatedStudent);
-      setLocalStudents(
-        localStudents.map((s) =>
-          s.studentId === student.studentId
-            ? updatedStudent
-            : s
-        )
-      );
 
       toast({
         variant: "success",
@@ -318,35 +314,28 @@ export function StudentDashboard({
         return;
       }
 
-      // Find the badge template for display
+      // Reset badge selection
+      setSelectedBadgeId("");
+
+      // Invalidate and refetch - let React Query handle the state update
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+
+      // Update viewStudent to reflect the change immediately
       const selectedBadgeTemplate = badges.find(
         (badge) => badge.id === selectedBadgeId
       );
-
-      // Add the new badge to the student's badges array
       const newBadgeAssignment: BadgeAssignment = {
         assignmentId: badgeAssignment.assignment.id,
         earnedAt: new Date(),
         badge: selectedBadgeTemplate!,
       };
-
-      // Update local state for both viewStudent and localStudents
       const updatedStudent = {
         ...viewStudent,
-        badges: viewStudent.badges ? [...viewStudent.badges, newBadgeAssignment] : [newBadgeAssignment]
+        badges: viewStudent.badges
+          ? [...viewStudent.badges, newBadgeAssignment]
+          : [newBadgeAssignment],
       };
-
       setViewStudent(updatedStudent);
-      setLocalStudents(
-        localStudents.map((s) =>
-          s.studentId === viewStudent.studentId
-            ? updatedStudent
-            : s
-        )
-      );
-
-      // Reset badge selection
-      setSelectedBadgeId("");
 
       toast({
         variant: "success",
@@ -371,7 +360,7 @@ export function StudentDashboard({
         method: "POST",
         body: JSON.stringify({
           studentId: student.studentId,
-          assignmentId: assignmentId
+          assignmentId: assignmentId,
         }),
       });
 
@@ -415,8 +404,14 @@ export function StudentDashboard({
         throw new Error("Failed to delete student");
       }
 
-      // Update local state
-      setLocalStudents(localStudents.filter((s) => s.studentId !== studentId));
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+
+      // Close the view dialog if the deleted student was being viewed
+      if (viewStudent?.studentId === studentId) {
+        setViewStudent(null);
+        setIsViewDialogOpen(false);
+      }
 
       toast({
         variant: "success",
@@ -566,15 +561,15 @@ export function StudentDashboard({
         }
       }
 
-      // Update local state with all successfully added students
-      if (addedStudents.length > 0) {
-        setLocalStudents([...localStudents, ...addedStudents]);
-      }
-
       // Reset form
       setBulkEmails("");
       setBulkAssignBadge(false);
       setBulkBadgeId("");
+
+      // Invalidate and refetch to get updated student list
+      if (addedStudents.length > 0) {
+        await queryClient.invalidateQueries({ queryKey: ["students"] });
+      }
 
       // Show results
       if (addedStudents.length > 0 && failedStudents.length === 0) {
@@ -775,7 +770,9 @@ export function StudentDashboard({
               <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
                 <TableHead className="text-[var(--main-text)]">Name</TableHead>
                 <TableHead className="text-[var(--main-text)]">Email</TableHead>
-                <TableHead className="text-[var(--main-text)]">Badges</TableHead>
+                <TableHead className="text-[var(--main-text)]">
+                  Badges
+                </TableHead>
                 <TableHead className="text-right text-[var(--main-text)]">
                   Actions
                 </TableHead>
@@ -819,7 +816,8 @@ export function StudentDashboard({
                     <TableCell className="text-[var(--main-text)]">
                       {student.badges && student.badges.length > 0 ? (
                         <span className="text-sm font-medium">
-                          {student.badges.length} {student.badges.length === 1 ? 'badge' : 'badges'}
+                          {student.badges.length}{" "}
+                          {student.badges.length === 1 ? "badge" : "badges"}
                         </span>
                       ) : (
                         <span className="text-[var(--main-text)]/60 text-sm">
@@ -881,7 +879,9 @@ export function StudentDashboard({
 
           <div className="space-y-6 py-4">
             {/* Current Badges */}
-            {viewStudent && viewStudent.badges && viewStudent.badges.length > 0 ? (
+            {viewStudent &&
+            viewStudent.badges &&
+            viewStudent.badges.length > 0 ? (
               <div>
                 <h3 className="text-sm font-medium text-[var(--main-text)] mb-3">
                   Current Badges ({viewStudent.badges.length})
@@ -900,13 +900,18 @@ export function StudentDashboard({
                             {badgeAssignment.badge.name}
                           </h4>
                           <p className="text-xs text-[var(--main-text)]/60 mb-2">
-                            Earned: {new Date(badgeAssignment.earnedAt).toLocaleDateString()}
+                            Earned:{" "}
+                            {new Date(
+                              badgeAssignment.earnedAt
+                            ).toLocaleDateString()}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => copyBadgeUrl(badgeAssignment.assignmentId)}
+                              onClick={() =>
+                                copyBadgeUrl(badgeAssignment.assignmentId)
+                              }
                               className="h-8 text-xs"
                             >
                               <Copy className="h-3 w-3 mr-1" />
@@ -915,12 +920,21 @@ export function StudentDashboard({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => resendBadgeEmail(viewStudent, badgeAssignment.assignmentId)}
-                              disabled={isResending === badgeAssignment.assignmentId}
+                              onClick={() =>
+                                resendBadgeEmail(
+                                  viewStudent,
+                                  badgeAssignment.assignmentId
+                                )
+                              }
+                              disabled={
+                                isResending === badgeAssignment.assignmentId
+                              }
                               className="h-8 text-xs"
                             >
                               <Share2 className="h-3 w-3 mr-1" />
-                              {isResending === badgeAssignment.assignmentId ? "Sending..." : "Resend Email"}
+                              {isResending === badgeAssignment.assignmentId
+                                ? "Sending..."
+                                : "Resend Email"}
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -939,13 +953,21 @@ export function StudentDashboard({
                                     Remove this badge?
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This will remove the "{badgeAssignment.badge.name}" badge from {viewStudent.name}. This action cannot be undone.
+                                    This will remove the "
+                                    {badgeAssignment.badge.name}" badge from{" "}
+                                    {viewStudent.name}. This action cannot be
+                                    undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => removeBadgeFromStudent(viewStudent, badgeAssignment.assignmentId)}
+                                    onClick={() =>
+                                      removeBadgeFromStudent(
+                                        viewStudent,
+                                        badgeAssignment.assignmentId
+                                      )
+                                    }
                                     className="bg-red-600 hover:bg-red-700 text-white"
                                   >
                                     Remove
@@ -1009,7 +1031,6 @@ export function StudentDashboard({
                 </Button>
               </div>
             </div>
-
           </div>
 
           <DialogFooter>
@@ -1026,7 +1047,6 @@ export function StudentDashboard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

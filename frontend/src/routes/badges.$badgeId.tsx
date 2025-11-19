@@ -70,7 +70,7 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
@@ -83,7 +83,7 @@ const floatAnimation = {
     y: [-5, 5, -5],
     transition: {
       duration: 4,
-      ease: "easeInOut",
+      ease: "easeInOut" as const,
       repeat: Infinity,
     },
   },
@@ -379,7 +379,7 @@ function BadgeViewComponent() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{
                           delay: 0.2,
-                          type: "spring",
+                          type: "spring" as const,
                           stiffness: 200,
                         }}
                         className="mt-6 text-center"

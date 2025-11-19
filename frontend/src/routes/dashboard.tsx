@@ -38,7 +38,7 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 100,
       damping: 15,
     },
@@ -124,16 +124,23 @@ function Dashboard() {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-xl mx-auto bg-surface border border-gray-light rounded-xl p-6 text-center">
-          <h2 className="text-2xl font-semibold text-text mb-2">Verify your email</h2>
+          <h2 className="text-2xl font-semibold text-text mb-2">
+            Verify your email
+          </h2>
           <p className="text-text-muted mb-6">
-            Please confirm your email address to access your dashboard. We can resend the verification email if needed.
+            Please confirm your email address to access your dashboard. We can
+            resend the verification email if needed.
           </p>
           <div className="flex gap-3 justify-center">
             <Button
               onClick={async () => {
                 try {
-                  const resp = await fetchWithAuth("api/auth/send-verification-email", { method: "POST" });
-                  if (!resp.ok) throw new Error("Failed to send verification email");
+                  const resp = await fetchWithAuth(
+                    "api/auth/send-verification-email",
+                    { method: "POST" }
+                  );
+                  if (!resp.ok)
+                    throw new Error("Failed to send verification email");
                   alert("Verification email sent. Please check your inbox.");
                 } catch (e) {
                   alert(e instanceof Error ? e.message : "Error sending email");

@@ -72,7 +72,7 @@ const cardVariant = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 260,
       damping: 20,
     },
@@ -103,7 +103,10 @@ function HomeComponent() {
   // After email verification, Better Auth redirects here and sets a session.
   // If the user is an administrator and verified, route to the admin dashboard.
   useEffect(() => {
-    if (session?.user?.role === "administrator" && session?.user?.emailVerified) {
+    if (
+      session?.user?.role === "administrator" &&
+      session?.user?.emailVerified
+    ) {
       navigate({ to: "/admin", replace: true });
     }
   }, [session, navigate]);

@@ -18,6 +18,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -621,6 +622,9 @@ export function StudentDashboard({
             <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
               <DialogHeader>
                 <DialogTitle>Add Multiple Students</DialogTitle>
+                <DialogDescription>
+                  Enter email addresses to import students in bulk.
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -713,6 +717,9 @@ export function StudentDashboard({
             <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
+                <DialogDescription>
+                  Enter the details of the new student below.
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -895,6 +902,9 @@ export function StudentDashboard({
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Manage Badges for {viewStudent?.name}
             </DialogTitle>
+            <DialogDescription>
+              View and manage badges for this student.
+            </DialogDescription>
             <p className="text-sm text-gray-500 mt-1">{viewStudent?.email}</p>
           </DialogHeader>
 

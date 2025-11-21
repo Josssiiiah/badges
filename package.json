@@ -5,6 +5,7 @@
     "world": "bun run --cwd backend dev & bun run --cwd frontend dev & bun run --cwd backend drizzle-kit studio --config drizzle.config.ts",
     "build": "bun run --cwd frontend build && rm -rf backend/dist/* && cp -r frontend/dist/* backend/dist/ && cp frontend/public/*.png backend/dist/",
     "deploy": "bun run build && bun run --cwd backend dev",
+    "test": "bun run --cwd backend vitest run && bun run --cwd frontend vitest run",
     "db:push": "bun run --cwd backend drizzle-kit push",
     "db:generate": "bun run --cwd backend drizzle-kit generate",
     "db:migrate": "bun run --cwd backend drizzle-kit migrate",

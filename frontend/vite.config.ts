@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,8 +10,14 @@ import type { PluginOption } from "vite";
 export default defineConfig({
   root: path.resolve(__dirname), // point root at frontend/
   publicDir: "../backend/src/public", // <-- point Vite at your actual static folder
-  plugins: [react(), TanStackRouterVite(), tailwindcss()],
+  plugins: [react(), TanStackRouterVite(), tailwindcss()] as any,
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
+  },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.ts",
+    include: ["src/**/*.test.{ts,tsx}"],
   },
 });

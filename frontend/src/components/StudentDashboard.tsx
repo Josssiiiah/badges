@@ -897,7 +897,7 @@ export function StudentDashboard({
 
       {/* View/Manage Student Badges Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-white border border-gray-200 shadow-lg max-h-[80vh] overflow-y-auto [&>button]:hidden">
+        <DialogContent className="sm:max-w-[600px] bg-white border border-gray-200 shadow-lg max-h-[80vh] overflow-y-auto [&>button]:hidden left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Manage Badges for {viewStudent?.name}

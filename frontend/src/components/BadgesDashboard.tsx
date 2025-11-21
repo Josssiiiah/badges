@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -62,8 +63,26 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
   const [skills, setSkills] = useState("");
   const [earningCriteria, setEarningCriteria] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [editingBadge, setEditingBadge] = useState<Badge | null>(null);
   const { toast } = useToast();
+
+  // Cleanup preview URL on unmount or when dialogs close
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
+  // Clean up preview when dialogs close
+  useEffect(() => {
+    if (!isCreateOpen && !isEditOpen && imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+  }, [isCreateOpen, isEditOpen]);
 
   // Upload badge mutation
   const uploadBadge = useMutation<Badge, Error, void>({
@@ -207,10 +226,22 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
           description: "Please select an image file (PNG, JPG, GIF).",
         });
         setImage(null);
+        // Clean up existing preview if any
+        if (imagePreview) {
+          URL.revokeObjectURL(imagePreview);
+        }
+        setImagePreview(null);
         e.target.value = "";
         return;
       }
+      // Clean up previous preview URL if it exists
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
       setImage(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     }
   };
 
@@ -248,6 +279,11 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
     setSkills("");
     setEarningCriteria("");
     setImage(null);
+    // Clean up preview URL if it exists
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
     const fileInput = document.getElementById("image") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
@@ -260,6 +296,12 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
     setCourseLink(badge.courseLink || "");
     setSkills(badge.skills || "");
     setEarningCriteria(badge.earningCriteria || "");
+    // Clear any existing preview when opening edit dialog
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+    setImage(null);
     setIsEditOpen(true);
   };
 
@@ -295,7 +337,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
   const renderBadgeForm = (
     isEdit = false,
-    onSubmit: (e: React.FormEvent) => void,
+    onSubmit: (e: React.FormEvent) => void
   ) => {
     const isPending = isEdit ? editBadge.isPending : uploadBadge.isPending;
     const isDeleting = deleteBadge.isPending;
@@ -305,9 +347,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
         <div className="space-y-4 py-4 px-1 overflow-y-auto flex-1">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">
-                Badge Name
-              </Label>
+              <Label htmlFor="name">Badge Name</Label>
               <Input
                 id="name"
                 value={name}
@@ -318,9 +358,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="issuedBy">
-                Issued By
-              </Label>
+              <Label htmlFor="issuedBy">Issued By</Label>
               <Input
                 id="issuedBy"
                 value={issuedBy}
@@ -332,21 +370,18 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">
-              Description
-            </Label>
-            <Input
+            <Label htmlFor="description">Description</Label>
+            <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description of the badge"
               disabled={isPending}
+              rows={3}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="courseLink">
-              Course Link
-            </Label>
+            <Label htmlFor="courseLink">Course Link</Label>
             <Input
               id="courseLink"
               value={courseLink}
@@ -356,9 +391,7 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="skills">
-              Skills
-            </Label>
+            <Label htmlFor="skills">Skills</Label>
             <Input
               id="skills"
               value={skills}
@@ -368,39 +401,60 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="earningCriteria">
-              Earning Criteria
-            </Label>
-            <Input
+            <Label htmlFor="earningCriteria">Earning Criteria</Label>
+            <Textarea
               id="earningCriteria"
               value={earningCriteria}
               onChange={(e) => setEarningCriteria(e.target.value)}
               placeholder="e.g., Complete all course modules with 80% or higher"
               disabled={isPending}
+              rows={3}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="image">
-              Badge Image
-            </Label>
-            <Input
-              id="image"
-              type="file"
-              accept="image/png, image/jpeg, image/gif"
-              onChange={handleFileChange}
-              required={!isEdit || !editingBadge?.imageData}
-              className="file:mr-4 mt-1 file:px-4 file:rounded-full file:border file:border-black file:bg-transparent file:text-sm file:font-semibold file:text-black hover:file:bg-gray-100 disabled:opacity-50"
-              disabled={isPending}
-            />
+            <Label htmlFor="image">Badge Image</Label>
+            <div className="mt-2 relative">
+              <Input
+                id="image"
+                type="file"
+                accept="image/png, image/jpeg, image/gif"
+                onChange={handleFileChange}
+                required={!isEdit || !editingBadge?.imageData}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:opacity-0 disabled:cursor-not-allowed"
+                disabled={isPending}
+              />
+              <div className="h-10 flex items-center rounded-md border border-neutral-200 bg-transparent px-3 text-base shadow-sm md:text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const fileInput = document.getElementById(
+                      "image"
+                    ) as HTMLInputElement;
+                    fileInput?.click();
+                  }}
+                  disabled={isPending}
+                  className="px-4 py-0 h-full rounded-md text-sm font-semibold text-black cursor-pointer flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {image || imagePreview ? "Change Image" : "Choose File"}
+                </button>
+                <span className="ml-4 text-neutral-500 text-sm">
+                  {image ? image.name : "No file chosen"}
+                </span>
+              </div>
+            </div>
             {editingBadge && !image && isEdit && (
               <p className="text-sm text-text-muted">
                 Using existing image. Upload a new one to replace it.
               </p>
             )}
-            {image && (
-              <p className="text-sm text-text-muted">
-                Selected: {image.name}
-              </p>
+            {imagePreview && (
+              <div className="mt-2">
+                <img
+                  src={imagePreview}
+                  alt="Badge preview"
+                  className="max-w-[200px] max-h-[200px] object-contain border border-gray-light rounded-md p-2 bg-surface-accent/30"
+                />
+              </div>
             )}
           </div>
         </div>
@@ -425,7 +479,9 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
                 <div className="flex items-center gap-2">
                   <div className="mr-2">
                     {isLoadingUsage ? (
-                      <p className="text-sm text-text-muted">Checking usage...</p>
+                      <p className="text-sm text-text-muted">
+                        Checking usage...
+                      </p>
                     ) : (
                       <p className="text-sm text-destructive font-medium">
                         Confirm delete?
@@ -497,17 +553,13 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold tracking-tight text-text">
-        Badges
-      </h2>
+      <h2 className="text-2xl font-bold tracking-tight text-text">Badges</h2>
 
       {/* Create Badge Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Create New Badge
-            </DialogTitle>
+            <DialogTitle>Create New Badge</DialogTitle>
             <DialogDescription>
               Create a new badge by providing the required information.
             </DialogDescription>
@@ -528,12 +580,8 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
       >
         <DialogContent className="sm:max-w-[600px] bg-surface border border-gray-light max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Edit Badge
-            </DialogTitle>
-            <DialogDescription>
-              Update the badge information.
-            </DialogDescription>
+            <DialogTitle>Edit Badge</DialogTitle>
+            <DialogDescription>Update the badge information.</DialogDescription>
           </DialogHeader>
           {renderBadgeForm(true, handleEditSubmit)}
         </DialogContent>

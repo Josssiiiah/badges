@@ -2,7 +2,14 @@ import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { fetchWithAuth } from "@/lib/api-client";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,9 +30,12 @@ export const Route = createFileRoute("/create-account")({
 
 function CreateAccountPage() {
   const navigate = useNavigate();
-  const { data: session, isPending: isSessionPending } = authClient.useSession();
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
 
-  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const params = new URLSearchParams(
+    typeof window !== "undefined" ? window.location.search : ""
+  );
   const assignmentId = params.get("assignmentId") || "";
 
   const [name, setName] = React.useState("");
@@ -92,18 +102,20 @@ function CreateAccountPage() {
     try {
       // Require a session (invite link should have created one). If missing, show expired message.
       if (!session?.user) {
-        setError("Your secure link has expired. Please request a new one from your instructor.");
+        setError(
+          "Your secure link has expired. Please request a new one from your instructor."
+        );
         return;
       }
 
       {
         console.log("[create-account] Changing password for user");
         const { data, error } = await authClient.changePassword({
-          currentPassword: import.meta.env.VITE_TEMP_PASSWORD, 
+          currentPassword: import.meta.env.VITE_TEMP_PASSWORD,
           newPassword: password,
-          revokeOtherSessions: false, 
+          revokeOtherSessions: false,
         });
-        
+
         if (error) {
           console.error("[create-account] Failed to change password:", error);
           throw new Error(error.message || "Failed to change password");
@@ -157,7 +169,8 @@ function CreateAccountPage() {
             <CardHeader>
               <CardTitle>Create your account</CardTitle>
               <CardDescription>
-                Your secure link has expired or is invalid. Please request a new link from your instructor.
+                Your secure link has expired or is invalid. Please request a new
+                link from your instructor.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -169,40 +182,48 @@ function CreateAccountPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto">
+        {/* Badge Display - Above the form */}
+        {loadingBadge ? (
+          <div className="mb-8 flex flex-col items-center">
+            <Skeleton className="h-64 w-64 mb-4" />
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        ) : (
+          badge && (
+            <div className="mb-8 flex flex-col items-center">
+              {badge.imageData ? (
+                <img
+                  src={badge.imageData}
+                  alt={badge.name}
+                  className="h-64 w-auto mb-4 object-contain"
+                />
+              ) : (
+                <div className="h-64 w-64 flex items-center justify-center mb-4 text-text-muted text-lg">
+                  Badge
+                </div>
+              )}
+              <div className="text-center">
+                <div className="font-semibold text-xl mb-1">{badge.name}</div>
+                <div className="text-sm text-text-muted">
+                  Issued by {badge.issuedBy}
+                </div>
+              </div>
+            </div>
+          )
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Create your account</CardTitle>
             <CardDescription>
-              Set your password to continue. Your email is verified via this secure link.
+              Set your password to continue. Your email is verified via this
+              secure link.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loadingBadge ? (
-              <div className="mb-6">
-                <Skeleton className="h-32 w-full" />
-              </div>
-            ) : (
-              badge && (
-                <div className="mb-6 p-4 border rounded-lg bg-surface">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 flex items-center justify-center bg-surface-accent/10 rounded">
-                      {badge.imageData ? (
-                        <img src={badge.imageData} alt={badge.name} className="max-w-full max-h-16 object-contain" />
-                      ) : (
-                        <div className="text-text-muted text-sm">Badge</div>
-                      )}
-                    </div>
-                    <div>
-                      <div className="font-medium">{badge.name}</div>
-                      <div className="text-sm text-text-muted">Issued by {badge.issuedBy}</div>
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
-
             {error && (
-              <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/30 text-red-200 text-sm">
+              <div className="mb-4 p-3 rounded bg-red-500/10 text-red-500 text-sm">
                 {error}
               </div>
             )}
@@ -210,11 +231,21 @@ function CreateAccountPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="text-black" />
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="text-black"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" value={email} readOnly className="text-black opacity-80 cursor-not-allowed" />
+                <Input
+                  id="email"
+                  value={email}
+                  readOnly
+                  className="text-black opacity-80 cursor-not-allowed"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -237,7 +268,11 @@ function CreateAccountPage() {
                   className="text-black"
                 />
               </div>
-              <Button type="submit" disabled={submitting} className="bg-black text-white hover:bg-black/80 w-full">
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="bg-black text-white hover:bg-black/80 w-full"
+              >
                 {submitting ? "Creating account..." : "Create account"}
               </Button>
             </form>

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   User,
   Calendar,
+  Building,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -73,18 +74,6 @@ const itemVariants = {
       type: "spring" as const,
       stiffness: 100,
       damping: 15,
-    },
-  },
-};
-
-const floatAnimation = {
-  initial: { y: 0 },
-  animate: {
-    y: [-5, 5, -5],
-    transition: {
-      duration: 4,
-      ease: "easeInOut" as const,
-      repeat: Infinity,
     },
   },
 };
@@ -264,59 +253,110 @@ function BadgeViewComponent() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="container mx-auto px-4 py-8 relative min-h-screen"
+      className="container mx-auto px-4 pt-24 pb-12 relative min-h-screen bg-[#ffffff]"
     >
-      <motion.div
-        variants={itemVariants}
-        className="max-w-6xl mx-auto space-y-8"
-      >
-        {/* Top Info Bar */}
-        <motion.div
-          variants={itemVariants}
-          whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-          className="bg-surface/80 backdrop-blur-lg rounded-2xl p-6 shadow-md border border-gray-light/20 transition-all"
-        >
-          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/20">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-text-muted text-sm">Issued on</p>
-                <p className="font-medium text-text">{formattedDate}</p>
-              </div>
+      <motion.div variants={itemVariants} className="max-w-5xl mx-auto">
+        {/* Main Badge Content */}
+        <div className="grid md:grid-cols-[300px_1fr] gap-12 items-start">
+          {/* Badge Image (Left Column) */}
+          <motion.div
+            variants={itemVariants}
+            className="w-full flex flex-col space-y-4"
+          >
+            <div className="relative w-full aspect-square rounded-lg overflow-hidden shadow-sm">
+              {badge.imageData ? (
+                <img
+                  src={badge.imageData}
+                  alt={badge.name}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-full h-full rounded-lg bg-gray-100 flex items-center justify-center">
+                  <Award className="h-20 w-20 text-gray-400" />
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/20">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-text-muted text-sm">Issued to</p>
-                <Link
-                  to="/users/$username"
-                  params={{ username: user.name }}
-                  className="font-medium text-text hover:underline"
-                >
-                  {user.name}
-                </Link>
-              </div>
+            {/* Issued By */}
+            <div className="flex items-center gap-2 text-gray-600">
+              <Building className="h-4 w-4" />
+              <span className="text-sm">Issued by</span>
+              <span className="text-sm font-medium text-gray-900">
+                {badge.issuedBy}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2 sm:ml-auto">
+            {/* Description */}
+            {badge.description && (
+              <p className="text-gray-700 leading-relaxed text-sm">
+                {badge.description}
+              </p>
+            )}
+          </motion.div>
+
+          {/* Badge Info (Right Column) */}
+          <motion.div variants={itemVariants} className="space-y-6">
+            {/* Title */}
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-6">
+                {badge.name}
+              </h1>
+            </div>
+
+            {/* Skills */}
+            {badge.skills && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                  Skills
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {badge.skills.split(",").map((skill, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md font-medium"
+                    >
+                      {skill.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Earning Criteria */}
+            {badge.earningCriteria && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                  Earning Criteria
+                </h3>
+                <p className="text-gray-700 leading-relaxed text-base">
+                  {badge.earningCriteria}
+                </p>
+              </div>
+            )}
+
+            {/* Date Obtained */}
+            <div className="space-y-3 pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                Date Obtained
+              </h3>
+              <p className="text-gray-700 text-base">{formattedDate}</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-4">
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsVerified(true)}
-                    className="rounded-full px-4 border-primary text-primary hover:bg-primary/10"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
                   >
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Verify
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] rounded-xl border-0 shadow-lg bg-surface/95 backdrop-blur-md">
+                <DialogContent className="sm:max-w-[425px] rounded-xl border-0 shadow-lg bg-white">
                   <div className="py-6 space-y-6">
                     <div className="space-y-4 relative">
                       {verificationSteps.map((step, index) => (
@@ -421,177 +461,26 @@ function BadgeViewComponent() {
                 variant="outline"
                 size="sm"
                 onClick={copyToClipboard}
-                className="rounded-full px-4 border-primary text-primary hover:bg-primary/10"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </Button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Main Badge Content */}
-        <div className="grid md:grid-cols-[350px_1fr] gap-10 items-start md:pt-4">
-          {/* Badge Image (Left Column) */}
-          <motion.div
-            variants={itemVariants}
-            className="w-full flex flex-col items-center gap-6"
-          >
-            <motion.div
-              variants={floatAnimation}
-              animate="animate"
-              initial="initial"
-              className="relative"
-            >
-              <div className="relative w-[250px] h-[250px] rounded-full overflow-hidden shadow-lg border-4 border-surface p-1">
-                {badge.imageData ? (
-                  <img
-                    src={badge.imageData}
-                    alt={badge.name}
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-full bg-primary flex items-center justify-center text-text-muted">
-                    <Award className="h-20 w-20 text-surface/70" />
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
-            <div className="w-full">
-              <motion.div
-                className="relative"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                {badge.courseLink && (
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full text-md py-6 hidden md:flex shadow-sm rounded-xl border-primary text-primary bg-surface hover:bg-primary/10 transition-all"
-                    onClick={() =>
-                      badge.courseLink &&
-                      window.open(badge.courseLink, "_blank")
-                    }
-                  >
-                    Earn this Badge
-                    <ExternalLink className="ml-2 h-5 w-5" />
-                  </Button>
-                )}
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Badge Info (Right Column) */}
-          <motion.div variants={itemVariants} className="space-y-6 sm:pr-14">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h2 className="text-3xl font-bold text-text mb-2">
-                {badge.name}
-              </h2>
-              <p className="text-text-muted flex items-center gap-2 text-md mb-6">
-                <Award className="h-5 w-5 text-primary" />
-                Issued by{" "}
-                <span className="text-primary font-medium">
-                  {badge.issuedBy}
-                </span>
-              </p>
-
-              {/* Badge Description */}
-              {badge.description && (
-                <motion.div
-                  className="space-y-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
+              {badge.courseLink && (
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    badge.courseLink && window.open(badge.courseLink, "_blank")
+                  }
+                  className="bg-gray-900 hover:bg-gray-800 text-white"
                 >
-                  <h3 className="text-lg font-semibold text-text">
-                    Description
-                  </h3>
-                  <p className="text-text-muted leading-relaxed">
-                    {badge.description}
-                  </p>
-                </motion.div>
+                  Earn this Badge
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
               )}
-            </motion.div>
-
-            {/* Skills */}
-            {badge.skills && (
-              <motion.div
-                className="space-y-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <h3 className="text-lg font-semibold text-text">Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {badge.skills.split(",").map((skill, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.1 + index * 0.05 }}
-                      whileHover={{
-                        scale: 1.05,
-                        transition: { duration: 0.2 },
-                      }}
-                    >
-                      <BadgeUI
-                        variant="outline"
-                        className="bg-primary/20 border-primary/30 text-primary py-1.5 px-3 text-sm font-medium rounded-full"
-                      >
-                        {skill.trim()}
-                      </BadgeUI>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Earning Criteria */}
-            {badge.earningCriteria && (
-              <motion.div
-                className="space-y-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-              >
-                <h3 className="text-lg font-semibold text-text">
-                  Earning Criteria
-                </h3>
-                <p className="text-text-muted leading-relaxed">
-                  {badge.earningCriteria}
-                </p>
-              </motion.div>
-            )}
+            </div>
           </motion.div>
         </div>
-
-        {/* Earn Badge Button (Mobile) */}
-        {badge.courseLink && (
-          <motion.div
-            className="md:hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full text-md py-6 rounded-xl shadow-sm border-primary text-primary bg-surface hover:bg-primary/10 transition-all"
-              onClick={() =>
-                badge.courseLink && window.open(badge.courseLink, "_blank")
-              }
-            >
-              Earn this Badge
-              <ExternalLink className="ml-2 h-5 w-5" />
-            </Button>
-          </motion.div>
-        )}
       </motion.div>
       <Toaster />
     </motion.div>

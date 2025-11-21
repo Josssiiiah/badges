@@ -22,7 +22,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const Route = createRootRoute({
   component: RootComponent,
-})
+});
 
 function RootComponent() {
   const { data: session } = authClient.useSession();
@@ -32,10 +32,8 @@ function RootComponent() {
   const matchRoute = useMatchRoute();
   const isIndexRoute = matchRoute({ to: "/" });
 
-
-
   // Dynamic background based on route
-  const backgroundClass = "bg-surface-secondary";
+  const backgroundClass = "bg-[#ffffff]";
 
   return (
     <div className={`min-h-screen flex flex-col ${backgroundClass}`}>

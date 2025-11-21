@@ -108,8 +108,8 @@ function Dashboard() {
   // If session is still loading, show loading indicator
   if (isPending) {
     return (
-      <div className="min-h-screen bg-oxford flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pure"></div>
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -257,7 +257,7 @@ function Dashboard() {
   // Actual content
   return (
     <motion.div
-      className="container mx-auto px-4 py-8 relative"
+      className="container mx-auto px-4 py-8 relative bg-[#ffffff]"
       initial="hidden"
       animate="visible"
       variants={containerVariants}

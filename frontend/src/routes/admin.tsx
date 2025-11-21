@@ -12,6 +12,7 @@ import { fetchWithAuth } from "@/lib/api-client";
 import { Award, GraduationCap, Building } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Navigate } from "@tanstack/react-router";
+import * as React from "react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoute,
@@ -23,7 +24,7 @@ function AdminRoute() {
 
   if (isPending) {
     return (
-      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -36,20 +37,26 @@ function AdminRoute() {
   }
   if (session.user?.emailVerified === false) {
     return (
-      <div className="min-h-screen bg-surface-secondary flex items-center justify-center px-4">
-        <div className="max-w-xl w-full bg-surface border border-gray-light rounded-xl p-6 text-center">
-          <h2 className="text-2xl font-semibold text-text mb-2">Verify your email</h2>
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center px-4">
+        <div className="max-w-xl w-full bg-[#ffffff] border border-gray-light rounded-xl p-6 text-center">
+          <h2 className="text-2xl font-semibold text-text mb-2">
+            Verify your email
+          </h2>
           <p className="text-text-muted mb-6">
             Please confirm your email address to access the Admin Dashboard.
           </p>
           <button
             onClick={async () => {
               try {
-                const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/send-verification-email`, {
-                  method: "POST",
-                  credentials: "include",
-                });
-                if (!resp.ok) throw new Error("Failed to send verification email");
+                const resp = await fetch(
+                  `${import.meta.env.VITE_BACKEND_URL}/api/auth/send-verification-email`,
+                  {
+                    method: "POST",
+                    credentials: "include",
+                  }
+                );
+                if (!resp.ok)
+                  throw new Error("Failed to send verification email");
                 alert("Verification email sent. Please check your inbox.");
               } catch (e) {
                 alert(e instanceof Error ? e.message : "Error sending email");
@@ -71,9 +78,11 @@ function AdminAccessDenied({ error }: { error: Error }) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-surface-secondary flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-[#ffffff] flex flex-col items-center justify-center">
       <h1 className="text-3xl font-bold mb-4 text-text">Access Denied</h1>
-      <p className="mb-8 text-center max-w-md text-text-muted">{error.message}</p>
+      <p className="mb-8 text-center max-w-md text-text-muted">
+        {error.message}
+      </p>
       <button
         onClick={() => navigate({ to: "/" })}
         className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
@@ -89,6 +98,14 @@ function AdminPage() {
     authClient.useSession();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // All hooks must be called at the top level, before any conditional returns
+  const [activeTab, setActiveTab] = React.useState("templates");
+  const tabsRef = React.useRef<HTMLDivElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = React.useState({
+    width: 0,
+    left: 0,
+  });
 
   // Fetch organization data
   const { data: organization, isLoading: isOrganizationLoading } = useQuery({
@@ -145,6 +162,30 @@ function AdminPage() {
     },
   });
 
+  React.useEffect(() => {
+    const updateIndicator = () => {
+      if (!tabsRef.current) return;
+
+      const tabs = tabsRef.current.querySelectorAll('[role="tab"]');
+      const activeIndex =
+        activeTab === "templates" ? 0 : activeTab === "students" ? 1 : 2;
+      const activeTabElement = tabs[activeIndex] as HTMLElement;
+
+      if (activeTabElement) {
+        const containerRect = tabsRef.current.getBoundingClientRect();
+        const tabRect = activeTabElement.getBoundingClientRect();
+        const left = tabRect.left - containerRect.left;
+        const width = tabRect.width;
+
+        setIndicatorStyle({ width, left });
+      }
+    };
+
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
+  }, [activeTab]);
+
   // If the data is still loading, show a loading spinner
   if (
     isSessionLoading ||
@@ -153,7 +194,7 @@ function AdminPage() {
     isOrganizationLoading
   ) {
     return (
-      <div className="min-h-screen bg-surface-secondary flex items-center justify-center">
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -162,68 +203,79 @@ function AdminPage() {
   console.log("Current organization:", organization);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2 text-text">
-        Admin Dashboard
-      </h1>
+    <div className="container mx-auto px-4 py-8 bg-[#ffffff]">
+      <h1 className="text-3xl font-bold mb-2 text-text">Admin Dashboard</h1>
       <p className="text-text-muted mb-8">
         Organization: {organization?.name || "No organization"}
       </p>
 
-      <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="w-full max-w-md mx-auto mb-6 bg-surface-accent p-1 rounded-lg">
-          <TabsTrigger
-            value="templates"
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
-              "data-[state=active]:bg-surface data-[state=active]:shadow-sm data-[state=active]:text-text",
-              "data-[state=inactive]:text-text-muted hover:text-text",
-            )}
-          >
-            <Award className="h-4 w-4" />
-            <span>Badges</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="students"
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
-              "data-[state=active]:bg-surface data-[state=active]:shadow-sm data-[state=active]:text-text",
-              "data-[state=inactive]:text-text-muted hover:text-text",
-            )}
-          >
-            <GraduationCap className="h-4 w-4" />
-            <span>Students</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="organization"
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-3 transition-all",
-              "data-[state=active]:bg-surface data-[state=active]:shadow-sm data-[state=active]:text-text",
-              "data-[state=inactive]:text-text-muted hover:text-text",
-            )}
-          >
-            <Building className="h-4 w-4" />
-            <span>Organization</span>
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* Sleek tab design - always show the sleek version */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200 relative">
+            <TabsList
+              ref={tabsRef}
+              className="inline-flex h-auto items-center gap-8 bg-transparent p-0 border-0 rounded-none"
+            >
+              <TabsTrigger
+                value="templates"
+                className={cn(
+                  "relative px-0 py-4 text-sm font-medium bg-transparent border-0 rounded-none transition-colors",
+                  "data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500",
+                  "hover:text-gray-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                )}
+              >
+                <Award className="h-4 w-4 inline-block mr-2" />
+                Badges
+              </TabsTrigger>
+              <TabsTrigger
+                value="students"
+                className={cn(
+                  "relative px-0 py-4 text-sm font-medium bg-transparent border-0 rounded-none transition-colors",
+                  "data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500",
+                  "hover:text-gray-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                )}
+              >
+                <GraduationCap className="h-4 w-4 inline-block mr-2" />
+                Students
+              </TabsTrigger>
+              <TabsTrigger
+                value="organization"
+                className={cn(
+                  "relative px-0 py-4 text-sm font-medium bg-transparent border-0 rounded-none transition-colors",
+                  "data-[state=active]:text-gray-900 data-[state=inactive]:text-gray-500",
+                  "hover:text-gray-900 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                )}
+              >
+                <Building className="h-4 w-4 inline-block mr-2" />
+                Organization
+              </TabsTrigger>
+            </TabsList>
+            {/* Sliding underline indicator */}
+            <div
+              className="absolute bottom-0 h-0.5 bg-gray-900 transition-all duration-300 ease-in-out"
+              style={{
+                width: `${indicatorStyle.width}px`,
+                left: `${indicatorStyle.left}px`,
+              }}
+            />
+          </div>
+        </div>
 
         <TabsContent
           value="templates"
-          className="mt-6 rounded-xl p-6 bg-surface border border-gray-light"
+          className="mt-6 rounded-xl p-6 bg-[#ffffff] border border-gray-light"
         >
           <BadgesDashboard badges={badges || []} />
         </TabsContent>
 
-        <TabsContent
-          value="students"
-          className="mt-6 rounded-xl p-6 bg-surface border border-gray-light"
-        >
+        <TabsContent value="students" className="mt-6 bg-[#ffffff]">
           <StudentDashboard students={students || []} badges={badges || []} />
         </TabsContent>
 
         <TabsContent
           value="organization"
-          className="mt-6 rounded-xl p-6 bg-surface border border-gray-light"
+          className="mt-6 rounded-xl p-6 bg-[#ffffff] border border-gray-light"
         >
           <OrganizationsDashboard />
         </TabsContent>

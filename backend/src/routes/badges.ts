@@ -73,7 +73,11 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       }
 
       // If user is an administrator, fetch all badge templates for their organization
-      if (session.user.role === "administrator" && session.user.organizationId) {
+      if (session.user.role === "administrator") {
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
         const orgBadgeTemplates = await db
           .select({
             id: createdBadges.id,
@@ -229,12 +233,14 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       }
       
       // If administrator, verify the badge belongs to their organization
-      if (
-        session.user.role === "administrator" &&
-        session.user.organizationId &&
-        badge[0].organizationId !== session.user.organizationId
-      ) {
-        return { error: "Badge does not belong to your organization" };
+      if (session.user.role === "administrator") {
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
+        if (badge[0].organizationId !== session.user.organizationId) {
+          return { error: "Badge does not belong to your organization" };
+        }
       }
 
       // Check if this user already has this specific badge assigned
@@ -315,12 +321,14 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       }
       
       // If administrator, verify the badge belongs to their organization
-      if (
-        session.user.role === "administrator" &&
-        session.user.organizationId &&
-        badge[0].organizationId !== session.user.organizationId
-      ) {
-        return { error: "Badge does not belong to your organization" };
+      if (session.user.role === "administrator") {
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
+        if (badge[0].organizationId !== session.user.organizationId) {
+          return { error: "Badge does not belong to your organization" };
+        }
       }
 
       // Check if user is an existing user BEFORE creating the assignment
@@ -674,6 +682,29 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
           return { error: "Only administrators can remove badge assignments" };
         }
 
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
+        // Verify assignment belongs to a user in the organization
+        const assignment = await db
+          .select({
+            id: badges.id,
+          })
+          .from(badges)
+          .innerJoin(user, eq(badges.userId, user.id))
+          .where(
+            and(
+              eq(badges.id, assignmentId),
+              eq(user.organizationId, session.user.organizationId)
+            )
+          )
+          .limit(1);
+
+        if (assignment.length === 0) {
+          return { error: "Badge assignment not found or not in your organization" };
+        }
+
         // Delete only the specific badge assignment by assignment ID
         const deleted = await db
           .delete(badges)
@@ -725,12 +756,14 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
       }
       
       // If administrator, verify the badge belongs to their organization
-      if (
-        session.user.role === "administrator" && 
-        session.user.organizationId && 
-        badge[0].organizationId !== session.user.organizationId
-      ) {
-        return { error: "Badge does not belong to your organization" };
+      if (session.user.role === "administrator") {
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
+        if (badge[0].organizationId !== session.user.organizationId) {
+          return { error: "Badge does not belong to your organization" };
+        }
       }
 
       // Validate email format

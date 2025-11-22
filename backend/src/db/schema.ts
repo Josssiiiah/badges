@@ -95,6 +95,37 @@ export const students = sqliteTable("students", {
     .$type<Date>(),
 });
 
+// Invitations table
+export const invitations = sqliteTable("invitations", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  token: text("token").notNull().unique(),
+  email: text("email").notNull(),
+  type: text("type", {
+    enum: ["org_creator", "administrator", "student"]
+  }).notNull(),
+  organizationId: text("organization_id").references(() => organizations.id, {
+    onDelete: "cascade",
+  }),
+  organizationName: text("organization_name"),
+  status: text("status", {
+    enum: ["pending", "used", "expired", "revoked"]
+  }).notNull().default("pending"),
+  expiresAt: integer("expires_at", { mode: "timestamp" })
+    .notNull()
+    .$type<Date>(),
+  createdBy: text("created_by"),
+  metadata: text("metadata"),
+  usedAt: integer("used_at", { mode: "timestamp" }).$type<Date>(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .$type<Date>(),
+});
+
 // BetterAuth Tables
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),

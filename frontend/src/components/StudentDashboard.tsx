@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -18,6 +18,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 type Badge = {
   id: string;
@@ -92,6 +94,7 @@ export function StudentDashboard({
   const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
   const [viewStudent, setViewStudent] = useState<Student | null>(null);
   const [isResending, setIsResending] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
 
   // Sync local state with prop changes from React Query
   useEffect(() => {
@@ -604,10 +607,10 @@ export function StudentDashboard({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-[#ffffff]">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-[var(--main-text)]">Students</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Students</h2>
         <div className="flex gap-2">
           <Dialog>
             <DialogTrigger asChild>
@@ -619,6 +622,9 @@ export function StudentDashboard({
             <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
               <DialogHeader>
                 <DialogTitle>Add Multiple Students</DialogTitle>
+                <DialogDescription>
+                  Enter email addresses to import students in bulk.
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -711,6 +717,9 @@ export function StudentDashboard({
             <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
               <DialogHeader>
                 <DialogTitle>Add New Student</DialogTitle>
+                <DialogDescription>
+                  Enter the details of the new student below.
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -763,248 +772,261 @@ export function StudentDashboard({
       </div>
 
       {/* Student Table */}
-      <Card className="bg-white/10 backdrop-filter backdrop-blur-md border border-white/20 shadow-xl">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
-                <TableHead className="text-[var(--main-text)]">Name</TableHead>
-                <TableHead className="text-[var(--main-text)]">Email</TableHead>
-                <TableHead className="text-[var(--main-text)]">
-                  Badges
-                </TableHead>
-                <TableHead className="text-right text-[var(--main-text)]">
-                  Actions
-                </TableHead>
+      <div className="bg-[#ffffff] rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-b border-gray-100">
+              <TableHead className="text-gray-600 font-medium py-4 px-6">
+                Name
+              </TableHead>
+              <TableHead className="text-gray-600 font-medium py-4 px-6">
+                Email
+              </TableHead>
+              <TableHead className="text-gray-600 font-medium py-4 px-6">
+                Badges
+              </TableHead>
+              <TableHead className="text-right text-gray-600 font-medium py-4 px-6">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow className="border-0">
+                <TableCell
+                  colSpan={4}
+                  className="h-24 text-center text-gray-500 py-8"
+                >
+                  Loading...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
+            ) : localStudents.length === 0 ? (
+              <TableRow className="border-0">
+                <TableCell
+                  colSpan={4}
+                  className="h-24 text-center text-gray-500 py-8"
+                >
+                  No students found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              localStudents.map((student, index) => (
+                <TableRow
+                  key={student.studentId}
+                  className={cn(
+                    "cursor-pointer border-0 hover:bg-gray-50/50 transition-colors",
+                    index !== localStudents.length - 1 &&
+                      "border-b border-gray-100"
+                  )}
+                  onClick={() => {
+                    setViewStudent(student);
+                    setIsViewDialogOpen(true);
+                  }}
+                >
+                  <TableCell className="text-gray-900 py-4 px-6">
+                    {student.name}
+                  </TableCell>
+                  <TableCell className="text-gray-600 py-4 px-6">
+                    {student.email}
+                  </TableCell>
+                  <TableCell className="text-gray-600 py-4 px-6">
+                    {student.badges && student.badges.length > 0 ? (
+                      <span className="text-sm font-medium text-gray-900">
+                        {student.badges.length}{" "}
+                        {student.badges.length === 1 ? "badge" : "badges"}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-sm">No badges</span>
+                    )}
+                  </TableCell>
                   <TableCell
-                    colSpan={4}
-                    className="h-24 text-center text-[var(--main-text)]/80"
+                    onClick={(e) => e.stopPropagation()}
+                    className="py-4 px-6"
                   >
-                    Loading...
+                    <div className="flex justify-end gap-2">
+                      <AlertDialog
+                        open={deleteDialogOpen === student.studentId}
+                        onOpenChange={(open) =>
+                          setDeleteDialogOpen(open ? student.studentId : null)
+                        }
+                      >
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white border-gray-200 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-gray-900">
+                              Delete student?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-600">
+                              This will permanently delete the student, their
+                              associated user account, and all of their badge
+                              assignments. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                deleteStudent(student.studentId);
+                                setDeleteDialogOpen(null);
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : localStudents.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="h-24 text-center text-[var(--main-text)]/80"
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* View/Manage Student Badges Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] bg-white border border-gray-200 shadow-lg max-h-[80vh] overflow-y-auto [&>button]:hidden left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl font-semibold text-gray-900">
+              Manage Badges for {viewStudent?.name}
+            </DialogTitle>
+            <DialogDescription>
+              View and manage badges for this student.
+            </DialogDescription>
+            <p className="text-sm text-gray-500 mt-1">{viewStudent?.email}</p>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Current Badges */}
+            {viewStudent &&
+            viewStudent.badges &&
+            viewStudent.badges.length > 0 ? (
+              <div className="space-y-4">
+                {viewStudent.badges.map((badgeAssignment, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50/50 transition-colors"
                   >
-                    No students found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                localStudents.map((student) => (
-                  <TableRow
-                    key={student.studentId}
-                    className="cursor-pointer hover:bg-[var(--gray)]/5"
-                    onClick={() => {
-                      setViewStudent(student);
-                      setIsViewDialogOpen(true);
-                    }}
-                  >
-                    <TableCell className="text-[var(--main-text)]">
-                      {student.name}
-                    </TableCell>
-                    <TableCell className="text-[var(--main-text)]">
-                      {student.email}
-                    </TableCell>
-                    <TableCell className="text-[var(--main-text)]">
-                      {student.badges && student.badges.length > 0 ? (
-                        <span className="text-sm font-medium">
-                          {student.badges.length}{" "}
-                          {student.badges.length === 1 ? "badge" : "badges"}
-                        </span>
-                      ) : (
-                        <span className="text-[var(--main-text)]/60 text-sm">
-                          No badges
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-2">
+                    <img
+                      src={badgeAssignment.badge.imageData}
+                      alt={badgeAssignment.badge.name}
+                      className="w-20 h-20 object-contain rounded-md shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 mb-1">
+                        {badgeAssignment.badge.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Earned:{" "}
+                        {new Date(
+                          badgeAssignment.earnedAt
+                        ).toLocaleDateString()}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            resendBadgeEmail(
+                              viewStudent,
+                              badgeAssignment.assignmentId
+                            )
+                          }
+                          disabled={
+                            isResending === badgeAssignment.assignmentId
+                          }
+                          className="h-8 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 border-0 disabled:opacity-50"
+                        >
+                          <Share2 className="h-3 w-3 mr-1.5" />
+                          {isResending === badgeAssignment.assignmentId
+                            ? "Sending..."
+                            : "Resend Email"}
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-[var(--gray)] hover:bg-[var(--gray)]/10 hover:text-[var(--gray)]"
+                              size="sm"
+                              className="h-8 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50/50 border-0"
                             >
-                              <Trash2 className="h-4 w-4 text-[var(--gray)]" />
+                              <Trash2 className="h-3 w-3 mr-1.5" />
+                              Remove
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="bg-white border-gray-200 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete student?
+                              <AlertDialogTitle className="text-gray-900">
+                                Remove this badge?
                               </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete the student, their
-                                associated user account, and all of their badge
-                                assignments. This action cannot be undone.
+                              <AlertDialogDescription className="text-gray-600">
+                                This will remove the "
+                                {badgeAssignment.badge.name}" badge from{" "}
+                                {viewStudent.name}. This action cannot be
+                                undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                                Cancel
+                              </AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => deleteStudent(student.studentId)}
+                                onClick={() =>
+                                  removeBadgeFromStudent(
+                                    viewStudent,
+                                    badgeAssignment.assignmentId
+                                  )
+                                }
                                 className="bg-red-600 hover:bg-red-700 text-white"
                               >
-                                Delete
+                                Remove
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* View/Manage Student Badges Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Manage Badges for {viewStudent?.name}</DialogTitle>
-            <p className="text-sm text-gray-600">{viewStudent?.email}</p>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {/* Current Badges */}
-            {viewStudent &&
-            viewStudent.badges &&
-            viewStudent.badges.length > 0 ? (
-              <div>
-                <h3 className="text-sm font-medium text-[var(--main-text)] mb-3">
-                  Current Badges ({viewStudent.badges.length})
-                </h3>
-                <div className="space-y-3">
-                  {viewStudent.badges.map((badgeAssignment, idx) => (
-                    <Card key={idx} className="p-4">
-                      <div className="flex items-start gap-4">
-                        <img
-                          src={badgeAssignment.badge.imageData}
-                          alt={badgeAssignment.badge.name}
-                          className="w-24 h-24 object-contain rounded-sm flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-[var(--main-text)] mb-1">
-                            {badgeAssignment.badge.name}
-                          </h4>
-                          <p className="text-xs text-[var(--main-text)]/60 mb-2">
-                            Earned:{" "}
-                            {new Date(
-                              badgeAssignment.earnedAt
-                            ).toLocaleDateString()}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                copyBadgeUrl(badgeAssignment.assignmentId)
-                              }
-                              className="h-8 text-xs"
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              Copy URL
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                resendBadgeEmail(
-                                  viewStudent,
-                                  badgeAssignment.assignmentId
-                                )
-                              }
-                              disabled={
-                                isResending === badgeAssignment.assignmentId
-                              }
-                              className="h-8 text-xs"
-                            >
-                              <Share2 className="h-3 w-3 mr-1" />
-                              {isResending === badgeAssignment.assignmentId
-                                ? "Sending..."
-                                : "Resend Email"}
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Remove Badge
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Remove this badge?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will remove the "
-                                    {badgeAssignment.badge.name}" badge from{" "}
-                                    {viewStudent.name}. This action cannot be
-                                    undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      removeBadgeFromStudent(
-                                        viewStudent,
-                                        badgeAssignment.assignmentId
-                                      )
-                                    }
-                                    className="bg-red-600 hover:bg-red-700 text-white"
-                                  >
-                                    Remove
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-[var(--main-text)]/60">
+              <div className="text-center py-12 text-gray-500">
                 No badges assigned yet
               </div>
             )}
 
             {/* Add New Badge Section */}
-            <div className="border-t pt-4">
-              <h3 className="text-sm font-medium text-[var(--main-text)] mb-3">
+            <div className="pt-2">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
                 Assign New Badge
               </h3>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <Select
                   value={selectedBadgeId}
                   onValueChange={setSelectedBadgeId}
                 >
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger className="flex-1 border-gray-300 bg-white hover:bg-gray-50 h-10">
                     <SelectValue placeholder="Choose a badge to assign" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-gray-200">
                     {badges && badges.length > 0 ? (
                       badges.map((badge) => (
-                        <SelectItem key={badge.id} value={badge.id}>
+                        <SelectItem
+                          key={badge.id}
+                          value={badge.id}
+                          className="hover:bg-gray-50"
+                        >
                           <div className="flex items-center gap-2">
                             <img
                               src={badge.imageData}
@@ -1025,26 +1047,13 @@ export function StudentDashboard({
                 <Button
                   onClick={assignBadgeToStudent}
                   disabled={!selectedBadgeId}
-                  className="bg-primary hover:bg-primary/90 text-white"
+                  className="bg-gray-900 hover:bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed px-6 h-10"
                 >
                   Assign
                 </Button>
               </div>
             </div>
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsViewDialogOpen(false);
-                setViewStudent(null);
-                setSelectedBadgeId("");
-              }}
-            >
-              Close
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

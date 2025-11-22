@@ -1,55 +1,20 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
-  Share2,
-  Clock,
-  Book,
-  Award,
-  ExternalLink,
-  Eye,
-  Globe,
-  Calendar,
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Award } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { Badge as BadgeUI } from "@/components/ui/badge";
 import { fetchWithAuth } from "@/lib/api-client";
-import { Link } from "@tanstack/react-router";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { motion } from "framer-motion";
-
-type Badge = {
-  // ID from the badges table (assignment ID)
-  id: string;
-  // ID from the createdBadges table (badge template ID)
-  badgeId: string;
-  earnedAt: Date;
-  // Badge details from createdBadges
-  issuedBy: string;
-  name: string;
-  description: string | null;
-  imageData: string;
-  courseLink: string | null;
-  skills: string | null;
-  earningCriteria: string | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-};
 
 type UserData = {
   id: string;
@@ -67,7 +32,8 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfileComponent() {
-  const { data: session, isPending: isSessionLoading } = authClient.useSession();
+  const { data: session, isPending: isSessionLoading } =
+    authClient.useSession();
   const [biography, setBiography] = React.useState("");
   const [initialBiography, setInitialBiography] = React.useState("");
   const [isPublic, setIsPublic] = React.useState(true);
@@ -92,31 +58,6 @@ function ProfileComponent() {
       }
 
       return data.user as UserData;
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  const {
-    data: badges,
-    isLoading: isBadgesLoading,
-    error,
-  } = useQuery({
-    queryKey: ["user-badges", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) {
-        throw new Error("User not authenticated");
-      }
-
-      const response = await fetchWithAuth(`badges/user/${session.user.id}`);
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      console.log("User Badges: ", data.badges);
-
-      return data.badges as Badge[];
     },
     enabled: !!session?.user?.id,
   });
@@ -172,7 +113,7 @@ function ProfileComponent() {
               ...oldData,
               biography,
             };
-          },
+          }
         );
       }
     } catch (error) {
@@ -223,7 +164,7 @@ function ProfileComponent() {
               ...oldData,
               isPublic: !isPublic,
             };
-          },
+          }
         );
       }
     } catch (error) {
@@ -288,16 +229,23 @@ function ProfileComponent() {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-xl mx-auto bg-surface border border-gray-light rounded-xl p-6 text-center">
-          <h2 className="text-2xl font-semibold text-text mb-2">Verify your email</h2>
+          <h2 className="text-2xl font-semibold text-text mb-2">
+            Verify your email
+          </h2>
           <p className="text-text-muted mb-6">
-            Please confirm your email address to access your profile. We can resend the verification email if needed.
+            Please confirm your email address to access your profile. We can
+            resend the verification email if needed.
           </p>
           <div className="flex gap-3 justify-center">
             <Button
               onClick={async () => {
                 try {
-                  const resp = await fetchWithAuth("api/auth/send-verification-email", { method: "POST" });
-                  if (!resp.ok) throw new Error("Failed to send verification email");
+                  const resp = await fetchWithAuth(
+                    "api/auth/send-verification-email",
+                    { method: "POST" }
+                  );
+                  if (!resp.ok)
+                    throw new Error("Failed to send verification email");
                   alert("Verification email sent. Please check your inbox.");
                 } catch (e) {
                   alert(e instanceof Error ? e.message : "Error sending email");
@@ -386,160 +334,6 @@ function ProfileComponent() {
                   </Button>
                 </div>
               </div>
-            </div>
-
-            {/* Badge Wallet Section in rounded div with background */}
-            <div className="bg-surface-accent/5 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-text-muted mb-4">
-                Badge Wallet
-              </h3>
-
-              {isBadgesLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex flex-col gap-2">
-                      <Skeleton className="h-[200px] w-full rounded-xl" />
-                      <Skeleton className="h-6 w-3/4 rounded-md" />
-                      <Skeleton className="h-4 w-1/2 rounded-md" />
-                    </div>
-                  ))}
-                </div>
-              ) : error ? (
-                <div className="text-center py-8 bg-surface-secondary rounded-xl shadow-shadow border border-surface-accent/10">
-                  <p className="text-text-muted/80">Error loading badges</p>
-                </div>
-              ) : badges && badges.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {badges.map((badge, index) => (
-                    <motion.div
-                      key={badge.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.4,
-                        delay: index * 0.1,
-                        ease: "easeOut",
-                      }}
-                      whileHover={{
-                        y: -10,
-                        transition: { duration: 0.2 },
-                      }}
-                      className="group"
-                    >
-                      <div className="h-full">
-                        <Card className="overflow-hidden h-full flex flex-col bg-surface-secondary border-surface-accent/10 rounded-xl shadow-shadow hover:shadow-lg transition-all duration-300">
-                          <div className="p-5 bg-gradient-to-br from-surface-accent/5 to-surface-accent/15 flex items-center justify-center">
-                            <div className="w-28 h-28 relative">
-                              {badge.imageData ? (
-                                <img
-                                  src={badge.imageData}
-                                  alt={badge.name}
-                                  className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-surface-accent/10 flex items-center justify-center text-text-muted/60 rounded-full">
-                                  <Award className="h-12 w-12" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <CardContent className="p-5 flex-1 flex flex-col">
-                            <div className="mb-3">
-                              <h4 className="font-semibold text-text-muted mb-1 group-hover:text-primary transition-colors duration-200 line-clamp-1">
-                                {badge.name}
-                              </h4>
-                              <p className="text-xs text-text-muted/70 flex items-center gap-1">
-                                <Award className="h-3 w-3 flex-shrink-0" />
-                                <span className="line-clamp-1">
-                                  {badge.issuedBy}
-                                </span>
-                              </p>
-                            </div>
-
-                            {badge.description && (
-                              <p className="text-xs text-text-muted/80 line-clamp-2 mb-4">
-                                {badge.description}
-                              </p>
-                            )}
-
-                            {badge.skills && (
-                              <div className="mt-auto">
-                                <div className="flex flex-wrap gap-1.5">
-                                  {badge.skills
-                                    .split(",")
-                                    .slice(0, 3)
-                                    .map((skill, index) => (
-                                      <BadgeUI
-                                        key={index}
-                                        variant="outline"
-                                        className="text-xs bg-surface-accent/10 hover:bg-surface-accent/20 transition-colors"
-                                      >
-                                        {skill.trim()}
-                                      </BadgeUI>
-                                    ))}
-                                  {badge.skills.split(",").length > 3 && (
-                                    <BadgeUI
-                                      variant="outline"
-                                      className="text-xs bg-surface-accent/10 hover:bg-surface-accent/20 transition-colors"
-                                    >
-                                      +{badge.skills.split(",").length - 3} more
-                                    </BadgeUI>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="mt-4 pt-3 border-t border-surface-accent/10">
-                              <div className="flex flex-col gap-2">
-                                <div className="flex items-center justify-between">
-                                  <Link
-                                    to="/badges/$badgeId"
-                                    params={{ badgeId: badge.id }}
-                                  >
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="gap-1 text-xs opacity-90 group-hover:opacity-100 transition-opacity duration-200"
-                                    >
-                                      <Eye className="h-3 w-3" />
-                                      View Badge
-                                    </Button>
-                                  </Link>
-                                </div>
-
-                                {badge.courseLink && (
-                                  <div className="flex justify-start">
-                                    <a
-                                      href={badge.courseLink}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center text-xs text-primary hover:underline"
-                                    >
-                                      <ExternalLink className="mr-1 h-3 w-3" />
-                                      View Course Materials
-                                    </a>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16 bg-surface-secondary rounded-xl shadow-shadow border border-surface-accent/10">
-                  <Award className="h-16 w-16 mx-auto mb-4 text-surface-accent/30" />
-                  <h3 className="text-xl font-medium text-text-muted mb-2">
-                    No badges yet
-                  </h3>
-                  <p className="text-text-muted/70 max-w-md mx-auto">
-                    Search for badges to earn by using the search bar at the top
-                    of the page.
-                  </p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

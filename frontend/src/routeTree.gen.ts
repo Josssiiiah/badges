@@ -18,6 +18,9 @@ import { Route as CreateAccountRouteImport } from './routes/create-account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersUsernameRouteImport } from './routes/users.$username'
+import { Route as OnboardJoinAdminRouteImport } from './routes/onboard/join-admin'
+import { Route as OnboardJoinRouteImport } from './routes/onboard/join'
+import { Route as OnboardCreateOrgRouteImport } from './routes/onboard/create-org'
 import { Route as BadgesBadgeIdRouteImport } from './routes/badges.$badgeId'
 
 const ProfileRoute = ProfileRouteImport.update({
@@ -65,6 +68,21 @@ const UsersUsernameRoute = UsersUsernameRouteImport.update({
   path: '/users/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardJoinAdminRoute = OnboardJoinAdminRouteImport.update({
+  id: '/onboard/join-admin',
+  path: '/onboard/join-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardJoinRoute = OnboardJoinRouteImport.update({
+  id: '/onboard/join',
+  path: '/onboard/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardCreateOrgRoute = OnboardCreateOrgRouteImport.update({
+  id: '/onboard/create-org',
+  path: '/onboard/create-org',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BadgesBadgeIdRoute = BadgesBadgeIdRouteImport.update({
   id: '/badges/$badgeId',
   path: '/badges/$badgeId',
@@ -81,6 +99,9 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/badges/$badgeId': typeof BadgesBadgeIdRoute
+  '/onboard/create-org': typeof OnboardCreateOrgRoute
+  '/onboard/join': typeof OnboardJoinRoute
+  '/onboard/join-admin': typeof OnboardJoinAdminRoute
   '/users/$username': typeof UsersUsernameRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +114,9 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/badges/$badgeId': typeof BadgesBadgeIdRoute
+  '/onboard/create-org': typeof OnboardCreateOrgRoute
+  '/onboard/join': typeof OnboardJoinRoute
+  '/onboard/join-admin': typeof OnboardJoinAdminRoute
   '/users/$username': typeof UsersUsernameRoute
 }
 export interface FileRoutesById {
@@ -106,6 +130,9 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/badges/$badgeId': typeof BadgesBadgeIdRoute
+  '/onboard/create-org': typeof OnboardCreateOrgRoute
+  '/onboard/join': typeof OnboardJoinRoute
+  '/onboard/join-admin': typeof OnboardJoinAdminRoute
   '/users/$username': typeof UsersUsernameRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +147,9 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/profile'
     | '/badges/$badgeId'
+    | '/onboard/create-org'
+    | '/onboard/join'
+    | '/onboard/join-admin'
     | '/users/$username'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +162,9 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/profile'
     | '/badges/$badgeId'
+    | '/onboard/create-org'
+    | '/onboard/join'
+    | '/onboard/join-admin'
     | '/users/$username'
   id:
     | '__root__'
@@ -144,6 +177,9 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/profile'
     | '/badges/$badgeId'
+    | '/onboard/create-org'
+    | '/onboard/join'
+    | '/onboard/join-admin'
     | '/users/$username'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +193,9 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   ProfileRoute: typeof ProfileRoute
   BadgesBadgeIdRoute: typeof BadgesBadgeIdRoute
+  OnboardCreateOrgRoute: typeof OnboardCreateOrgRoute
+  OnboardJoinRoute: typeof OnboardJoinRoute
+  OnboardJoinAdminRoute: typeof OnboardJoinAdminRoute
   UsersUsernameRoute: typeof UsersUsernameRoute
 }
 
@@ -225,6 +264,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboard/join-admin': {
+      id: '/onboard/join-admin'
+      path: '/onboard/join-admin'
+      fullPath: '/onboard/join-admin'
+      preLoaderRoute: typeof OnboardJoinAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboard/join': {
+      id: '/onboard/join'
+      path: '/onboard/join'
+      fullPath: '/onboard/join'
+      preLoaderRoute: typeof OnboardJoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboard/create-org': {
+      id: '/onboard/create-org'
+      path: '/onboard/create-org'
+      fullPath: '/onboard/create-org'
+      preLoaderRoute: typeof OnboardCreateOrgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/badges/$badgeId': {
       id: '/badges/$badgeId'
       path: '/badges/$badgeId'
@@ -245,6 +305,9 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   ProfileRoute: ProfileRoute,
   BadgesBadgeIdRoute: BadgesBadgeIdRoute,
+  OnboardCreateOrgRoute: OnboardCreateOrgRoute,
+  OnboardJoinRoute: OnboardJoinRoute,
+  OnboardJoinAdminRoute: OnboardJoinAdminRoute,
   UsersUsernameRoute: UsersUsernameRoute,
 }
 export const routeTree = rootRouteImport

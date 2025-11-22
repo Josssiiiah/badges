@@ -22,7 +22,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const Route = createRootRoute({
   component: RootComponent,
-})
+});
 
 function RootComponent() {
   const { data: session } = authClient.useSession();
@@ -32,10 +32,8 @@ function RootComponent() {
   const matchRoute = useMatchRoute();
   const isIndexRoute = matchRoute({ to: "/" });
 
-
-
   // Dynamic background based on route
-  const backgroundClass = "bg-surface-secondary";
+  const backgroundClass = "bg-[#ffffff]";
 
   return (
     <div className={`min-h-screen flex flex-col ${backgroundClass}`}>
@@ -56,16 +54,29 @@ function RootComponent() {
             <nav className="hidden sm:flex items-center space-x-4">
               {isAuthenticated && isVerified && (
                 <>
-                  <Link
-                    to="/dashboard"
-                    className="text-text-muted hover:text-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                    activeProps={{
-                      className:
-                        "text-text bg-surface-accent px-3 py-2 rounded-md text-sm font-medium",
-                    }}
-                  >
-                    Dashboard
-                  </Link>
+                  {isAdministrator ? (
+                    <Link
+                      to="/admin"
+                      className="text-text-muted hover:text-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      activeProps={{
+                        className:
+                          "text-text bg-surface-accent px-3 py-2 rounded-md text-sm font-medium",
+                      }}
+                    >
+                      Dashboard
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/dashboard"
+                      className="text-text-muted hover:text-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      activeProps={{
+                        className:
+                          "text-text bg-surface-accent px-3 py-2 rounded-md text-sm font-medium",
+                      }}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
                   <Link
                     to="/profile"
                     className="text-text-muted hover:text-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -77,18 +88,6 @@ function RootComponent() {
                     Profile
                   </Link>
                 </>
-              )}
-              {isAuthenticated && isVerified && isAdministrator && (
-                <Link
-                  to="/admin"
-                  className="text-text-muted hover:text-text px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                  activeProps={{
-                    className:
-                      "text-text bg-surface-accent px-3 py-2 rounded-md text-sm font-medium",
-                  }}
-                >
-                  Admin Dashboard
-                </Link>
               )}
             </nav>
           </div>
@@ -125,7 +124,11 @@ function RootComponent() {
                     asChild
                     className="cursor-pointer hover:bg-surface-accent focus:bg-surface-accent"
                   >
-                    <Link to="/dashboard">Dashboard</Link>
+                    {isAdministrator ? (
+                      <Link to="/admin">Dashboard</Link>
+                    ) : (
+                      <Link to="/dashboard">Dashboard</Link>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     asChild
@@ -133,15 +136,6 @@ function RootComponent() {
                   >
                     <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>
-
-                  {isAdministrator && (
-                    <DropdownMenuItem
-                      asChild
-                      className="cursor-pointer hover:bg-surface-accent focus:bg-surface-accent"
-                    >
-                      <Link to="/admin">Admin Dashboard</Link>
-                    </DropdownMenuItem>
-                  )}
 
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

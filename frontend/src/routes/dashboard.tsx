@@ -1,17 +1,10 @@
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-import {
-  Award,
-  Eye,
-  Clock,
-  Share2,
-  Linkedin,
-  ExternalLink,
-} from "lucide-react";
+import { Award, Linkedin, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -19,7 +12,13 @@ import { Badge as BadgeUI } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/api-client";
-import { Separator } from "@/components/ui/separator";
+
+// Helper function to truncate text to 40 words
+const truncateToWords = (text: string, wordLimit: number = 40): string => {
+  const words = text.split(" ");
+  if (words.length <= wordLimit) return text;
+  return words.slice(0, wordLimit).join(" ") + "...";
+};
 
 // Animation variants
 const containerVariants = {
@@ -97,19 +96,41 @@ function Dashboard() {
   const { data: session, isPending } = authClient.useSession();
   const navigate = useNavigate();
   const [showLoading, setShowLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalBadges: 0,
-    profileViews: "N/A", // Not implemented
-    recentBadge: "None",
-    issueDate: "N/A",
-    badgeShares: "N/A", // Not implemented
+  const [expandedBadges, setExpandedBadges] = useState<Set<string>>(new Set());
+
+  // Fetch badges using React Query
+  const {
+    data: badges,
+    isLoading: isBadgesLoading,
+    error,
+  } = useQuery({
+    queryKey: ["user-badges", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetchWithAuth(`badges/user/${session.user.id}`);
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data.badges as Badge[];
+    },
+    enabled: !!session?.user?.id,
+    // Add a short timeout to make the query fail faster if it's taking too long
+    retry: 1,
+    retryDelay: 500,
+    staleTime: 60000, // Cache results for 1 minute
   });
 
   // If session is still loading, show loading indicator
   if (isPending) {
     return (
-      <div className="min-h-screen bg-oxford flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pure"></div>
+      <div className="min-h-screen bg-[#ffffff] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -117,6 +138,11 @@ function Dashboard() {
   // If user is not logged in, redirect to login page
   if (!session || !session.user) {
     return <Navigate to="/login" />;
+  }
+
+  // If user is an administrator, redirect to admin dashboard
+  if (session.user.role === "administrator") {
+    return <Navigate to="/admin" />;
   }
 
   // If email not verified, block access with a prompt
@@ -155,61 +181,6 @@ function Dashboard() {
       </div>
     );
   }
-
-  // Fetch badges using React Query
-  const {
-    data: badges,
-    isLoading: isBadgesLoading,
-    error,
-  } = useQuery({
-    queryKey: ["user-badges", session.user.id],
-    queryFn: async () => {
-      if (!session.user.id) {
-        throw new Error("User not authenticated");
-      }
-
-      const response = await fetchWithAuth(`badges/user/${session.user.id}`);
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      // Update stats based on the badges data
-      if (data.badges && data.badges.length > 0) {
-        const mostRecentBadge = [...data.badges].sort(
-          (a, b) =>
-            new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime()
-        )[0];
-
-        setStats({
-          totalBadges: data.badges.length,
-          profileViews: "N/A", // Not implemented
-          recentBadge: mostRecentBadge?.name || "None",
-          issueDate: mostRecentBadge
-            ? formatDate(mostRecentBadge.earnedAt)
-            : "N/A",
-          badgeShares: "N/A", // Not implemented
-        });
-      } else {
-        // Reset stats if no badges are found
-        setStats({
-          totalBadges: 0,
-          profileViews: "N/A", // Not implemented
-          recentBadge: "None",
-          issueDate: "N/A",
-          badgeShares: "N/A", // Not implemented
-        });
-      }
-
-      return data.badges as Badge[];
-    },
-    enabled: !!session?.user?.id,
-    // Add a short timeout to make the query fail faster if it's taking too long
-    retry: 1,
-    retryDelay: 500,
-    staleTime: 60000, // Cache results for 1 minute
-  });
 
   // Format date helper function
   const formatDate = (date: Date | string | null) => {
@@ -257,7 +228,7 @@ function Dashboard() {
   // Actual content
   return (
     <motion.div
-      className="container mx-auto px-4 py-8 relative"
+      className="container mx-auto px-4 py-8 relative bg-[#ffffff]"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -278,281 +249,183 @@ function Dashboard() {
         />
       </div>
 
-      <motion.div variants={itemVariants} className="mb-8 flex flex-col">
-        <div className="flex items-center">
-          <h1 className="text-3xl font-bold text-text">
-            Welcome back, {session?.user?.name || "User"}!
-          </h1>
-          {session?.user?.image && (
-            <Avatar className="ml-4 h-12 w-12 ring-2 ring-primary/20 shadow-sm">
-              <AvatarImage src={session.user.image} />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-surface">
-                {getInitials(session.user.name)}
-              </AvatarFallback>
-            </Avatar>
-          )}
-        </div>
-        <h2 className="text-lg text-text-muted mt-2">
-          Here's an overview of your achievements
-        </h2>
-      </motion.div>
-
-      {/* Stats cards with consistent background */}
-      <motion.div
-        variants={itemVariants}
-        className="p-6 bg-surface/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-light/20 mb-10"
-      >
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          >
-            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-primary/10 overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-medium text-text">
-                  Total Badges
-                </CardTitle>
-                <div className="p-2 rounded-full bg-primary/20">
-                  <Award className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-text">
-                  {stats.totalBadges}
-                </div>
-                <p className="text-sm text-text-muted mt-1">
-                  Earned across all platforms
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          >
-            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-primary/10 overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-medium text-text">
-                  Recent Badge
-                </CardTitle>
-                <div className="p-2 rounded-full bg-primary/20">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xl font-medium truncate text-text">
-                  {stats.recentBadge}
-                </div>
-                <p className="text-sm text-text-muted mt-1">
-                  Earned {stats.issueDate}
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          >
-            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-primary/10 overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-medium text-text">
-                  Profile Views
-                </CardTitle>
-                <div className="p-2 rounded-full bg-primary/20">
-                  <Eye className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-text">
-                  {stats.profileViews}
-                </div>
-                <p className="text-sm text-text-muted mt-1">
-                  In the last 30 days
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          >
-            <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-primary/10 overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-medium text-text">
-                  Badge Shares
-                </CardTitle>
-                <div className="p-2 rounded-full bg-primary/20">
-                  <Share2 className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-text">
-                  {stats.badgeShares}
-                </div>
-                <p className="text-sm text-text-muted mt-1">
-                  Times your badges were shared
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </motion.div>
-
       {/* My Badges Section */}
       <motion.div variants={itemVariants} className="mt-8">
-        <h2 className="text-2xl font-semibold text-text">My Badges</h2>
-        <Separator className="my-4" />
+        <h2 className="text-2xl font-semibold text-gray-900 mb-6">My Badges</h2>
 
         {!badges || badges.length === 0 ? (
           <motion.div
             variants={itemVariants}
-            className="text-center py-16 bg-surface/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-light/20"
+            className="text-center py-16 bg-white rounded-xl shadow-sm"
           >
-            <Award className="h-16 w-16 mx-auto mb-4 text-primary/30" />
-            <h3 className="text-xl font-medium text-text mb-2">
+            <Award className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
               No badges yet
             </h3>
-            <p className="text-text-muted max-w-md mx-auto">
+            <p className="text-gray-600 max-w-md mx-auto">
               Search for badges to earn by using the search bar at the top of
               the page.
             </p>
           </motion.div>
         ) : (
           <div className="grid gap-10 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-            {badges.map((badge, index) => (
-              <motion.div
-                key={badge.id}
-                variants={itemVariants}
-                whileHover={{
-                  y: -10,
-                  transition: { duration: 0.2 },
-                }}
-                className="group"
-              >
-                <Card className="overflow-hidden h-full flex flex-col border-gray-light/20 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 bg-surface/80 backdrop-blur-sm">
-                  <div className="p-10 bg-primary/5 flex items-center justify-center">
-                    <div className="w-48 h-48 relative">
-                      {badge.imageUrl || badge.imageData ? (
-                        <img
-                          src={(badge.imageUrl || badge.imageData) ?? ""}
-                          alt={badge.name}
-                          className="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-primary/10 flex items-center justify-center text-text-muted rounded-full">
-                          <Award className="h-20 w-20" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <CardContent className="p-8 flex-1 flex flex-col">
-                    <div className="mb-6">
-                      <h3 className="text-xl font-semibold text-text mb-3 transition-colors duration-200 line-clamp-1">
-                        {badge.name}
-                      </h3>
-                      <p className="text-base text-text-muted flex items-center gap-2">
-                        <Award className="h-5 w-5 flex-shrink-0" />
-                        <span className="line-clamp-1">{badge.issuedBy}</span>
-                      </p>
-                    </div>
+            {badges.map((badge, index) => {
+              const isExpanded = expandedBadges.has(badge.id);
+              const fullDescription = badge.description || "";
+              const truncatedDescription = truncateToWords(fullDescription, 40);
+              const shouldShowMore = fullDescription.split(" ").length > 40;
 
-                    {badge.description && (
-                      <p className="text-base text-text-muted line-clamp-2 mb-8">
-                        {badge.description}
-                      </p>
-                    )}
+              const toggleExpand = (e: React.MouseEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setExpandedBadges((prev) => {
+                  const newSet = new Set(prev);
+                  if (newSet.has(badge.id)) {
+                    newSet.delete(badge.id);
+                  } else {
+                    newSet.add(badge.id);
+                  }
+                  return newSet;
+                });
+              };
 
-                    {badge.skills && (
-                      <div className="mt-auto mb-6">
-                        <div className="flex flex-wrap gap-2.5">
-                          {badge.skills
-                            .split(",")
-                            .slice(0, 3)
-                            .map((skill, index) => (
-                              <BadgeUI
-                                key={index}
-                                variant="outline"
-                                className="text-base px-4 py-1.5 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
-                              >
-                                {skill.trim()}
-                              </BadgeUI>
-                            ))}
-                          {badge.skills.split(",").length > 3 && (
-                            <BadgeUI
-                              variant="outline"
-                              className="text-base px-4 py-1.5 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
-                            >
-                              +{badge.skills.split(",").length - 3} more
-                            </BadgeUI>
+              return (
+                <motion.div
+                  key={badge.id}
+                  variants={itemVariants}
+                  whileHover={{
+                    y: -5,
+                    transition: { duration: 0.2 },
+                  }}
+                  className="group"
+                >
+                  <Link
+                    to="/badges/$badgeId"
+                    params={{ badgeId: badge.id }}
+                    className="block"
+                  >
+                    <Card className="overflow-hidden h-full flex flex-col border-0 rounded-xl shadow-sm transition-all duration-300 bg-white cursor-pointer hover:shadow-md">
+                      {/* Image on top, left-aligned */}
+                      <div className="p-6 flex items-start">
+                        <div className="w-48 h-48 relative">
+                          {badge.imageUrl || badge.imageData ? (
+                            <img
+                              src={(badge.imageUrl || badge.imageData) ?? ""}
+                              alt={badge.name}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <Award className="h-24 w-24" />
+                            </div>
                           )}
                         </div>
                       </div>
-                    )}
-
-                    <div className="mt-6 pt-5 border-t border-primary/10">
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between space-x-2">
-                          <Link
-                            to="/badges/$badgeId"
-                            params={{ badgeId: badge.id }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="default"
-                              className="gap-1 text-base px-5 py-2.5 border-primary text-primary hover:bg-primary/10 opacity-90 group-hover:opacity-100 transition-all duration-200"
-                            >
-                              <Eye className="h-5 w-5 mr-1.5" />
-                              View Badge
-                            </Button>
-                          </Link>
-
-                          <a
-                            href={generateLinkedInURL(badge)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              variant="outline"
-                              size="default"
-                              className="gap-1 text-base px-5 py-2.5 border-[#0077B5] text-[#0077B5] hover:bg-[#0077B5]/10 opacity-90 group-hover:opacity-100 transition-all duration-200"
-                            >
-                              <Linkedin className="h-5 w-5 mr-1.5" />
-                              Add to LinkedIn
-                            </Button>
-                          </a>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                          {badge.courseLink && (
-                            <a
-                              href={badge.courseLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Button
-                                variant="outline"
-                                size="default"
-                                className="gap-1 text-base px-5 py-2.5 border-gray-dark text-gray-dark hover:bg-gray-dark/10 opacity-90 group-hover:opacity-100 transition-all duration-200"
-                              >
-                                <ExternalLink className="h-5 w-5 mr-1.5" />
-                                View Course
-                              </Button>
-                            </a>
-                          )}
-
-                          <p className="text-base text-text-muted">
-                            {formatDate(badge.earnedAt)}
+                      <CardContent className="p-6 flex-1 flex flex-col">
+                        <div className="mb-4">
+                          <h3 className="text-xl font-semibold text-gray-900 mb-2 transition-colors duration-200 line-clamp-1">
+                            {badge.name}
+                          </h3>
+                          <p className="text-base text-gray-600 flex items-center gap-2 mb-4">
+                            <Award className="h-4 w-4 flex-shrink-0" />
+                            <span className="line-clamp-1">
+                              {badge.issuedBy}
+                            </span>
                           </p>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+
+                        {badge.description && (
+                          <div className="mb-4">
+                            <p className="text-base text-gray-700 leading-relaxed">
+                              {isExpanded
+                                ? fullDescription
+                                : truncatedDescription}
+                            </p>
+                            {shouldShowMore && (
+                              <button
+                                onClick={toggleExpand}
+                                className="text-gray-900 hover:text-gray-700 hover:underline mt-2 text-sm font-medium"
+                              >
+                                {isExpanded ? "Show less" : "Show more"}
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {badge.skills && (
+                          <div className="mt-auto mb-4">
+                            <div className="flex flex-wrap gap-2">
+                              {badge.skills
+                                .split(",")
+                                .slice(0, 3)
+                                .map((skill, index) => (
+                                  <span
+                                    key={index}
+                                    className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md font-medium"
+                                  >
+                                    {skill.trim()}
+                                  </span>
+                                ))}
+                              {badge.skills.split(",").length > 3 && (
+                                <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md font-medium">
+                                  +{badge.skills.split(",").length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                              <a
+                                href={generateLinkedInURL(badge)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button
+                                  variant="outline"
+                                  size="default"
+                                  className="gap-1 text-sm px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
+                                >
+                                  <Linkedin className="h-4 w-4 mr-1.5" />
+                                  Add to LinkedIn
+                                </Button>
+                              </a>
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                              {badge.courseLink && (
+                                <a
+                                  href={badge.courseLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Button
+                                    variant="outline"
+                                    size="default"
+                                    className="gap-1 text-sm px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
+                                  >
+                                    <ExternalLink className="h-4 w-4 mr-1.5" />
+                                    View Course
+                                  </Button>
+                                </a>
+                              )}
+
+                              <p className="text-sm text-gray-600">
+                                {formatDate(badge.earnedAt)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </motion.div>

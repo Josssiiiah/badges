@@ -246,7 +246,7 @@ export async function sendBatchMagicLinkEmails({ emails }: SendBatchMagicLinkEma
   try {
     // Use Resend's batch API to send up to 100 emails at once
     const { data, error } = await resend.batch.send(batchEmails);
-    
+
     if (error) {
       console.error('[email.service] Batch send error:', error);
       return { error: error.message || 'Failed to send batch emails' };
@@ -258,4 +258,109 @@ export async function sendBatchMagicLinkEmails({ emails }: SendBatchMagicLinkEma
     console.error('[email.service] Batch send exception:', error);
     return { error: String(error) };
   }
+}
+
+type SendOrgCreatorInvitationArgs = {
+  to: string;
+  invitationUrl: string;
+  organizationName: string;
+};
+
+export async function sendOrgCreatorInvitation({ to, invitationUrl, organizationName }: SendOrgCreatorInvitationArgs) {
+  const primaryFrom = process.env.RESEND_FROM || 'Badges <onboarding@resend.dev>';
+
+  const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Create Your BadgeSpot Organization</h2>
+        <p>You've been invited to set up your organization <strong>${organizationName}</strong> on BadgeSpot.</p>
+        <p>Click the button below to create your organization and set up your administrator account:</p>
+        <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+          <a href="${invitationUrl}"
+             style="display: inline-block; background-color: #111827; color: white; padding: 12px 18px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+            Create Organization
+          </a>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+          This invitation link will expire in 48 hours. If you didn't expect this invitation, you can safely ignore this email.
+        </p>
+      </div>
+    `;
+
+  return await queueEmailSend(
+    to,
+    'Create Your BadgeSpot Organization',
+    html,
+    [primaryFrom, 'Badges <onboarding@resend.dev>']
+  );
+}
+
+type SendAdminInvitationArgs = {
+  to: string;
+  invitationUrl: string;
+  organizationName: string;
+  inviterName?: string;
+};
+
+export async function sendAdminInvitation({ to, invitationUrl, organizationName, inviterName }: SendAdminInvitationArgs) {
+  const primaryFrom = process.env.RESEND_FROM || 'Badges <onboarding@resend.dev>';
+
+  const inviterText = inviterName ? ` by ${inviterName}` : '';
+
+  const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>You've been invited to ${organizationName}</h2>
+        <p>You've been invited${inviterText} to join <strong>${organizationName}</strong> as an administrator on BadgeSpot.</p>
+        <p>As an administrator, you'll be able to create and manage badges, invite students, and oversee your organization's digital credentials.</p>
+        <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+          <a href="${invitationUrl}"
+             style="display: inline-block; background-color: #111827; color: white; padding: 12px 18px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+            Accept Invitation
+          </a>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+          This invitation link will expire in 7 days. If you didn't expect this invitation, you can safely ignore this email.
+        </p>
+      </div>
+    `;
+
+  return await queueEmailSend(
+    to,
+    `You've been invited to ${organizationName}`,
+    html,
+    [primaryFrom, 'Badges <onboarding@resend.dev>']
+  );
+}
+
+type SendStudentInvitationArgs = {
+  to: string;
+  invitationUrl: string;
+  organizationName: string;
+};
+
+export async function sendStudentInvitation({ to, invitationUrl, organizationName }: SendStudentInvitationArgs) {
+  const primaryFrom = process.env.RESEND_FROM || 'Badges <onboarding@resend.dev>';
+
+  const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Join ${organizationName} on BadgeSpot</h2>
+        <p>You've been invited to join <strong>${organizationName}</strong> on BadgeSpot.</p>
+        <p>Click the button below to create your account and start earning digital badges:</p>
+        <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+          <a href="${invitationUrl}"
+             style="display: inline-block; background-color: #111827; color: white; padding: 12px 18px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+            Join Now
+          </a>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+          This invitation link will expire in 30 days. If you didn't expect this invitation, you can safely ignore this email.
+        </p>
+      </div>
+    `;
+
+  return await queueEmailSend(
+    to,
+    `Join ${organizationName} on BadgeSpot`,
+    html,
+    [primaryFrom, 'Badges <onboarding@resend.dev>']
+  );
 }

@@ -15,6 +15,13 @@
       "when": 1762382794077,
       "tag": "0001_luxuriant_micromacro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1763765336476,
+      "tag": "0002_outstanding_praxagora",
+      "breakpoints": true
     }
   ]
 }

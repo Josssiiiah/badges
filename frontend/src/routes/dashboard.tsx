@@ -12,7 +12,6 @@ import { Badge as BadgeUI } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/api-client";
-import { Separator } from "@/components/ui/separator";
 
 // Helper function to truncate text to 40 words
 const truncateToWords = (text: string, wordLimit: number = 40): string => {
@@ -99,6 +98,34 @@ function Dashboard() {
   const [showLoading, setShowLoading] = useState(true);
   const [expandedBadges, setExpandedBadges] = useState<Set<string>>(new Set());
 
+  // Fetch badges using React Query
+  const {
+    data: badges,
+    isLoading: isBadgesLoading,
+    error,
+  } = useQuery({
+    queryKey: ["user-badges", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const response = await fetchWithAuth(`badges/user/${session.user.id}`);
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data.badges as Badge[];
+    },
+    enabled: !!session?.user?.id,
+    // Add a short timeout to make the query fail faster if it's taking too long
+    retry: 1,
+    retryDelay: 500,
+    staleTime: 60000, // Cache results for 1 minute
+  });
+
   // If session is still loading, show loading indicator
   if (isPending) {
     return (
@@ -111,6 +138,11 @@ function Dashboard() {
   // If user is not logged in, redirect to login page
   if (!session || !session.user) {
     return <Navigate to="/login" />;
+  }
+
+  // If user is an administrator, redirect to admin dashboard
+  if (session.user.role === "administrator") {
+    return <Navigate to="/admin" />;
   }
 
   // If email not verified, block access with a prompt
@@ -149,34 +181,6 @@ function Dashboard() {
       </div>
     );
   }
-
-  // Fetch badges using React Query
-  const {
-    data: badges,
-    isLoading: isBadgesLoading,
-    error,
-  } = useQuery({
-    queryKey: ["user-badges", session.user.id],
-    queryFn: async () => {
-      if (!session.user.id) {
-        throw new Error("User not authenticated");
-      }
-
-      const response = await fetchWithAuth(`badges/user/${session.user.id}`);
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      return data.badges as Badge[];
-    },
-    enabled: !!session?.user?.id,
-    // Add a short timeout to make the query fail faster if it's taking too long
-    retry: 1,
-    retryDelay: 500,
-    staleTime: 60000, // Cache results for 1 minute
-  });
 
   // Format date helper function
   const formatDate = (date: Date | string | null) => {
@@ -247,19 +251,18 @@ function Dashboard() {
 
       {/* My Badges Section */}
       <motion.div variants={itemVariants} className="mt-8">
-        <h2 className="text-2xl font-semibold text-text">My Badges</h2>
-        <Separator className="my-4" />
+        <h2 className="text-2xl font-semibold text-gray-900 mb-6">My Badges</h2>
 
         {!badges || badges.length === 0 ? (
           <motion.div
             variants={itemVariants}
-            className="text-center py-16 bg-surface/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-light/20"
+            className="text-center py-16 bg-white rounded-xl shadow-sm"
           >
-            <Award className="h-16 w-16 mx-auto mb-4 text-primary/30" />
-            <h3 className="text-xl font-medium text-text mb-2">
+            <Award className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">
               No badges yet
             </h3>
-            <p className="text-text-muted max-w-md mx-auto">
+            <p className="text-gray-600 max-w-md mx-auto">
               Search for badges to earn by using the search bar at the top of
               the page.
             </p>
@@ -301,7 +304,7 @@ function Dashboard() {
                     params={{ badgeId: badge.id }}
                     className="block"
                   >
-                    <Card className="overflow-hidden h-full flex flex-col border border-gray-light/30 rounded-xl shadow-sm transition-all duration-300 bg-surface/80 backdrop-blur-sm cursor-pointer hover:border-primary/40 hover:shadow-md">
+                    <Card className="overflow-hidden h-full flex flex-col border-0 rounded-xl shadow-sm transition-all duration-300 bg-white cursor-pointer hover:shadow-md">
                       {/* Image on top, left-aligned */}
                       <div className="p-6 flex items-start">
                         <div className="w-48 h-48 relative">
@@ -312,7 +315,7 @@ function Dashboard() {
                               className="w-full h-full object-contain"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-text-muted">
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
                               <Award className="h-24 w-24" />
                             </div>
                           )}
@@ -320,10 +323,10 @@ function Dashboard() {
                       </div>
                       <CardContent className="p-6 flex-1 flex flex-col">
                         <div className="mb-4">
-                          <h3 className="text-xl font-semibold text-text mb-2 transition-colors duration-200 line-clamp-1">
+                          <h3 className="text-xl font-semibold text-gray-900 mb-2 transition-colors duration-200 line-clamp-1">
                             {badge.name}
                           </h3>
-                          <p className="text-base text-text-muted flex items-center gap-2 mb-4">
+                          <p className="text-base text-gray-600 flex items-center gap-2 mb-4">
                             <Award className="h-4 w-4 flex-shrink-0" />
                             <span className="line-clamp-1">
                               {badge.issuedBy}
@@ -333,7 +336,7 @@ function Dashboard() {
 
                         {badge.description && (
                           <div className="mb-4">
-                            <p className="text-base text-text-muted">
+                            <p className="text-base text-gray-700 leading-relaxed">
                               {isExpanded
                                 ? fullDescription
                                 : truncatedDescription}
@@ -341,7 +344,7 @@ function Dashboard() {
                             {shouldShowMore && (
                               <button
                                 onClick={toggleExpand}
-                                className="text-primary hover:underline mt-2 text-sm font-medium"
+                                className="text-gray-900 hover:text-gray-700 hover:underline mt-2 text-sm font-medium"
                               >
                                 {isExpanded ? "Show less" : "Show more"}
                               </button>
@@ -351,32 +354,28 @@ function Dashboard() {
 
                         {badge.skills && (
                           <div className="mt-auto mb-4">
-                            <div className="flex flex-wrap gap-2.5">
+                            <div className="flex flex-wrap gap-2">
                               {badge.skills
                                 .split(",")
                                 .slice(0, 3)
                                 .map((skill, index) => (
-                                  <BadgeUI
+                                  <span
                                     key={index}
-                                    variant="outline"
-                                    className="text-sm px-3 py-1 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
+                                    className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md font-medium"
                                   >
                                     {skill.trim()}
-                                  </BadgeUI>
+                                  </span>
                                 ))}
                               {badge.skills.split(",").length > 3 && (
-                                <BadgeUI
-                                  variant="outline"
-                                  className="text-sm px-3 py-1 bg-primary/10 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
-                                >
+                                <span className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md font-medium">
                                   +{badge.skills.split(",").length - 3} more
-                                </BadgeUI>
+                                </span>
                               )}
                             </div>
                           </div>
                         )}
 
-                        <div className="mt-4 pt-4 border-t border-primary/10">
+                        <div className="mt-4 pt-4 border-t border-gray-200">
                           <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                               <a
@@ -388,7 +387,7 @@ function Dashboard() {
                                 <Button
                                   variant="outline"
                                   size="default"
-                                  className="gap-1 text-sm px-4 py-2 border-[#0077B5] text-[#0077B5] hover:bg-[#0077B5]/10 transition-all duration-200"
+                                  className="gap-1 text-sm px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
                                 >
                                   <Linkedin className="h-4 w-4 mr-1.5" />
                                   Add to LinkedIn
@@ -407,7 +406,7 @@ function Dashboard() {
                                   <Button
                                     variant="outline"
                                     size="default"
-                                    className="gap-1 text-sm px-4 py-2 border-gray-dark text-gray-dark hover:bg-gray-dark/10 transition-all duration-200"
+                                    className="gap-1 text-sm px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
                                   >
                                     <ExternalLink className="h-4 w-4 mr-1.5" />
                                     View Course
@@ -415,7 +414,7 @@ function Dashboard() {
                                 </a>
                               )}
 
-                              <p className="text-sm text-text-muted">
+                              <p className="text-sm text-gray-600">
                                 {formatDate(badge.earnedAt)}
                               </p>
                             </div>

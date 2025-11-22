@@ -797,7 +797,8 @@ export const badgeRoutes = new Elysia({ prefix: "/badges" })
           const betterAuthBase = process.env.BETTER_AUTH_URL || `${backendOrigin}/api/auth`;
           
           // Check if user has verified email (existing user) or not (new student)
-          let hasLoggedIn = userResult[0].emailVerified === true;
+          // Use Boolean() to handle SQLite integer (1/0) vs boolean (true/false)
+          let hasLoggedIn = Boolean(userResult[0].emailVerified);
 
           if (!hasLoggedIn) {
             const existingSession = await db

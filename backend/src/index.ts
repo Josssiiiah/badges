@@ -5,6 +5,7 @@ import { studentRoutes } from "./routes/students";
 import { badgeRoutes } from "./routes/badges";
 import { organizationRoutes } from "./routes/organizations";
 import { userRoutes } from "./routes/users";
+import { invitationRoutes } from "./routes/invitations";
 import { join } from "path";
 import { staticPlugin } from '@elysiajs/static'
 
@@ -41,12 +42,13 @@ const app = new Elysia()
   .use(auth)
 
   // Define API routes first - these take precedence (other than auth)
-  .group("/api", (app) => 
+  .group("/api", (app) =>
     app
        .use(studentRoutes)
        .use(badgeRoutes)
        .use(organizationRoutes)
        .use(userRoutes)
+       .use(invitationRoutes)
   )
 
   // Static assets

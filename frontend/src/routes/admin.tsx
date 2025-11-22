@@ -9,10 +9,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/api-client";
-import { Award, GraduationCap, Building } from "lucide-react";
+import { Award, GraduationCap, Building, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Navigate } from "@tanstack/react-router";
 import * as React from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoute,
@@ -43,7 +45,7 @@ function AdminRoute() {
             Verify your email
           </h2>
           <p className="text-text-muted mb-6">
-            Please confirm your email address to access the Admin Dashboard.
+            Please confirm your email address to access the Dashboard.
           </p>
           <button
             onClick={async () => {
@@ -106,6 +108,8 @@ function AdminPage() {
     width: 0,
     left: 0,
   });
+  const [isEditingCode, setIsEditingCode] = React.useState(false);
+  const [newShortCode, setNewShortCode] = React.useState("");
 
   // Fetch organization data
   const { data: organization, isLoading: isOrganizationLoading } = useQuery({
@@ -168,7 +172,9 @@ function AdminPage() {
 
       const tabs = tabsRef.current.querySelectorAll('[role="tab"]');
       const activeIndex =
-        activeTab === "templates" ? 0 : activeTab === "students" ? 1 : 2;
+        activeTab === "templates" ? 0
+        : activeTab === "students" ? 1
+        : 2;
       const activeTabElement = tabs[activeIndex] as HTMLElement;
 
       if (activeTabElement) {
@@ -202,13 +208,59 @@ function AdminPage() {
 
   console.log("Current organization:", organization);
 
+  const activeStudents = students?.length || 0;
+
   return (
     <div className="container mx-auto px-4 py-8 bg-[#ffffff]">
-      <h1 className="text-3xl font-bold mb-2 text-text">Admin Dashboard</h1>
-      <p className="text-text-muted mb-8">
-        Organization: {organization?.name || "No organization"}
-      </p>
+      {/* Organization Header Section - ABOVE TABS */}
+      <div className="mb-12">
+        <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          {organization?.name || "Organization"}
+        </h1>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Active Students */}
+          <div>
+            <div className="text-sm text-gray-600 mb-1">Active Students</div>
+            <div className="text-2xl font-semibold text-gray-900">{activeStudents}</div>
+          </div>
+
+          {/* Organization Code */}
+          <div>
+            <div className="text-sm text-gray-600 mb-1">Organization Code</div>
+            <div className="flex items-center gap-2">
+              {isEditingCode ? (
+                <>
+                  <Input
+                    value={newShortCode}
+                    onChange={(e) => setNewShortCode(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <Button size="sm" onClick={() => setIsEditingCode(false)}>Save</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingCode(false)}>Cancel</Button>
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-semibold text-gray-900">
+                    {organization?.short_code || "No code"}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setNewShortCode(organization?.short_code || "");
+                      setIsEditingCode(true);
+                    }}
+                    className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                  >
+                    <Edit className="h-4 w-4 text-gray-600" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs Section */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Sleek tab design - always show the sleek version */}
         <div className="mb-8">

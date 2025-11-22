@@ -1,14 +1,7 @@
 import * as React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -18,24 +11,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Building,
-  Users,
-  User,
-  CalendarDays,
-  Shield,
-  GraduationCap,
-  Copy,
-  Check,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Mail, CalendarDays, UserPlus, X, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { fetchWithAuth } from "@/lib/api-client";
-import { useState } from "react";
-
-// Get the backend URL from environment variables
-const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000/api";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 type Organization = {
   id: string;
@@ -53,186 +44,165 @@ type OrganizationUser = {
   createdAt: string;
 };
 
+type Invitation = {
+  id: string;
+  email: string;
+  type: "administrator" | "student";
+  status: "pending" | "used" | "expired" | "revoked";
+  expiresAt: string;
+  createdAt: string;
+};
+
 export function OrganizationsDashboard() {
   const { data: session } = authClient.useSession();
   const { toast } = useToast();
-  const [copiedShortCode, setCopiedShortCode] = useState(false);
+  const queryClient = useQueryClient();
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = React.useState(false);
+  const [inviteEmail, setInviteEmail] = React.useState("");
 
-  // Check if the organizations API is working correctly
-  const { data: healthCheck } = useQuery({
-    queryKey: ["org-api-health"],
-    queryFn: async () => {
-      try {
-        console.log(
-          `Checking API health at: ${BACKEND_URL}/organizations/health`
-        );
-        const response = await fetch(`${BACKEND_URL}/organizations/health`, {
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Organizations API is not available");
-        }
-
-        return await response.json();
-      } catch (error) {
-        console.error("API health check failed:", error);
-        return { status: "error" };
-      }
-    },
-  });
-
-  // Fetch the current organization data
+  // Fetch organization data
   const { data: organization, isLoading: isLoadingOrg } = useQuery({
     queryKey: ["organization"],
     queryFn: async () => {
-      try {
-        if (!session?.user) {
-          console.log("No user in session");
-          return null;
-        }
-
-        // Fetch organization data from the backend API
-        console.log("Fetching organization data from API");
-        const response = await fetchWithAuth("organizations/current");
-
-        if (!response.ok) {
-          console.error("Organization API error:", response.status);
-          throw new Error("Failed to fetch organization data");
-        }
-
-        const data = await response.json();
-        console.log("Organization data from API:", data);
-
-        if (!data.organization) {
-          console.log("No organization returned from API");
-          return {
-            id: "unknown",
-            name: "No organization",
-          } as Organization;
-        }
-
-        return data.organization as Organization;
-      } catch (error) {
-        console.error("Error fetching organization:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch organization details",
-        });
-        return {
-          id: "unknown",
-          name: "Error loading organization",
-        } as Organization;
-      }
+      const response = await fetchWithAuth("organizations/current");
+      const data = await response.json();
+      return data.organization as Organization;
     },
     enabled: !!session?.user,
   });
 
-  // Fetch organization users
+  // Fetch organization users (for administrators list)
   const { data: orgUsers, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["organization-users", organization?.id],
     queryFn: async () => {
-      try {
-        if (!organization?.id || organization.id === "unknown") {
-          console.log("No valid organization ID for fetching users");
-          return [];
-        }
-
-        // Check if the API health check failed
-        if (healthCheck?.status !== "ok") {
-          console.log("Skipping user fetch - API health check failed");
-          return [];
-        }
-
-        const url = `${BACKEND_URL}/organizations/${organization.id}/users`;
-        console.log(`Fetching users from: ${url}`);
-
-        const response = await fetch(url, {
-          credentials: "include", // Include cookies for auth
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        });
-
-        // First check for the content type
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          console.error("Received non-JSON response:", await response.text());
-          throw new Error("Server did not return JSON");
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Error response from API:", errorData);
-          throw new Error(
-            errorData.error || "Failed to fetch organization users"
-          );
-        }
-
-        const data = await response.json();
-        console.log("Received organization users:", data);
-        return Array.isArray(data.users) ? data.users : [];
-      } catch (error) {
-        console.error("Error fetching organization users:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch organization users",
-        });
-        return [];
-      }
+      if (!organization?.id) return [];
+      const response = await fetchWithAuth(
+        `organizations/${organization.id}/users`
+      );
+      const data = await response.json();
+      return data.users || [];
     },
-    enabled:
-      !!organization?.id &&
-      organization.id !== "unknown" &&
-      healthCheck?.status === "ok",
+    enabled: !!organization?.id,
   });
 
-  // Fetch students from the students table
-  const { data: students, isLoading: isLoadingStudents } = useQuery({
-    queryKey: ["students"],
+  // Fetch invitations (administrator only)
+  const { data: invitations } = useQuery({
+    queryKey: ["invitations"],
     queryFn: async () => {
-      try {
-        if (!organization?.id || organization.id === "unknown") {
-          console.log("No valid organization ID for fetching students");
-          return [];
-        }
-
-        const response = await fetchWithAuth("students/all");
-        const data = await response.json();
-        return data.students || [];
-      } catch (error) {
-        console.error("Error fetching students:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch students",
-        });
-        return [];
-      }
+      const response = await fetchWithAuth("invitations/list");
+      const data = await response.json();
+      const allInvitations = data.invitations || [];
+      // Filter to only show administrator invitations
+      return allInvitations.filter(
+        (inv: Invitation) => inv.type === "administrator"
+      );
     },
-    enabled: !!organization?.id && organization.id !== "unknown",
+    enabled: !!organization?.id,
   });
 
-  const isLoading = isLoadingOrg || isLoadingUsers || isLoadingStudents;
+  // Create invitation mutation
+  const createInvitationMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetchWithAuth("invitations/create", {
+        method: "POST",
+        body: JSON.stringify({ email, type: "administrator" }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create invitation");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      setIsInviteDialogOpen(false);
+      setInviteEmail("");
+      toast({
+        title: "Success",
+        description: "Administrator invitation sent successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
 
-  const getRoleColor = (role: string) => {
-    switch (role.toLowerCase()) {
-      case "administrator":
-        return "bg-blue-500 text-white dark:bg-blue-600 dark:text-white";
-      case "student":
-        return "bg-green-500 text-white dark:bg-green-600 dark:text-white";
-      default:
-        return "bg-gray-500 text-white dark:bg-gray-600 dark:text-white";
+  // Revoke invitation mutation
+  const revokeInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const response = await fetchWithAuth(
+        `invitations/revoke/${invitationId}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to revoke invitation");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      toast({
+        title: "Success",
+        description: "Invitation revoked successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
+
+  // Resend invitation mutation
+  const resendInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const response = await fetchWithAuth(
+        `invitations/resend/${invitationId}`,
+        {
+          method: "POST",
+        }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to resend invitation");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      toast({
+        title: "Success",
+        description: "Invitation resent successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
+
+  const handleSendInvitation = () => {
+    if (!inviteEmail || !inviteEmail.includes("@")) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a valid email address",
+      });
+      return;
     }
+    createInvitationMutation.mutate(inviteEmail);
   };
 
   const getInitials = (name: string | null) => {
@@ -245,219 +215,122 @@ export function OrganizationsDashboard() {
       .substring(0, 2);
   };
 
-  const handleCopyShortCode = () => {
-    if (organization?.short_code) {
-      navigator.clipboard.writeText(organization.short_code);
-      setCopiedShortCode(true);
-      setTimeout(() => setCopiedShortCode(false), 2000);
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
-      toast({
-        title: "Short code copied",
-        description: "Organization short code copied to clipboard",
-      });
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "default";
+      case "used":
+        return "secondary";
+      case "expired":
+        return "destructive";
+      case "revoked":
+        return "outline";
+      default:
+        return "default";
     }
   };
+
+  const isLoading = isLoadingOrg || isLoadingUsers;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--main-text)]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
+  const administrators =
+    orgUsers?.filter((u: OrganizationUser) => u.role === "administrator") || [];
+  const pendingInvitations =
+    invitations?.filter((inv: Invitation) => inv.status === "pending") || [];
+  const otherInvitations =
+    invitations?.filter((inv: Invitation) => inv.status !== "pending") || [];
+
   return (
     <div className="space-y-8">
-      {/* Organization Overview Card */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-white/20 to-white/5 backdrop-filter backdrop-blur-md border border-white/30 shadow-xl overflow-hidden">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-[var(--accent-bg)]/20">
-                  <Building className="h-6 w-6 text-[var(--main-text)]" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">
-                    Organization Profile
-                  </CardTitle>
-                  <CardDescription>Basic organization details</CardDescription>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6 mt-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center p-4 rounded-lg bg-[var(--accent-bg)]/10">
-                  <div className="flex items-center gap-3">
-                    <Building className="h-5 w-5 text-[var(--main-text)]/70" />
-                    <span className="text-sm font-medium text-[var(--main-text)]/60">
-                      Organization
-                    </span>
-                  </div>
-                  <span className="text-base font-semibold text-[var(--main-text)]">
-                    {organization?.name || "No organization"}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center p-4 rounded-lg bg-[var(--accent-bg)]/10">
-                  <div className="flex items-center gap-3">
-                    <Building className="h-5 w-5 text-[var(--main-text)]/70" />
-                    <span className="text-sm font-medium text-[var(--main-text)]/60">
-                      Organization Code
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-semibold text-[var(--main-text)]">
-                      {organization?.short_code || "No code available"}
-                    </span>
-                    <button
-                      onClick={handleCopyShortCode}
-                      className="p-1 rounded-md hover:bg-[var(--accent-bg)]/20 transition-colors"
-                      aria-label="Copy organization code"
-                    >
-                      {copiedShortCode ? (
-                        <Check className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <Copy className="h-4 w-4 text-[var(--main-text)]/70" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-white/20 to-white/5 backdrop-filter backdrop-blur-md border border-white/30 shadow-xl">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-[var(--accent-bg)]/20">
-                  <Users className="h-6 w-6 text-[var(--main-text)]" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Member Statistics</CardTitle>
-                  <CardDescription>
-                    Overview of organization members
-                  </CardDescription>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-[var(--accent-bg)]/10 flex flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-[var(--main-text)]">
-                    {orgUsers?.filter(
-                      (u: OrganizationUser) => u.role === "administrator"
-                    ).length || 0}
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-[var(--main-text)]/60 font-medium">
-                    <Shield className="h-3.5 w-3.5" />
-                    <span>Administrators</span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-lg bg-[var(--accent-bg)]/10 flex flex-col items-center justify-center">
-                  <div className="text-3xl font-bold text-[var(--main-text)]">
-                    {students?.length || 0}
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-[var(--main-text)]/60 font-medium">
-                    <GraduationCap className="h-3.5 w-3.5" />
-                    <span>Students</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* <Button className="w-full bg-primary hover:bg-primary/90 text-white">
-                <User className="h-4 w-4 mr-2" />
-                Invite New Administrator
-              </Button> */}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Organization Members Card */}
-      <Card className="bg-gradient-to-br from-white/20 to-white/5 backdrop-filter backdrop-blur-md border border-white/30 shadow-xl overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-[var(--accent-bg)]/20">
-                <Users className="h-5 w-5 text-[var(--main-text)]" />
-              </div>
-              <div>
-                <CardTitle>Organization Members</CardTitle>
-                <CardDescription>
-                  Manage your organization's users
-                </CardDescription>
-              </div>
-            </div>
+      {/* Invitations Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Administrator Invitations
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Invite new administrators to your organization
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {orgUsers && orgUsers.length > 0 ? (
-            <div className="rounded-xl overflow-hidden border border-white/20">
+          <Button
+            onClick={() => setIsInviteDialogOpen(true)}
+            className="bg-black text-white hover:bg-black/80"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Send Invitation
+          </Button>
+        </div>
+
+        {/* Pending Invitations */}
+        {pendingInvitations.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <div className="p-4 border-b border-gray-200">
+              <h4 className="font-semibold text-gray-900">
+                Pending Invitations
+              </h4>
+            </div>
+            <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-[var(--accent-bg)]/15">
-                  <TableRow className="hover:bg-transparent dark:hover:bg-transparent">
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Join Date</TableHead>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Expires</TableHead>
+                    <TableHead>Sent</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orgUsers.map((user: OrganizationUser) => (
-                    <TableRow
-                      key={user.id}
-                      className="hover:bg-[var(--accent-bg)]/5"
-                    >
-                      <TableCell className="font-medium p-4">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-[var(--accent-bg)]/30 text-[var(--main-text)]">
-                            {getInitials(user.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-[var(--main-text)]">
-                            {user.name || "No name"}
-                          </span>
-                          <span className="text-sm text-[var(--main-text)]/60">
-                            {user.email || "No email"}
-                          </span>
+                  {pendingInvitations.map((invitation: Invitation) => (
+                    <TableRow key={invitation.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          {invitation.email}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`${getRoleColor(user.role)} capitalize px-2 py-1`}
-                        >
-                          {user.role === "administrator" ? (
-                            <Shield className="inline h-3 w-3 mr-1" />
-                          ) : (
-                            <User className="inline h-3 w-3 mr-1" />
-                          )}
-                          {user.role}
-                        </Badge>
+                      <TableCell>{formatDate(invitation.expiresAt)}</TableCell>
+                      <TableCell className="text-gray-600">
+                        {formatDate(invitation.createdAt)}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <CalendarDays className="h-4 w-4 mr-2 text-[var(--main-text)]/50" />
-                          <span className="text-sm">
-                            {new Date(user.createdAt).toLocaleDateString(
-                              undefined,
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
-                          </span>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              resendInvitationMutation.mutate(invitation.id)
+                            }
+                            disabled={resendInvitationMutation.isPending}
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              revokeInvitationMutation.mutate(invitation.id)
+                            }
+                            disabled={revokeInvitationMutation.isPending}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -465,20 +338,180 @@ export function OrganizationsDashboard() {
                 </TableBody>
               </Table>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 bg-[var(--accent-bg)]/5 rounded-lg">
-              <Users className="h-10 w-10 text-[var(--main-text)]/40 mb-2" />
-              <p className="text-center text-[var(--main-text)]/70 mb-4">
-                No members found for this organization.
-              </p>
-              <Button variant="outline" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                Add Administrators
-              </Button>
+          </div>
+        )}
+
+        {/* Past Invitations */}
+        {otherInvitations.length > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white">
+            <div className="p-4 border-b border-gray-200">
+              <h4 className="font-semibold text-gray-900">
+                Invitation History
+              </h4>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Sent</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {otherInvitations.map((invitation: Invitation) => (
+                    <TableRow key={invitation.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          {invitation.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={getStatusBadgeVariant(invitation.status)}
+                        >
+                          {invitation.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        {formatDate(invitation.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+
+        {pendingInvitations.length === 0 && otherInvitations.length === 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center text-gray-600">
+            <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p>No invitations yet</p>
+            <p className="text-sm mt-2">
+              Send your first invitation to get started
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Separator */}
+      <Separator className="my-8" />
+
+      {/* Administrators Section */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Administrators</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Manage administrator access
+          </p>
+        </div>
+
+        {/* Administrators Table - Sleek like students */}
+        <div className="bg-[#ffffff] rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-b border-gray-100">
+                <TableHead className="text-gray-600 font-medium py-4 px-6 w-12"></TableHead>
+                <TableHead className="text-gray-600 font-medium py-4 px-6">
+                  Name
+                </TableHead>
+                <TableHead className="text-gray-600 font-medium py-4 px-6">
+                  Email
+                </TableHead>
+                <TableHead className="text-gray-600 font-medium py-4 px-6">
+                  Joined
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {administrators.length === 0 ? (
+                <TableRow className="border-0">
+                  <TableCell
+                    colSpan={4}
+                    className="h-24 text-center text-gray-500 py-8"
+                  >
+                    No administrators found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                administrators.map((admin: OrganizationUser, index: number) => (
+                  <TableRow
+                    key={admin.id}
+                    className={cn(
+                      "cursor-pointer border-0 hover:bg-gray-50/50 transition-colors",
+                      index !== administrators.length - 1 &&
+                        "border-b border-gray-100"
+                    )}
+                  >
+                    <TableCell className="py-4 px-6">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="bg-gray-100 text-gray-900">
+                          {getInitials(admin.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell className="text-gray-900 py-4 px-6 font-medium">
+                      {admin.name || "No name"}
+                    </TableCell>
+                    <TableCell className="text-gray-600 py-4 px-6">
+                      {admin.email || "No email"}
+                    </TableCell>
+                    <TableCell className="text-gray-600 py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4" />
+                        {formatDate(admin.createdAt)}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Invite Dialog */}
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Administrator Invitation</DialogTitle>
+            <DialogDescription>
+              Invite a new administrator to join your organization
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-4">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsInviteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendInvitation}
+              disabled={createInvitationMutation.isPending}
+              className="bg-black text-white hover:bg-black/80"
+            >
+              {createInvitationMutation.isPending
+                ? "Sending..."
+                : "Send Invitation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

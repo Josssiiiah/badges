@@ -187,10 +187,10 @@ export default function Login() {
     <div className="container mx-auto px-4 py-6 md:py-12 flex justify-center items-center min-h-[80vh]">
       <div className="flex flex-col lg:flex-row justify-center w-full gap-6 lg:gap-0">
         <div className="w-full lg:w-1/2 p-4 lg:p-8 lg:pr-12 order-1 lg:order-1">
-          <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-4 md:mb-6 text-[var(--main-text)]">
+          <h1 className="text-3xl md:text-4xl lg:text-6xl font-light mb-4 md:mb-6 text-[var(--main-text)]">
             Protect Your Resume-worthy Achievements
           </h1>
-          <p className="text-lg md:text-xl text-[var(--main-text)]/80">
+          <p className="text-lg md:text-xl font-light text-[var(--main-text)]/80">
             Track your earned badges and certifications. Or issue secure,
             verifiable badges and certification links to showcase and validate
             course completion anywhere online.

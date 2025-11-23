@@ -29,7 +29,11 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
       }
 
       // For administrators, filter students by organization
-      if (session.user.role === "administrator" && session.user.organizationId) {
+      if (session.user.role === "administrator") {
+        if (!session.user.organizationId) {
+          return { error: "Administrator must be associated with an organization" };
+        }
+
         // Get all students
         const allStudents = await db
           .select({
@@ -90,58 +94,8 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         return { students: studentsWithBadges };
       }
 
-      // For non-administrators or if no organizationId is available
-      const allStudents = await db
-        .select({
-          studentId: students.studentId,
-          name: students.name,
-          email: students.email,
-          createdAt: students.createdAt,
-          updatedAt: students.updatedAt,
-        })
-        .from(students);
-
-      // Get all users and their badges
-      const userRecords = await db
-        .select({ id: user.id, email: user.email })
-        .from(user);
-
-      const userIdMap = new Map(userRecords.map(u => [u.email, u.id]));
-      const userIds = Array.from(userIdMap.values());
-
-      const badgeAssignments = userIds.length > 0 ? await db
-        .select({
-          userId: badges.userId,
-          assignmentId: badges.id,
-          earnedAt: badges.earnedAt,
-          badge: createdBadges,
-        })
-        .from(badges)
-        .innerJoin(createdBadges, eq(badges.badgeId, createdBadges.id)) : [];
-
-      // Group badges by user email
-      const badgesByEmail = new Map<string, any[]>();
-      for (const assignment of badgeAssignments) {
-        const userEmail = userRecords.find(u => u.id === assignment.userId)?.email;
-        if (userEmail) {
-          if (!badgesByEmail.has(userEmail)) {
-            badgesByEmail.set(userEmail, []);
-          }
-          badgesByEmail.get(userEmail)!.push({
-            assignmentId: assignment.assignmentId,
-            earnedAt: assignment.earnedAt,
-            badge: assignment.badge,
-          });
-        }
-      }
-
-      // Combine students with their badges
-      const studentsWithBadges = allStudents.map(student => ({
-        ...student,
-        badges: badgesByEmail.get(student.email) || [],
-      }));
-
-      return { students: studentsWithBadges };
+      // Non-administrators should not be able to see all students
+      return { error: "Unauthorized access to student list" };
     } catch (error) {
       console.error("Error fetching students:", error);
       return { error: String(error) };
@@ -165,7 +119,10 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         let whereConditions = [eq(students.studentId, params.studentId)];
         
         // Add organization filter for administrators
-        if (session.user.role === "administrator" && session.user.organizationId) {
+        if (session.user.role === "administrator") {
+          if (!session.user.organizationId) {
+            return { error: "Administrator must be associated with an organization" };
+          }
           whereConditions.push(eq(students.organizationId, session.user.organizationId));
         }
         
@@ -519,7 +476,11 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         }
         
         // For administrators, verify student belongs to their organization
-        if (session.user.role === "administrator" && session.user.organizationId) {
+        if (session.user.role === "administrator") {
+          if (!session.user.organizationId) {
+            return { error: "Administrator must be associated with an organization" };
+          }
+
           const existingStudent = await db
             .select({ organizationId: students.organizationId })
             .from(students)
@@ -583,7 +544,11 @@ export const studentRoutes = new Elysia({ prefix: "/students" })
         }
         
         // For administrators, verify student belongs to their organization
-        if (session.user.role === "administrator" && session.user.organizationId) {
+        if (session.user.role === "administrator") {
+          if (!session.user.organizationId) {
+            return { error: "Administrator must be associated with an organization" };
+          }
+
           const existingStudent = await db
             .select({ organizationId: students.organizationId })
             .from(students)

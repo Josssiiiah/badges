@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle, Copy, Share2, Users } from "lucide-react";
+import { Trash2, PlusCircle, Share2 } from "lucide-react";
 import { fetchWithAuth } from "@/lib/api-client";
 import { nanoid } from "nanoid";
 import { Textarea } from "@/components/ui/textarea";
@@ -95,6 +95,13 @@ export function StudentDashboard({
   const [viewStudent, setViewStudent] = useState<Student | null>(null);
   const [isResending, setIsResending] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(
+    new Set()
+  );
+  const [isBulkBadgeDialogOpen, setIsBulkBadgeDialogOpen] =
+    useState<boolean>(false);
+  const [bulkBadgeAssignmentId, setBulkBadgeAssignmentId] =
+    useState<string>("");
 
   // Sync local state with prop changes from React Query
   useEffect(() => {
@@ -451,6 +458,84 @@ export function StudentDashboard({
     window.open(`/badges/${badgeId}`, "_blank");
   };
 
+  // Handle student selection
+  const handleSelectStudent = (studentId: string, checked: boolean) => {
+    setSelectedStudents((prev) => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(studentId);
+      } else {
+        newSet.delete(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedStudents(new Set(localStudents.map((s) => s.studentId)));
+    } else {
+      setSelectedStudents(new Set());
+    }
+  };
+
+  // Check if all students are selected
+  const isAllSelected =
+    localStudents.length > 0 &&
+    localStudents.every((s) => selectedStudents.has(s.studentId));
+
+  // Check if some (but not all) students are selected
+  const isSomeSelected =
+    selectedStudents.size > 0 && selectedStudents.size < localStudents.length;
+
+  // Assign badge to selected students
+  const assignBadgeToSelectedStudents = async () => {
+    if (selectedStudents.size === 0 || !bulkBadgeAssignmentId) return;
+
+    try {
+      const selectedEmails = localStudents
+        .filter((s) => selectedStudents.has(s.studentId))
+        .map((s) => s.email);
+
+      const response = await fetchWithAuth("badges/assign-bulk", {
+        method: "POST",
+        body: JSON.stringify({
+          badgeId: bulkBadgeAssignmentId,
+          emails: selectedEmails,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        throw new Error(result?.error || "Failed to assign badges");
+      }
+
+      // Clear selection and close dialog
+      setSelectedStudents(new Set());
+      setBulkBadgeAssignmentId("");
+      setIsBulkBadgeDialogOpen(false);
+
+      // Invalidate and refetch
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+
+      toast({
+        variant: "success",
+        title: "Success",
+        description: `Badge assigned to ${selectedEmails.length} student${selectedEmails.length > 1 ? "s" : ""}`,
+      });
+    } catch (error) {
+      console.error("Error assigning badges:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to assign badges",
+      });
+    }
+  };
+
   const addBulkStudents = async () => {
     try {
       setIsBulkImporting(true);
@@ -612,106 +697,20 @@ export function StudentDashboard({
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Students</h2>
         <div className="flex gap-2">
+          {selectedStudents.size > 0 && (
+            <Button
+              onClick={() => setIsBulkBadgeDialogOpen(true)}
+              className="bg-surface-accent hover:bg-surface-accent/80"
+            >
+              <PlusCircle className="mr-2 h-4 w-4 text-[var(--gray)]" />
+              <span className="text-black font-normal">Add Badge</span>
+            </Button>
+          )}
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="">
-                <Users className="mr-2 h-4 w-4 text-[var(--gray)]" />{" "}
-                <span className="text-gray-500">Bulk Import</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
-              <DialogHeader>
-                <DialogTitle>Add Multiple Students</DialogTitle>
-                <DialogDescription>
-                  Enter email addresses to import students in bulk.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label
-                    htmlFor="bulkEmails"
-                    className="text-right text-gray-500"
-                  >
-                    Emails
-                  </Label>
-                  <div className="col-span-3">
-                    <Textarea
-                      id="bulkEmails"
-                      value={bulkEmails}
-                      onChange={(e) => setBulkEmails(e.target.value)}
-                      className="min-h-[100px]"
-                      placeholder="student1@example.com, student2@example.com, student3@example.com"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Enter comma-separated email addresses
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right text-gray-500">Badge</Label>
-                  <div className="col-span-3 flex items-center space-x-2">
-                    <Checkbox
-                      id="bulk-assign-badge"
-                      checked={bulkAssignBadge}
-                      onCheckedChange={(checked) =>
-                        setBulkAssignBadge(checked as boolean)
-                      }
-                    />
-                    <Label
-                      htmlFor="bulk-assign-badge"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-500"
-                    >
-                      Assign same badge to all students
-                    </Label>
-                  </div>
-                </div>
-
-                {bulkAssignBadge && (
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label
-                      htmlFor="bulk-badge"
-                      className="text-right text-gray-500"
-                    >
-                      Select Badge
-                    </Label>
-                    <Select value={bulkBadgeId} onValueChange={setBulkBadgeId}>
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select a badge" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {badges?.map((badge) => (
-                          <SelectItem key={badge.id} value={badge.id}>
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={badge.imageData}
-                                alt={badge.name}
-                                className="w-6 h-6 object-contain rounded-sm"
-                              />
-                              {badge.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button onClick={addBulkStudents} disabled={isBulkImporting}>
-                  {isBulkImporting ? "Importing..." : "Import Students"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-white">
+              <Button className="bg-black hover:bg-black/90 text-white">
                 <PlusCircle className="h-4 w-4 text-[var(--gray)]" />{" "}
-                <span className="text-white">Add Student</span>
+                <span className="text-white font-light">Add Student</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
@@ -761,7 +760,7 @@ export function StudentDashboard({
                 <Button
                   onClick={addStudent}
                   type="submit"
-                  className="bg-primary hover:bg-primary/90 text-white"
+                  className="bg-black hover:bg-black/90 text-white"
                 >
                   Add Student
                 </Button>
@@ -775,17 +774,24 @@ export function StudentDashboard({
       <div className="bg-[#ffffff] rounded-lg">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent border-b border-gray-100">
-              <TableHead className="text-gray-600 font-medium py-4 px-6">
+            <TableRow className="hover:bg-transparent border-0 bg-[var(--color-surface-secondary)] rounded-t-lg">
+              <TableHead className="w-12 text-gray-600 font-semibold text-base py-4 px-6 rounded-tl-lg">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={handleSelectAll}
+                  className="border-gray-300 data-[state=checked]:bg-transparent data-[state=checked]:border-gray-300 data-[state=checked]:text-gray-900"
+                />
+              </TableHead>
+              <TableHead className="text-gray-600 font-semibold text-base py-4 px-6">
                 Name
               </TableHead>
-              <TableHead className="text-gray-600 font-medium py-4 px-6">
+              <TableHead className="text-gray-600 font-semibold text-base py-4 px-6">
                 Email
               </TableHead>
-              <TableHead className="text-gray-600 font-medium py-4 px-6">
+              <TableHead className="text-gray-600 font-semibold text-base py-4 px-6">
                 Badges
               </TableHead>
-              <TableHead className="text-right text-gray-600 font-medium py-4 px-6">
+              <TableHead className="text-right text-gray-600 font-semibold text-base py-4 px-6 rounded-tr-lg">
                 Actions
               </TableHead>
             </TableRow>
@@ -794,7 +800,7 @@ export function StudentDashboard({
             {loading ? (
               <TableRow className="border-0">
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="h-24 text-center text-gray-500 py-8"
                 >
                   Loading...
@@ -803,7 +809,7 @@ export function StudentDashboard({
             ) : localStudents.length === 0 ? (
               <TableRow className="border-0">
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="h-24 text-center text-gray-500 py-8"
                 >
                   No students found.
@@ -816,13 +822,29 @@ export function StudentDashboard({
                   className={cn(
                     "cursor-pointer border-0 hover:bg-gray-50/50 transition-colors",
                     index !== localStudents.length - 1 &&
-                      "border-b border-gray-100"
+                      "border-b border-gray-100",
+                    selectedStudents.has(student.studentId) && "bg-blue-50/30"
                   )}
                   onClick={() => {
                     setViewStudent(student);
                     setIsViewDialogOpen(true);
                   }}
                 >
+                  <TableCell
+                    className="py-4 px-6"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Checkbox
+                      checked={selectedStudents.has(student.studentId)}
+                      onCheckedChange={(checked) =>
+                        handleSelectStudent(
+                          student.studentId,
+                          checked as boolean
+                        )
+                      }
+                      className="border-gray-300 data-[state=checked]:bg-transparent data-[state=checked]:border-gray-300 data-[state=checked]:text-gray-900"
+                    />
+                  </TableCell>
                   <TableCell className="text-gray-900 py-4 px-6">
                     {student.name}
                   </TableCell>
@@ -1054,6 +1076,66 @@ export function StudentDashboard({
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Badge Assignment Dialog */}
+      <Dialog
+        open={isBulkBadgeDialogOpen}
+        onOpenChange={setIsBulkBadgeDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[425px] backdrop-filter backdrop-blur-xl border-2 border-white/30 shadow-xl">
+          <DialogHeader>
+            <DialogTitle>Add Badge to Selected Students</DialogTitle>
+            <DialogDescription>
+              Assign a badge to {selectedStudents.size} selected student
+              {selectedStudents.size > 1 ? "s" : ""}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label
+                htmlFor="bulk-badge-assignment"
+                className="text-right text-gray-500"
+              >
+                Select Badge
+              </Label>
+              <Select
+                value={bulkBadgeAssignmentId}
+                onValueChange={setBulkBadgeAssignmentId}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a badge" />
+                </SelectTrigger>
+                <SelectContent>
+                  {badges?.map((badge) => (
+                    <SelectItem key={badge.id} value={badge.id}>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={badge.imageData}
+                          alt={badge.name}
+                          className="w-6 h-6 object-contain rounded-sm"
+                        />
+                        {badge.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              onClick={assignBadgeToSelectedStudents}
+              disabled={!bulkBadgeAssignmentId}
+              className="bg-black hover:bg-black/90 text-white"
+            >
+              Assign Badge
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

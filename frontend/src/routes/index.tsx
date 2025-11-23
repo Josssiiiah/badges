@@ -28,7 +28,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DemoDashboard } from "@/components/DemoDashboard";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
@@ -251,8 +250,6 @@ function HomeComponent() {
                 intuitive dashboard
               </p>
             </motion.div>
-
-            <DemoDashboard />
           </div>
         </section>
 

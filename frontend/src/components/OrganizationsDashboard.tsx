@@ -257,59 +257,67 @@ export function OrganizationsDashboard() {
     invitations?.filter((inv: Invitation) => inv.status !== "pending") || [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">
+          Administrator Invitations
+        </h2>
+        <Button
+          onClick={() => setIsInviteDialogOpen(true)}
+          className="bg-black text-white hover:bg-black/80"
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Send Invitation
+        </Button>
+      </div>
+
       {/* Invitations Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Administrator Invitations
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Invite new administrators to your organization
-            </p>
-          </div>
-          <Button
-            onClick={() => setIsInviteDialogOpen(true)}
-            className="bg-black text-white hover:bg-black/80"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Send Invitation
-          </Button>
-        </div>
-
         {/* Pending Invitations */}
         {pendingInvitations.length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <div className="p-4 border-b border-gray-200">
-              <h4 className="font-semibold text-gray-900">
-                Pending Invitations
-              </h4>
-            </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Expires</TableHead>
-                    <TableHead>Sent</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingInvitations.map((invitation: Invitation) => (
-                    <TableRow key={invitation.id}>
-                      <TableCell className="font-medium">
+          <div className="bg-[#ffffff] rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-b border-gray-100">
+                  <TableHead className="text-gray-600 font-medium py-4 px-6">
+                    Email
+                  </TableHead>
+                  <TableHead className="text-gray-600 font-medium py-4 px-6">
+                    Expires
+                  </TableHead>
+                  <TableHead className="text-gray-600 font-medium py-4 px-6">
+                    Sent
+                  </TableHead>
+                  <TableHead className="text-right text-gray-600 font-medium py-4 px-6">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingInvitations.map(
+                  (invitation: Invitation, index: number) => (
+                    <TableRow
+                      key={invitation.id}
+                      className={cn(
+                        "border-0 hover:bg-gray-50/50 transition-colors",
+                        index !== pendingInvitations.length - 1 &&
+                          "border-b border-gray-100"
+                      )}
+                    >
+                      <TableCell className="font-medium py-4 px-6">
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-gray-400" />
                           {invitation.email}
                         </div>
                       </TableCell>
-                      <TableCell>{formatDate(invitation.expiresAt)}</TableCell>
-                      <TableCell className="text-gray-600">
+                      <TableCell className="py-4 px-6">
+                        {formatDate(invitation.expiresAt)}
+                      </TableCell>
+                      <TableCell className="text-gray-600 py-4 px-6">
                         {formatDate(invitation.createdAt)}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right py-4 px-6">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
@@ -334,59 +342,67 @@ export function OrganizationsDashboard() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  )
+                )}
+              </TableBody>
+            </Table>
           </div>
         )}
 
         {/* Past Invitations */}
         {otherInvitations.length > 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white">
-            <div className="p-4 border-b border-gray-200">
-              <h4 className="font-semibold text-gray-900">
-                Invitation History
-              </h4>
-            </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sent</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {otherInvitations.map((invitation: Invitation) => (
-                    <TableRow key={invitation.id}>
-                      <TableCell className="font-medium">
+          <div className="bg-[#ffffff] rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-b border-gray-100">
+                  <TableHead className="text-gray-600 font-medium py-4 px-6">
+                    Email
+                  </TableHead>
+                  <TableHead className="text-gray-600 font-medium py-4 px-6">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-gray-600 font-medium py-4 px-6">
+                    Sent
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {otherInvitations.map(
+                  (invitation: Invitation, index: number) => (
+                    <TableRow
+                      key={invitation.id}
+                      className={cn(
+                        "border-0 hover:bg-gray-50/50 transition-colors",
+                        index !== otherInvitations.length - 1 &&
+                          "border-b border-gray-100"
+                      )}
+                    >
+                      <TableCell className="font-medium py-4 px-6">
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-gray-400" />
                           {invitation.email}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4 px-6">
                         <Badge
                           variant={getStatusBadgeVariant(invitation.status)}
                         >
                           {invitation.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-gray-600">
+                      <TableCell className="text-gray-600 py-4 px-6">
                         {formatDate(invitation.createdAt)}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  )
+                )}
+              </TableBody>
+            </Table>
           </div>
         )}
 
         {pendingInvitations.length === 0 && otherInvitations.length === 0 && (
-          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center text-gray-600">
+          <div className="bg-[#ffffff] rounded-lg p-12 text-center text-gray-600">
             <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p>No invitations yet</p>
             <p className="text-sm mt-2">
@@ -401,12 +417,7 @@ export function OrganizationsDashboard() {
 
       {/* Administrators Section */}
       <div className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Administrators</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Manage administrator access
-          </p>
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Administrators</h2>
 
         {/* Administrators Table - Sleek like students */}
         <div className="bg-[#ffffff] rounded-lg">

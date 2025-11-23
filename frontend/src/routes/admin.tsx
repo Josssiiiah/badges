@@ -172,9 +172,7 @@ function AdminPage() {
 
       const tabs = tabsRef.current.querySelectorAll('[role="tab"]');
       const activeIndex =
-        activeTab === "templates" ? 0
-        : activeTab === "students" ? 1
-        : 2;
+        activeTab === "templates" ? 0 : activeTab === "students" ? 1 : 2;
       const activeTabElement = tabs[activeIndex] as HTMLElement;
 
       if (activeTabElement) {
@@ -214,7 +212,7 @@ function AdminPage() {
     <div className="container mx-auto px-4 py-8 bg-[#ffffff]">
       {/* Organization Header Section - ABOVE TABS */}
       <div className="mb-12">
-        <h1 className="text-5xl font-bold text-gray-900 mb-6">
+        <h1 className="text-5xl font-bold text-gray-900 mb-10">
           {organization?.name || "Organization"}
         </h1>
 
@@ -222,7 +220,9 @@ function AdminPage() {
           {/* Active Students */}
           <div>
             <div className="text-sm text-gray-600 mb-1">Active Students</div>
-            <div className="text-2xl font-semibold text-gray-900">{activeStudents}</div>
+            <div className="text-2xl font-semibold text-gray-900">
+              {activeStudents}
+            </div>
           </div>
 
           {/* Organization Code */}
@@ -236,8 +236,16 @@ function AdminPage() {
                     onChange={(e) => setNewShortCode(e.target.value)}
                     className="max-w-xs"
                   />
-                  <Button size="sm" onClick={() => setIsEditingCode(false)}>Save</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setIsEditingCode(false)}>Cancel</Button>
+                  <Button size="sm" onClick={() => setIsEditingCode(false)}>
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditingCode(false)}
+                  >
+                    Cancel
+                  </Button>
                 </>
               ) : (
                 <>
@@ -325,10 +333,7 @@ function AdminPage() {
           <StudentDashboard students={students || []} badges={badges || []} />
         </TabsContent>
 
-        <TabsContent
-          value="organization"
-          className="mt-6 rounded-xl p-6 bg-[#ffffff] border border-gray-light"
-        >
+        <TabsContent value="organization" className="mt-6 bg-[#ffffff]">
           <OrganizationsDashboard />
         </TabsContent>
       </Tabs>

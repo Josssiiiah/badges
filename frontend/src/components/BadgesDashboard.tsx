@@ -4,14 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -553,7 +546,9 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold tracking-tight text-text">Badges</h2>
+      <h2 className="text-2xl font-medium tracking-tight text-text">
+        Available badges
+      </h2>
 
       {/* Create Badge Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -587,91 +582,65 @@ export function BadgesDashboard({ badges = [] }: { badges: Badge[] }) {
         </DialogContent>
       </Dialog>
 
-      {/* Badge Grid Card */}
-      <Card className="bg-surface-accent/50 border-gray-light">
-        <CardHeader>
-          <CardTitle>Available Badges</CardTitle>
-          <CardDescription>
-            Browse and manage your badge templates.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {/* Create New Badge Card */}
-            <Card
-              className="overflow-hidden border-dashed border-2 border-gray-light cursor-pointer group h-full flex flex-col bg-surface-accent/30 hover:bg-surface-accent/60 transition-all hover:shadow-lg hover:scale-[1.02]"
-              onClick={() => {
-                resetForm();
-                setIsCreateOpen(true);
-              }}
-            >
-              <CardContent className="p-0 flex-1 aspect-square flex items-center justify-center bg-muted/10 group-hover:bg-muted/20 transition-colors">
-                <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
-                  <Plus className="h-12 w-12 mb-2 text-text-muted" />
-                  <p className="text-sm font-medium text-text-muted">
-                    Create New Badge
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Badge Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {/* Create New Badge Card */}
+        <Card
+          className="overflow-hidden border-dashed border-2 border-gray-light cursor-pointer group h-full flex flex-col bg-surface-accent/30 hover:bg-surface-accent/60 transition-all hover:shadow-lg"
+          onClick={() => {
+            resetForm();
+            setIsCreateOpen(true);
+          }}
+        >
+          <CardContent className="p-0 flex-1 aspect-square flex items-center justify-center bg-muted/10 group-hover:bg-muted/20 transition-colors">
+            <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+              <Plus className="h-12 w-12 mb-2 text-text-muted" />
+              <p className="text-sm font-medium text-text-muted">
+                Create New Badge
+              </p>
+            </div>
+          </CardContent>
+          <div className="h-[57px] bg-transparent border-t border-transparent"></div>
+        </Card>
 
-            {/* Existing Badges */}
-            {badges.map((badge: Badge) => (
-              <Card
-                key={badge.id}
-                className="overflow-hidden border border-gray-light group cursor-pointer h-full bg-surface hover:bg-surface-accent transition-all hover:shadow-lg hover:scale-[1.02]"
-                onClick={() => openEditDialog(badge)}
-              >
-                <CardContent className="p-4 aspect-square flex items-center justify-center bg-surface-accent/30 group-hover:bg-surface-accent/50 transition-colors relative">
-                  <img
-                    src={badge.imageData}
-                    alt={`Badge for ${badge.name}`}
-                    className="max-w-[100%] max-h-[100%] object-contain transition-transform group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Pencil className="h-8 w-8 text-white drop-shadow-lg" />
-                  </div>
-                </CardContent>
-                <CardHeader className="p-3">
-                  <CardTitle
-                    className="text-base font-medium truncate text-text"
-                    title={badge.name}
-                  >
-                    {badge.name}
-                  </CardTitle>
-                  {/* <p className="text-sm text-[var(--main-text)]/80">
-                    Issued by: {badge.issuedBy}
-                  </p> */}
-                  {badge.description && (
-                    <CardDescription
-                      className="text-xs mt-1 line-clamp-1 text-text-muted"
-                      title={badge.description}
-                    >
-                      {badge.description.split(" ").slice(0, 20).join(" ")}
-                      {badge.description.split(" ").length > 20 ? "..." : ""}
-                    </CardDescription>
-                  )}
-                  {/* {badge.skills && (
-                    <p className="text-xs mt-1 text-[var(--main-text)]/80">
-                      Skills: {badge.skills}
-                    </p>
-                  )} */}
-                </CardHeader>
-              </Card>
-            ))}
-
-            {badges.length === 0 && (
-              <div className="col-span-full rounded-lg bg-surface-accent/30 border border-gray-light p-6 text-center">
-                <p className="text-text-muted">
-                  No badge templates available yet. Click the "Create New Badge"
-                  card to get started.
-                </p>
+        {/* Existing Badges */}
+        {badges.map((badge: Badge) => (
+          <Card
+            key={badge.id}
+            className="overflow-hidden border border-gray-light group cursor-pointer h-full bg-surface hover:shadow-lg transition-all flex flex-col"
+            onClick={() => openEditDialog(badge)}
+          >
+            <CardContent className="p-8 aspect-square flex items-center justify-center bg-white relative">
+              <img
+                src={badge.imageData}
+                alt={`Badge for ${badge.name}`}
+                className="max-w-[100%] max-h-[100%] object-contain transition-transform group-hover:scale-105"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Pencil className="h-8 w-8 text-white drop-shadow-lg" />
               </div>
-            )}
+            </CardContent>
+            <div className="p-4 bg-muted/30 border-t border-gray-light mt-auto">
+              <h3
+                className="text-base text-text font-normal"
+                title={badge.name}
+              >
+                {badge.name}
+              </h3>
+            </div>
+          </Card>
+        ))}
+
+        {badges.length === 0 && (
+          <div className="col-span-full rounded-lg bg-surface-accent/30 border border-gray-light p-6 text-center">
+            <p className="text-text-muted">
+              No badge templates available yet. Click the "Create New Badge"
+              card to get started.
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }

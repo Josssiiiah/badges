@@ -13,7 +13,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Noto Sans", "sans-serif"],
+        sans: ["Archivo", "sans-serif"],
       },
     },
   },
